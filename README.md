@@ -188,7 +188,7 @@ Compared draft by draft with bf16, all three files are within noise on the fact 
 
 ### Prompt format
 
-**This is a text-completion model, not a chat model.** There is no system prompt, no chat template and no turn markers. Send exactly this text and let the model continue:
+**This is a text-completion model, not a chat model.** There is no system prompt and there are no turn markers. Send exactly this text and let the model continue:
 
 ```
 Rewrite the text below so it reads like a person wrote it, not a language model.
@@ -211,6 +211,7 @@ In code: `prompt = INSTR + "\n\n" + draft.strip() + "\n\n### Rewritten:\n\n"`. `
 - **Stop on EOS only.** Don't pass `"###"` as a stop string; it truncates the rare output that contains it.
 - **Sampling:** temperature 1.0, top-p 0.95, nothing else (top-k off, min-p off, repetition penalty 1.0). llama-server turns on top-k 40 and min-p 0.05 by default, so switch them off as in the example above.
 - Allow about 2.5× the draft's token count for the output (the app uses 256 to 2048 tokens).
+- **Chat front ends:** since 2026-10-04 the GGUF files carry a chat template that builds exactly this prompt from the last user message (system prompts and earlier turns are ignored). llama-server's `/v1/chat/completions` (with `--jinja`, the default in recent builds) then works, one draft per message: with the same seed it gave the same rewrite as the completion endpoint. Chat apps that use the file's template, such as LM Studio's Chat tab, should work the same way (not tested by us). Files downloaded earlier have no template, and the safetensors weights have none either.
 
 ### llama.cpp
 
@@ -275,13 +276,23 @@ The weights were saved with transformers 5.14.1. Keep `top_k=0`: it switches off
 
 **vLLM:** see [docs/USAGE.md#6-vllm](docs/USAGE.md#6-vllm). Pass `top_k=-1` (off) in `SamplingParams`; for `vllm serve`, add `--generation-config vllm` so the top-k 64 in `generation_config.json` isn't used as a default.
 
-Ollama and LM Studio both wrap your text in a chat template by default, which breaks this model. **Use raw mode.** We have not tested either ourselves; full steps are in [docs/USAGE.md](docs/USAGE.md#7-ollama).
+We have not tested Ollama or LM Studio ourselves; full steps are in [docs/USAGE.md](docs/USAGE.md#7-ollama).
 
-**Ollama:** create a model whose template passes the prompt through untouched, then call `/api/generate` with `"raw": true` and the full prompt (instruction + draft + separator).
+**Ollama** ignores the chat template stored in the GGUF and would wrap your text in its own Gemma template, which breaks this model. Create the model with this `Modelfile`: its template takes the last user message as the draft and builds the prompt above (we rendered it with Go's `text/template` and got the prompt byte for byte, but have not run it in Ollama). Then `ollama run humanizer` or `/api/chat` with one draft per message, or `/api/generate` with `"raw": true` and the full prompt.
 
 ```
 FROM ./humanizer-12b-Q8_0.gguf
-TEMPLATE """{{ .Prompt }}"""
+TEMPLATE """{{- $draft := "" }}{{- range .Messages }}{{- if eq .Role "user" }}{{- $draft = .Content }}{{- end }}{{- end }}Rewrite the text below so it reads like a person wrote it, not a language model.
+
+Reorganize it as you see fit. Vary sentence length on purpose. Cut hedging,
+throat-clearing, and any sentence that only announces what comes next.
+Prefer the concrete word over the abstract one. It is fine to sound uneven.
+
+Every fact, number, unit, date, name and quotation must survive unchanged.
+
+{{ $draft }}
+
+### Rewritten:{{ "\n\n" }}"""
 PARAMETER temperature 1.0
 PARAMETER top_p 0.95
 PARAMETER top_k 0
@@ -295,7 +306,7 @@ PARAMETER num_predict 2048
 ollama create humanizer -f Modelfile
 ```
 
-**LM Studio:** load the GGUF, start the local server and send the full prompt to the text-completion endpoint `/v1/completions`. Don't use the chat tab or `/v1/chat/completions`.
+**LM Studio:** with a GGUF downloaded on or after 2026-10-04, the Chat tab should work: empty system prompt, one draft per message, sampling as above. Any download also works through the local server's text-completion endpoint `/v1/completions` with the full prompt.
 
 ### Speed
 

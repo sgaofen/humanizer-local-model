@@ -1,0 +1,44 @@
+{#-
+  humanizer chat template (stored in the GGUF files as tokenizer.chat_template).
+
+  The model is a text-completion model. It was trained on one plain-text prompt:
+      INSTR + "\n\n" + draft.strip() + "\n\n### Rewritten:\n\n"
+  and it ends the rewrite with <eos>. This template only lets chat front ends
+  (LM Studio, llama-server --jinja with /v1/chat/completions, ...) build that same
+  string from a chat. It adds no turn markers.
+
+  - The draft is the content of the LAST user message, with leading and trailing
+    whitespace removed (same as draft.strip()). Text parts of a list-style content
+    are joined in order.
+  - System messages, earlier user messages and assistant messages are ignored:
+    every new message is rewritten on its own. (Their content is still read, so
+    llama.cpp does not fold the system prompt into the user message.)
+  - add_generation_prompt=true (what chat front ends send) ends the prompt with
+    "\n\n### Rewritten:\n\n"; the model writes the rewrite and stops on <eos>.
+    With add_generation_prompt=false the separator is left out.
+  - No BOS token here: the runtime adds it (tokenizer.ggml.add_bos_token = true).
+  - With no user message the draft is empty.
+  Must stay byte for byte equal to humanizer/promptfmt.py (build_prompt).
+-#}
+{%- set instr = "Rewrite the text below so it reads like a person wrote it, not a language model.\n\nReorganize it as you see fit. Vary sentence length on purpose. Cut hedging,\nthroat-clearing, and any sentence that only announces what comes next.\nPrefer the concrete word over the abstract one. It is fine to sound uneven.\n\nEvery fact, number, unit, date, name and quotation must survive unchanged." -%}
+{%- set sep = "\n\n### Rewritten:\n\n" -%}
+{%- set ns = namespace(draft="", text="") -%}
+{%- for message in messages -%}
+  {%- set ns.text = "" -%}
+  {%- if message["content"] is string -%}
+    {%- set ns.text = message["content"] -%}
+  {%- elif message["content"] is iterable -%}
+    {%- for part in message["content"] -%}
+      {%- if part is mapping and part["type"] == "text" -%}
+        {%- set ns.text = ns.text ~ part["text"] -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {%- if message["role"] == "user" -%}
+    {%- set ns.draft = ns.text -%}
+  {%- endif -%}
+{%- endfor -%}
+{{- instr ~ "\n\n" ~ (ns.draft | trim) -}}
+{%- if add_generation_prompt -%}
+  {{- sep -}}
+{%- endif -%}

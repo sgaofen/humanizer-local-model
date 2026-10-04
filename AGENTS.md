@@ -5,8 +5,8 @@ Instructions for AI agents (Claude Code, Codex, Cursor, etc.) setting up **human
 ## 0. Facts you need
 
 - **What it does:** rewrites one AI-written draft (English or Chinese) so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote, and to add nothing. Output = the rewritten text only.
-- **Kind of model:** 12B **text-completion** model (fine-tuned from `google/gemma-4-12B`). **Not a chat model.** Never use a chat template, a system prompt, or `/v1/chat/completions`.
-- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,627,840 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,797,088 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,158,368 bytes, about 7.6 GB) when memory or disk is tight. You also need `prompt_format.json` from the same repo.
+- **Kind of model:** 12B **text-completion** model (fine-tuned from `google/gemma-4-12B`). **Not a chat model.** Call the completion endpoint with the exact prompt from step 6: no system prompt, no chat turns. (The GGUF files uploaded on or after 2026-10-04 also carry a chat template that builds the same prompt from the last user message, so chat front ends such as LM Studio should work; the authors have not tested them. In code, use the completion endpoint: it works with every download.)
+- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,304 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,520 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,800 bytes, about 7.6 GB) when memory or disk is tight. You also need `prompt_format.json` from the same repo.
 - **Runtime:** `llama-server` from llama.cpp (macOS, Windows, Linux). Alternatives in section 10.
 - **Sampling:** temperature 1.0, top_p 0.95, and nothing else: top_k 0, min_p 0, repeat_penalty 1.0. Stop on EOS only. No stop strings.
 - **License:** Apache 2.0.
@@ -28,8 +28,8 @@ powershell -c "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB"  
 
 | Memory | Use |
 |---|---|
-| 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,627,840 bytes) |
-| 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,797,088 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,158,368 bytes) if memory or disk is tight |
+| 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,630,304 bytes) |
+| 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,520 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,800 bytes) if memory or disk is tight |
 | 8 GB | `lite/humanizer-lite-Q6_K.gguf` (about 6.2 GB): the earlier, smaller E4B release. Same prompt format. |
 
 You also need free disk space for the file you pick. In the commands below, replace the Q8_0 file name if you picked another file.
@@ -59,11 +59,11 @@ Check the download:
 
 ```bash
 head -c 4 ./humanizer-model/humanizer-12b-Q8_0.gguf; echo     # must print GGUF
-wc -c ./humanizer-model/*.gguf                                # Q8_0: 12669627840 bytes; Q6_K: 10029797088 bytes; Q4_K_M: 7625158368 bytes
+wc -c ./humanizer-model/*.gguf                                # Q8_0: 12669630304 bytes; Q6_K: 10029799520 bytes; Q4_K_M: 7625160800 bytes
 shasum -a 256 ./humanizer-model/*.gguf                       # macOS (Linux: sha256sum)
-# Q8_0:   74d0e61d62c1c9d472002b9175cc71b9e725d5b5a4236383d89b04bdc29f05b9
-# Q6_K:   bc2259fabf2a03de6894bdca0c65092608e52fefe48ba6b624a51c82c1e522c5
-# Q4_K_M: 5f0fd4bf39401e58c1d4b4a3eda3fc42f64cb9f28d7cd80bcfccca568b215a2f
+# Q8_0:   bb9ef4eba1da2819541b74953b36f0bb62b16df9f2e594511243e75793fd76ca
+# Q6_K:   2d273af917345a953f8957ed3d59122fbebb7df97dfc0bf0db5658cd7d7e228e
+# Q4_K_M: 81ca23c59dbf8a885c855d79253c6daea90b2d69ef26e302fd180a03219a88c9
 # lite/humanizer-lite-Q6_K.gguf: baa27697697d87c85f5347b7673c357ff760ed6f7419ce459744c37026f7603c
 ```
 
@@ -204,14 +204,14 @@ All of them need the same prompt (step 6) and the same sampling (step 7). Comple
 - **MLX (Apple silicon):** `mlx_lm.convert --hf-path jialinyyzz/humanizer --mlx-path humanizer-mlx-8bit -q --q-bits 8 --q-group-size 64`, then `mlx_lm.generate`'s Python API with `make_sampler(temp=1.0, top_p=0.95)`. Pass the prompt string directly; don't apply a chat template.
 - **transformers (CUDA):** `AutoModelForCausalLM.from_pretrained("jialinyyzz/humanizer", dtype=torch.bfloat16)`, `generate(do_sample=True, temperature=1.0, top_p=0.95, top_k=0)`. `top_k=0` overrides the top-k 64 in the bundled `generation_config.json`. The bf16 `model.safetensors` (about 24 GB) is at the repo root.
 - **vLLM:** `LLM(model="jialinyyzz/humanizer", dtype="bfloat16", max_model_len=8192, limit_mm_per_prompt={"image": 0, "audio": 0, "video": 0})` and `SamplingParams(temperature=1.0, top_p=0.95, top_k=-1, min_p=0.0, repetition_penalty=1.0, max_tokens=2048)`. For `vllm serve`, add `--generation-config vllm` and use `/v1/completions`.
-- **Ollama:** Modelfile with `TEMPLATE """{{ .Prompt }}"""`, then `/api/generate` with `"raw": true`. Untested by the authors.
-- **LM Studio:** text-completion endpoint `/v1/completions` with the full prompt. Never the chat endpoint. Untested by the authors.
+- **Ollama:** it ignores the GGUF's chat template. Use the Modelfile in [USAGE.md section 7](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#7-ollama), whose `TEMPLATE` builds the step 6 prompt from the last user message, or call `/api/generate` with `"raw": true` and the full prompt. Untested by the authors.
+- **LM Studio:** the chat template in the GGUF (files uploaded on or after 2026-10-04) builds the step 6 prompt, so the Chat tab and `/v1/chat/completions` should work with one draft per message and an empty system prompt. The text-completion endpoint `/v1/completions` with the full prompt works with any download. Untested by the authors.
 
 ## 11. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Output starts with "Sure", "Here is", or repeats the instruction | A chat template or chat endpoint is in use | Use `/completion` (or raw mode) and send the prompt from step 6 |
+| Output starts with "Sure", "Here is", repeats the instruction, or doesn't stop | A generic chat template is in use (a GGUF downloaded before 2026-10-04 has no built-in one) | Use `/completion` (or raw mode) and send the prompt from step 6 |
 | Output is cut off at `###` | A stop string was set | Remove all stop strings; rely on EOS |
 | Output is almost the same as the draft | Sampling bad luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling or repeated phrases | Wrong sampler settings | Set `top_k: 0, min_p: 0, repeat_penalty: 1.0` explicitly |

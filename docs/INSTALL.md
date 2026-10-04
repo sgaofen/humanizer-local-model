@@ -151,7 +151,7 @@ The prompt must be built exactly like this; see [Prompt format](../README.md#pro
 
 **A number is flagged.** Check it. Usually the number really did change; sometimes it is only written differently ("60 minutes" → "an hour", "3" → "three"), which the check can't tell apart.
 
-**Ollama or LM Studio gives strange output** (it greets you, repeats the instructions, or adds "Sure, here's…"). They applied a chat template. Use raw mode; see [Usage without the app: Ollama](USAGE.md#7-ollama).
+**Ollama or LM Studio gives strange output** (it greets you, repeats the instructions, or adds "Sure, here's…"). They applied a generic chat template: the GGUF was downloaded before 2026-10-04 and has no built-in template (download it again), or Ollama runs without the Modelfile from [Usage without the app: Ollama](USAGE.md#7-ollama). The text-completion endpoint (raw mode) works with any download.
 
 **The browser page didn't open.** Open `http://127.0.0.1:47615/` yourself. If that port is taken, the app uses the next free one.
 

@@ -190,7 +190,7 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 
 ### 提示词格式
 
-**这是文本续写模型，不是聊天模型。**没有系统提示词，没有聊天模板，没有轮次标记。把下面这段原样发过去，让模型往下写：
+**这是文本续写模型，不是聊天模型。**没有系统提示词，没有轮次标记。把下面这段原样发过去，让模型往下写：
 
 ```
 Rewrite the text below so it reads like a person wrote it, not a language model.
@@ -213,6 +213,7 @@ Every fact, number, unit, date, name and quotation must survive unchanged.
 - **只靠 EOS 停。**不要把 `"###"` 设成停止符，极少数输出里本来就有它，会被截断。
 - **采样：**temperature 1.0、top-p 0.95，别的都关掉（top-k 关、min-p 关、重复惩罚 1.0）。llama-server 默认开着 top-k 40 和 min-p 0.05，要像上面的例子那样显式关掉。
 - 输出长度留草稿 token 数的 2.5 倍左右（App 的范围是 256 到 2048 token）。
+- **聊天软件：**2026-10-04 起，GGUF 文件里自带一个对话模板，把最后一条用户消息拼成上面这段提示词（系统提示词和之前的对话都不用）。所以 llama-server 的 `/v1/chat/completions`（带 `--jinja`，新版默认就开）能用，一条消息一篇草稿：同一个 seed 下，它和续写接口给出的是同一篇改写。用文件自带模板的聊天软件（比如 LM Studio 的聊天页面）应该也一样（我们没测过）。更早下载的文件没有这个模板，safetensors 权重也没有。
 
 ### llama.cpp
 
@@ -277,13 +278,23 @@ print(tok.decode(out[0, ids["input_ids"].shape[1]:], skip_special_tokens=True).s
 
 **vLLM：**见 [docs/USAGE.zh.md#6-vllm](docs/USAGE.zh.md#6-vllm)。`SamplingParams` 里传 `top_k=-1`（关闭）；用 `vllm serve` 时加 `--generation-config vllm`，免得把 `generation_config.json` 里的 top-k 64 当成默认值。
 
-Ollama 和 LM Studio 默认都会给你的文本套上聊天模板，这会把这个模型搞坏。**请用原始（raw）模式。**这两个我们自己没测过，完整步骤见 [docs/USAGE.zh.md](docs/USAGE.zh.md#7-ollama)。
+Ollama 和 LM Studio 我们自己都没测过，完整步骤见 [docs/USAGE.zh.md](docs/USAGE.zh.md#7-ollama)。
 
-**Ollama：**建一个把提示词原样透传的模型，然后调 `/api/generate`，带上 `"raw": true` 和完整提示词（指令 + 草稿 + 分隔符）。
+**Ollama** 不用 GGUF 里存的对话模板，会给你的文本套上它自己的 Gemma 模板，这会把这个模型搞坏。请用下面这个 `Modelfile` 建模型：它的模板把最后一条用户消息当作草稿，拼出上面的提示词（我们用 Go 的 `text/template` 渲染过，逐字相同，但没有在 Ollama 里实际跑过）。之后可以 `ollama run humanizer` 或调 `/api/chat`，一条消息一篇草稿；也可以调 `/api/generate`，带上 `"raw": true` 和完整提示词。
 
 ```
 FROM ./humanizer-12b-Q8_0.gguf
-TEMPLATE """{{ .Prompt }}"""
+TEMPLATE """{{- $draft := "" }}{{- range .Messages }}{{- if eq .Role "user" }}{{- $draft = .Content }}{{- end }}{{- end }}Rewrite the text below so it reads like a person wrote it, not a language model.
+
+Reorganize it as you see fit. Vary sentence length on purpose. Cut hedging,
+throat-clearing, and any sentence that only announces what comes next.
+Prefer the concrete word over the abstract one. It is fine to sound uneven.
+
+Every fact, number, unit, date, name and quotation must survive unchanged.
+
+{{ $draft }}
+
+### Rewritten:{{ "\n\n" }}"""
 PARAMETER temperature 1.0
 PARAMETER top_p 0.95
 PARAMETER top_k 0
@@ -297,7 +308,7 @@ PARAMETER num_predict 2048
 ollama create humanizer -f Modelfile
 ```
 
-**LM Studio：**加载 GGUF，开本地服务，把完整提示词发到文本续写接口 `/v1/completions`。不要用聊天页面，也不要用 `/v1/chat/completions`。
+**LM Studio：**2026-10-04 及之后下载的 GGUF 应该可以直接用聊天页面：系统提示词留空，一条消息一篇草稿，采样照上面设。不管哪天下载的文件，都可以开本地服务，把完整提示词发到文本续写接口 `/v1/completions`。
 
 ### 速度
 

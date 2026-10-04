@@ -1,8 +1,8 @@
 # humanizer
 
-> humanizer is a 12B text-completion model (fine-tuned from google/gemma-4-12B, Apache 2.0) that rewrites one AI-written draft, in English or Chinese, so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote and to add nothing. It is NOT a chat model: send a raw completion prompt, never a chat template.
+> humanizer is a 12B text-completion model (fine-tuned from google/gemma-4-12B, Apache 2.0) that rewrites one AI-written draft, in English or Chinese, so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote and to add nothing. It is NOT a chat model: send a raw completion prompt. (The GGUF files uploaded on or after 2026-10-04 carry a chat template that builds the same prompt from the last user message, so chat front ends that use it should work; in code, use the completion endpoint.)
 
-Weights: https://huggingface.co/jialinyyzz/humanizer. Pick by memory: 32 GB or more → humanizer-12b-Q8_0.gguf (12,669,627,840 bytes); 16 GB → humanizer-12b-Q6_K.gguf (10,029,797,088 bytes), or humanizer-12b-Q4_K_M.gguf (7,625,158,368 bytes) if memory or disk is tight; 8 GB → lite/humanizer-lite-Q6_K.gguf (earlier E4B release, about 6.2 GB, same prompt). Always also download prompt_format.json. bf16 model.safetensors (about 24 GB) is at the repo root for transformers, vLLM and MLX. Desktop app for macOS (Apple silicon) and Windows: https://github.com/sgaofen/humanize-model/releases/latest
+Weights: https://huggingface.co/jialinyyzz/humanizer. Pick by memory: 32 GB or more → humanizer-12b-Q8_0.gguf (12,669,630,304 bytes); 16 GB → humanizer-12b-Q6_K.gguf (10,029,799,520 bytes), or humanizer-12b-Q4_K_M.gguf (7,625,160,800 bytes) if memory or disk is tight; 8 GB → lite/humanizer-lite-Q6_K.gguf (earlier E4B release, about 6.2 GB, same prompt). Always also download prompt_format.json. bf16 model.safetensors (about 24 GB) is at the repo root for transformers, vLLM and MLX. Desktop app for macOS (Apple silicon) and Windows: https://github.com/sgaofen/humanize-model/releases/latest
 
 Minimal recipe:
 
@@ -24,7 +24,7 @@ The instruction text (instr), verbatim, lines joined with "\n", no trailing newl
 
 Long or structured documents (Markdown, .docx): use the hz command instead of raw requests. pipx install git+https://github.com/sgaofen/humanize-model (python-docx for .docx: pipx inject humanize-model python-docx), then hz input.md -o output.md --json. It uses the running Humanizer app or a llama-server (--server URL, default http://127.0.0.1:8080), keeps headings, code, tables and links, rewrites prose in pieces of about 350 words, flags missing or added numbers and copying, and retries a bad piece once. Exit code 3 = no model running.
 
-Rules: one draft per request; never use /v1/chat/completions or a chat template; don't reword the instruction; ask the user to proofread numbers, dates and names (on the evaluation set a strict judge found no factual problem in 376 of 420 English rewrites, and more than 9 in 10 of the fixes it listed are a single word or phrase); never promise that output passes an AI detector.
+Rules: one draft per request; use the completion endpoint, not a chat endpoint or a generic chat template; don't reword the instruction; ask the user to proofread numbers, dates and names (on the evaluation set a strict judge found no factual problem in 376 of 420 English rewrites, and more than 9 in 10 of the fixes it listed are a single word or phrase); never promise that output passes an AI detector.
 
 ## Docs
 

@@ -43,9 +43,9 @@ tags:
 
 | File | Size | For |
 |---|---|---|
-| `humanizer-12b-Q8_0.gguf` | 12,669,627,840 bytes (about 12.7 GB) | 32 GB of memory or more. Recommended. |
-| `humanizer-12b-Q6_K.gguf` | 10,029,797,088 bytes (about 10.0 GB) | 16 GB of memory. |
-| `humanizer-12b-Q4_K_M.gguf` | 7,625,158,368 bytes (about 7.6 GB) | The smallest 12B file, when memory or disk is tight. |
+| `humanizer-12b-Q8_0.gguf` | 12,669,630,304 bytes (about 12.7 GB) | 32 GB of memory or more. Recommended. |
+| `humanizer-12b-Q6_K.gguf` | 10,029,799,520 bytes (about 10.0 GB) | 16 GB of memory. |
+| `humanizer-12b-Q4_K_M.gguf` | 7,625,160,800 bytes (about 7.6 GB) | The smallest 12B file, when memory or disk is tight. |
 | `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
 | `prompt_format.json` | tiny | The instruction and separator, verbatim. |
 | `lite/` | `humanizer-lite-Q8_0.gguf` about 8.0 GB · `humanizer-lite-Q6_K.gguf` about 6.2 GB · `humanizer-lite-bf16.gguf` about 14.9 GB · safetensors (4 shards) about 15.9 GB, with config, tokenizer and `prompt_format.json` | The earlier E4B release (formerly `jialinyyzz/humanizer-gemma-4-e4b`), for 8 GB machines. Same prompt format. |
@@ -63,7 +63,7 @@ Compared draft by draft with bf16, all three files are within noise on the fact 
 
 ## Prompt format
 
-**Text completion, not chat.** No system prompt, no chat template, no turn markers. Send exactly this text and let the model continue:
+**Text completion, not chat.** No system prompt, no turn markers. Send exactly this text and let the model continue:
 
 ```
 Rewrite the text below so it reads like a person wrote it, not a language model.
@@ -85,6 +85,7 @@ Every fact, number, unit, date, name and quotation must survive unchanged.
 - **Stop on EOS only.** No stop strings, especially not `"###"`.
 - **Sampling: temperature 1.0, top-p 0.95, nothing else** (top-k 0, min-p 0, repetition penalty 1.0). llama.cpp defaults to top-k 40 and min-p 0.05, and the bundled `generation_config.json` sets top-k 64, so switch them off explicitly.
 - Context 8192 tokens for instruction + draft + rewrite. Split long documents at paragraph breaks ([USAGE.md](USAGE.md#10-long-documents)).
+- **Chat front ends:** since 2026-10-04 the GGUF files carry a chat template that builds exactly this prompt from the last user message (system prompts and earlier turns are ignored). llama-server's `/v1/chat/completions` (with `--jinja`, the default in recent builds) then works, one draft per message: with the same seed it gave the same rewrite as the completion endpoint. Chat apps that use the file's template, such as LM Studio's Chat tab, should work the same way (not tested by us). Files downloaded earlier have no template, and the safetensors weights have none either.
 
 ## Usage without the app
 
@@ -117,7 +118,7 @@ def humanize(draft: str, url: str = "http://127.0.0.1:8080") -> str:
 print(humanize(open("draft.txt", encoding="utf-8").read()))
 ```
 
-Use `/completion`, not `/v1/chat/completions` (that one applies the chat template). With curl and jq:
+`/completion` works with every download. `/v1/chat/completions` also works with the GGUF files uploaded on or after 2026-10-04 (built-in chat template, see above), one draft per request. With curl and jq:
 
 ```bash
 jq -n --rawfile d draft.txt --slurpfile f humanizer-model/prompt_format.json \
@@ -193,11 +194,21 @@ This mirrors how our evaluation outputs were generated. As a server: `vllm serve
 
 ### Ollama
 
-Ollama applies a chat template unless you pass the prompt through untouched and call it in raw mode. Needs an Ollama version that supports Gemma 4 models; untested by us.
+Ollama ignores the chat template stored in the GGUF and would apply its own Gemma template, which breaks this model. Use this `Modelfile`: its template takes the last user message as the draft and builds the prompt above (rendered with Go's `text/template`, byte for byte the same; not run in Ollama by us). Needs an Ollama version that supports Gemma 4 models.
 
 ```
 FROM ./humanizer-12b-Q8_0.gguf
-TEMPLATE """{{ .Prompt }}"""
+TEMPLATE """{{- $draft := "" }}{{- range .Messages }}{{- if eq .Role "user" }}{{- $draft = .Content }}{{- end }}{{- end }}Rewrite the text below so it reads like a person wrote it, not a language model.
+
+Reorganize it as you see fit. Vary sentence length on purpose. Cut hedging,
+throat-clearing, and any sentence that only announces what comes next.
+Prefer the concrete word over the abstract one. It is fine to sound uneven.
+
+Every fact, number, unit, date, name and quotation must survive unchanged.
+
+{{ $draft }}
+
+### Rewritten:{{ "\n\n" }}"""
 PARAMETER temperature 1.0
 PARAMETER top_p 0.95
 PARAMETER top_k 0
@@ -209,6 +220,8 @@ PARAMETER num_predict 2048
 
 ```bash
 ollama create humanizer -f Modelfile
+ollama run humanizer      # one draft per message, no leading or trailing blank lines
+# or raw mode, which skips the template:
 jq -n --rawfile d draft.txt --slurpfile f humanizer-model/prompt_format.json \
   '{model: "humanizer", raw: true, stream: false,
     prompt: ($f[0].instr + "\n\n" + ($d | sub("^\\s+"; "") | sub("\\s+$"; "")) + $f[0].sep),
@@ -217,11 +230,9 @@ jq -n --rawfile d draft.txt --slurpfile f humanizer-model/prompt_format.json \
 | curl -s http://127.0.0.1:11434/api/generate -d @- | jq -r .response
 ```
 
-Don't use interactive `ollama run` or `/api/chat`.
-
 ### LM Studio
 
-Untested by us. Load the GGUF with an 8192-token context; in the model's sampling settings set Temperature 1.0, Top P 0.95, Top K 0, Min P 0, Repeat Penalty 1.0 and remove stop strings; start the local server and send the full prompt to the **text-completion endpoint `/v1/completions`**:
+Untested by us. Load the GGUF with an 8192-token context; in the model's sampling settings set Temperature 1.0, Top P 0.95, Top K 0, Min P 0, Repeat Penalty 1.0 and remove stop strings. With a file downloaded on or after 2026-10-04, the **Chat tab** should work: leave the system prompt empty and paste one draft per message (the built-in template ignores system prompts and earlier turns). With any download, start the local server and send the full prompt to the **text-completion endpoint `/v1/completions`**:
 
 ```python
 import json, urllib.request
@@ -236,7 +247,7 @@ req = urllib.request.Request("http://127.0.0.1:1234/v1/completions", json.dumps(
 print(json.load(urllib.request.urlopen(req, timeout=900))["choices"][0]["text"].strip())
 ```
 
-Never the Chat tab or `/v1/chat/completions`.
+If a chat reply greets you, repeats the instruction or doesn't stop, the file has no built-in template (downloaded before 2026-10-04): download it again or use `/v1/completions`.
 
 ### More
 

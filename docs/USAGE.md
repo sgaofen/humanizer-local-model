@@ -14,7 +14,7 @@ humanizer is a 12B **text-completion** model fine-tuned from `google/gemma-4-12B
 
 | Rule | Why |
 |---|---|
-| **It is not a chat model.** Send one plain string. No chat template, no system prompt, no turn markers, no `/v1/chat/completions`. | It was trained on raw text in exactly the shape below. A chat template wraps the draft in tokens it never saw during training. |
+| **It is a text-completion model, not a chat model.** Send one plain string to a completion endpoint. Chat mode works only through the chat template built into the GGUF files (since 2026-10-04): it turns the last user message into exactly this string and ignores system prompts and earlier turns. | It was trained on raw text in exactly the shape below. A generic chat template (Gemma turns, ChatML) wraps the draft in tokens it never saw during training. The safetensors weights (transformers, vLLM, MLX) have no chat template. |
 | **The prompt must match byte for byte.** | A reworded instruction, a translated instruction or a missing blank line all make it worse. |
 | **Stop at EOS only.** No stop strings, and especially not `###`. | The model ends by itself. A few legitimate outputs contain `###` and would be cut off. |
 | **Sampling: temperature 1.0, top-p 0.95, and nothing else.** top-k off (0), min-p off (0), repetition penalty 1.0. | That is how the evaluation was run. Several runtimes switch on other samplers by default: llama.cpp uses top-k 40 and min-p 0.05, and transformers reads top-k 64 from the bundled `generation_config.json`. |
@@ -73,9 +73,9 @@ All files are in [`jialinyyzz/humanizer`](https://huggingface.co/jialinyyzz/huma
 
 | Your memory | File | Size |
 |---|---|---|
-| 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,627,840 bytes (about 12.7 GB) |
-| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,797,088 bytes (about 10.0 GB) |
-| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, the smallest 12B file | 7,625,158,368 bytes (about 7.6 GB) |
+| 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,630,304 bytes (about 12.7 GB) |
+| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,520 bytes (about 10.0 GB) |
+| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, the smallest 12B file | 7,625,160,800 bytes (about 7.6 GB) |
 | 8 GB | `lite/humanizer-lite-Q6_K.gguf`, the earlier, smaller E4B release | about 6.2 GB |
 
 Also in the repo:
@@ -101,17 +101,19 @@ pip install -U "huggingface_hub[cli]"
 hf download jialinyyzz/humanizer humanizer-12b-Q8_0.gguf prompt_format.json --local-dir ./humanizer-model
 # 16 GB machine: humanizer-12b-Q6_K.gguf instead of humanizer-12b-Q8_0.gguf (or humanizer-12b-Q4_K_M.gguf if disk is tight)
 # Slow from mainland China: put HF_ENDPOINT=https://hf-mirror.com in front of the command
-wc -c ./humanizer-model/*.gguf     # Q8_0: 12669627840 bytes, Q6_K: 10029797088 bytes, Q4_K_M: 7625158368 bytes
+wc -c ./humanizer-model/*.gguf     # Q8_0: 12669630304 bytes, Q6_K: 10029799520 bytes, Q4_K_M: 7625160800 bytes
 ```
 
 sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -hashfile FILE SHA256` on Windows):
 
 | File | sha256 |
 |---|---|
-| `humanizer-12b-Q8_0.gguf` | `74d0e61d62c1c9d472002b9175cc71b9e725d5b5a4236383d89b04bdc29f05b9` |
-| `humanizer-12b-Q6_K.gguf` | `bc2259fabf2a03de6894bdca0c65092608e52fefe48ba6b624a51c82c1e522c5` |
-| `humanizer-12b-Q4_K_M.gguf` | `5f0fd4bf39401e58c1d4b4a3eda3fc42f64cb9f28d7cd80bcfccca568b215a2f` |
+| `humanizer-12b-Q8_0.gguf` | `bb9ef4eba1da2819541b74953b36f0bb62b16df9f2e594511243e75793fd76ca` |
+| `humanizer-12b-Q6_K.gguf` | `2d273af917345a953f8957ed3d59122fbebb7df97dfc0bf0db5658cd7d7e228e` |
+| `humanizer-12b-Q4_K_M.gguf` | `81ca23c59dbf8a885c855d79253c6daea90b2d69ef26e302fd180a03219a88c9` |
 | `lite/humanizer-lite-Q6_K.gguf` | `baa27697697d87c85f5347b7673c357ff760ed6f7419ce459744c37026f7603c` |
+
+The three 12B GGUF files were replaced on 2026-10-04 to add a chat template to their metadata (for LM Studio and other chat front ends; see [section 3](#start-a-server)). The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes (about 2.4 KB smaller) and checksums, and still work through the completion endpoint.
 
 ## 3. llama.cpp (recommended)
 
@@ -138,7 +140,16 @@ llama-server -m ./humanizer-model/humanizer-12b-Q8_0.gguf -c 8192 -np 1 -ngl 99 
 
 Ready when `curl -s http://127.0.0.1:8080/health` returns `{"status":"ok"}`.
 
-Use the `/completion` endpoint. Don't use `/v1/chat/completions`: it applies the chat template.
+Use the `/completion` endpoint, as below; it works with every copy of the files.
+
+**Chat endpoint.** `/v1/chat/completions` also works if your GGUF was downloaded on or after 2026-10-04 (check the size or sha256 in [section 2](#2-pick-a-file)) and the server runs with `--jinja` (the default in recent builds). The chat template built into the file takes the last user message as the draft and builds exactly the prompt above; system prompts and earlier turns are ignored, so send one draft per request. With llama.cpp we checked that the template builds the prompt byte for byte, and that with the same seed both endpoints return the same rewrite and stop on their own. A file downloaded earlier has no chat template, and the chat endpoint then gives bad output.
+
+```bash
+jq -n --rawfile d draft.txt '{messages: [{role: "user", content: $d}],
+    temperature: 1.0, top_p: 0.95, top_k: 0, min_p: 0, repeat_penalty: 1.0, max_tokens: 2048}' \
+| curl -s http://127.0.0.1:8080/v1/chat/completions -H "Content-Type: application/json" -d @- \
+| jq -r '.choices[0].message.content'
+```
 
 ### Call it from Python (standard library only)
 
@@ -293,13 +304,23 @@ Use `/v1/completions`, never `/v1/chat/completions`. We have not tested the serv
 
 ## 7. Ollama
 
-Ollama applies a chat template unless you tell it not to. Create a model whose template passes the prompt through unchanged, and call the API in raw mode. You need an Ollama version whose engine supports Gemma 4 models. We have not tested Ollama ourselves.
+Ollama doesn't use the chat template stored in the GGUF; it needs its own template in the `Modelfile`. You need an Ollama version whose engine supports Gemma 4 models. We have not run Ollama ourselves: we rendered the template below with Go's `text/template` (the engine Ollama templates are written for) and got exactly the prompt from [section 1](#1-what-makes-this-model-different), but we have not tried it in Ollama.
 
-`Modelfile`, next to the GGUF:
+`Modelfile`, next to the GGUF. The template takes the last user message as the draft and wraps it exactly as in section 1; system prompts and earlier turns are ignored, so every message is rewritten on its own.
 
 ```
 FROM ./humanizer-12b-Q8_0.gguf
-TEMPLATE """{{ .Prompt }}"""
+TEMPLATE """{{- $draft := "" }}{{- range .Messages }}{{- if eq .Role "user" }}{{- $draft = .Content }}{{- end }}{{- end }}Rewrite the text below so it reads like a person wrote it, not a language model.
+
+Reorganize it as you see fit. Vary sentence length on purpose. Cut hedging,
+throat-clearing, and any sentence that only announces what comes next.
+Prefer the concrete word over the abstract one. It is fine to sound uneven.
+
+Every fact, number, unit, date, name and quotation must survive unchanged.
+
+{{ $draft }}
+
+### Rewritten:{{ "\n\n" }}"""
 PARAMETER temperature 1.0
 PARAMETER top_p 0.95
 PARAMETER top_k 0
@@ -312,9 +333,14 @@ PARAMETER num_predict 2048
 ```bash
 ollama create humanizer -f Modelfile
 ollama show humanizer --modelfile      # check that no "PARAMETER stop" lines were added
+ollama run humanizer                   # then paste one draft per message
 ```
 
-Call `/api/generate` with `"raw": true` and the full prompt (instruction + draft + separator):
+The `{{ "\n\n" }}` at the end is the blank line after `### Rewritten:`, written so that it survives even if the template's trailing whitespace is trimmed.
+
+**Chat mode** (`ollama run`, `/api/chat`): send the draft as the user message. Ollama templates can't trim whitespace, so leave out leading and trailing blank lines (in code, send `draft.strip()`); otherwise the prompt is no longer byte for byte the one the model was trained on.
+
+**Raw mode** skips the template and works with any Modelfile. Call `/api/generate` with `"raw": true` and the full prompt (instruction + draft + separator):
 
 ```bash
 jq -n --rawfile d draft.txt --slurpfile f humanizer-model/prompt_format.json \
@@ -341,15 +367,16 @@ req = urllib.request.Request("http://127.0.0.1:11434/api/generate", json.dumps(b
 print(json.load(urllib.request.urlopen(req, timeout=900))["response"].strip())
 ```
 
-Don't use `ollama run` interactively or `/api/chat`: both go through chat formatting.
+Ollama's built-in Gemma templates and a Modelfile without the `TEMPLATE` above both break this model in chat mode.
 
 ## 8. LM Studio
 
-We have not tested LM Studio ourselves.
+We have not tested LM Studio ourselves. LM Studio uses the chat template stored in the GGUF. The files uploaded on or after 2026-10-04 carry one that builds exactly the prompt from [section 1](#1-what-makes-this-model-different) (we checked it with llama.cpp, see [section 3](#start-a-server)); files downloaded earlier don't, so download them again or use the completion endpoint in step 4.
 
-1. Load `humanizer-12b-Q8_0.gguf` (or Q6_K). Set the context length to 8192 when loading.
-2. In the model's sampling settings, set **Temperature 1.0, Top P 0.95, Top K 0, Min P 0, Repeat Penalty 1.0** and remove any stop strings.
-3. Start the local server (Developer tab) and send the full prompt (instruction + draft + separator) to the **text-completion endpoint `/v1/completions`**:
+1. Load `humanizer-12b-Q8_0.gguf` (or Q6_K / Q4_K_M). Set the context length to 8192 when loading.
+2. In the model's sampling settings, set **Temperature 1.0, Top P 0.95, Top K 0, Min P 0, Repeat Penalty 1.0** and remove any stop strings. Leave the prompt template as it came with the file.
+3. **Chat tab:** leave the system prompt empty (the template ignores it) and paste one draft per message. Each message is rewritten on its own; earlier turns are not sent to the model. The server's `/v1/chat/completions` works the same way.
+4. **Text completion** (works with any download): start the local server (Developer tab) and send the full prompt (instruction + draft + separator) to **`/v1/completions`**:
 
 ```python
 import json, urllib.request
@@ -365,7 +392,7 @@ req = urllib.request.Request("http://127.0.0.1:1234/v1/completions", json.dumps(
 print(json.load(urllib.request.urlopen(req, timeout=900))["choices"][0]["text"].strip())
 ```
 
-Don't use the Chat tab or `/v1/chat/completions`: both apply a chat template. If your LM Studio version ignores `top_k`, `min_p` or `repeat_penalty` in the request, the settings from step 2 apply.
+If a chat reply starts with "Sure", repeats the instruction or doesn't stop, the file has no built-in template (downloaded before 2026-10-04) or the prompt template was changed in the model settings: download the file again, reset the template, or use `/v1/completions`. If your LM Studio version ignores `top_k`, `min_p` or `repeat_penalty` in the request, the settings from step 2 apply.
 
 ## 9. Rewrite a whole folder
 
@@ -544,7 +571,7 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Output starts with "Sure", "Here is…", or repeats the instruction | A chat template or a chat endpoint is in use | Use a completion endpoint (`/completion`, `/v1/completions`, Ollama `raw: true`) and the exact prompt from [section 1](#1-what-makes-this-model-different) |
+| Output starts with "Sure", "Here is…", repeats the instruction, or doesn't stop | A generic chat template is in use: a GGUF downloaded before 2026-10-04 (no built-in template), a template changed in the app's settings, Ollama without the Modelfile from [section 7](#7-ollama), or a chat endpoint on the safetensors weights | Download the GGUF again, or use a completion endpoint (`/completion`, `/v1/completions`, Ollama `raw: true`) with the exact prompt from [section 1](#1-what-makes-this-model-different) |
 | Output contains `<start_of_turn>`, `<end_of_turn>` or similar markers | Same: chat formatting | Same fix |
 | Output stops at `###` or very early | A stop string is set | Remove all stop strings; rely on EOS |
 | Output is almost the same as the draft | Sampling luck, or temperature too low | Check temperature 1.0 and sample again |

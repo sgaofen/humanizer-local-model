@@ -14,7 +14,7 @@ humanizer 是一个 12B 的**文本续写**模型，由 `google/gemma-4-12B` 微
 
 | 规则 | 原因 |
 |---|---|
-| **它不是聊天模型。**只发一个纯文本字符串：不要聊天模板、不要系统提示词、不要轮次标记、不要用 `/v1/chat/completions`。 | 它训练时见到的就是下面这种原始文本。聊天模板会给草稿套上它训练时从没见过的标记。 |
+| **它是文本续写模型，不是聊天模型。**把一个纯文本字符串发到续写接口。聊天模式只能靠 GGUF 文件里自带的对话模板（2026-10-04 起才有）：它把最后一条用户消息拼成和下面一模一样的字符串，系统提示词和之前的对话都不用。 | 它训练时见到的就是下面这种原始文本。通用的聊天模板（Gemma 轮次、ChatML）会给草稿套上它训练时从没见过的标记。safetensors 权重（transformers、vLLM、MLX）没有对话模板。 |
 | **提示词必须逐字一致。** | 指令改写过、翻译过，或者少一个空行，效果都会变差。 |
 | **只靠 EOS 停。**不要设停止符，尤其不要用 `###`。 | 模型会自己结束。少数正常输出里本来就有 `###`，会被截断。 |
 | **采样：temperature 1.0、top-p 0.95，别的都关掉。**top-k 关（0），min-p 关（0），重复惩罚 1.0。 | 评测就是这样跑的。好几个运行环境默认会开别的采样：llama.cpp 默认 top-k 40、min-p 0.05；transformers 会从随权重附带的 `generation_config.json` 里读到 top-k 64。 |
@@ -73,9 +73,9 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 
 | 内存 | 文件 | 大小 |
 |---|---|---|
-| 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,627,840 字节（约 12.7 GB） |
-| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,797,088 字节（约 10.0 GB） |
-| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，最小的 12B 文件 | 7,625,158,368 字节（约 7.6 GB） |
+| 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,630,304 字节（约 12.7 GB） |
+| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,520 字节（约 10.0 GB） |
+| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，最小的 12B 文件 | 7,625,160,800 字节（约 7.6 GB） |
 | 8 GB | `lite/humanizer-lite-Q6_K.gguf`，即更早、更小的 E4B 版 | 约 6.2 GB |
 
 仓库里还有：
@@ -101,17 +101,19 @@ pip install -U "huggingface_hub[cli]"
 hf download jialinyyzz/humanizer humanizer-12b-Q8_0.gguf prompt_format.json --local-dir ./humanizer-model
 # 16 GB 的机器:把 humanizer-12b-Q8_0.gguf 换成 humanizer-12b-Q6_K.gguf(硬盘紧张就用 humanizer-12b-Q4_K_M.gguf)
 # 国内下载慢:在命令前面加 HF_ENDPOINT=https://hf-mirror.com
-wc -c ./humanizer-model/*.gguf     # Q8_0 应为 12669627840 字节,Q6_K 应为 10029797088 字节,Q4_K_M 应为 7625158368 字节
+wc -c ./humanizer-model/*.gguf     # Q8_0 应为 12669630304 字节,Q6_K 应为 10029799520 字节,Q4_K_M 应为 7625160800 字节
 ```
 
 sha256 校验值（macOS 用 `shasum -a 256 文件名`，Linux 用 `sha256sum 文件名`，Windows 用 `certutil -hashfile 文件名 SHA256`）：
 
 | 文件 | sha256 |
 |---|---|
-| `humanizer-12b-Q8_0.gguf` | `74d0e61d62c1c9d472002b9175cc71b9e725d5b5a4236383d89b04bdc29f05b9` |
-| `humanizer-12b-Q6_K.gguf` | `bc2259fabf2a03de6894bdca0c65092608e52fefe48ba6b624a51c82c1e522c5` |
-| `humanizer-12b-Q4_K_M.gguf` | `5f0fd4bf39401e58c1d4b4a3eda3fc42f64cb9f28d7cd80bcfccca568b215a2f` |
+| `humanizer-12b-Q8_0.gguf` | `bb9ef4eba1da2819541b74953b36f0bb62b16df9f2e594511243e75793fd76ca` |
+| `humanizer-12b-Q6_K.gguf` | `2d273af917345a953f8957ed3d59122fbebb7df97dfc0bf0db5658cd7d7e228e` |
+| `humanizer-12b-Q4_K_M.gguf` | `81ca23c59dbf8a885c855d79253c6daea90b2d69ef26e302fd180a03219a88c9` |
 | `lite/humanizer-lite-Q6_K.gguf` | `baa27697697d87c85f5347b7673c357ff760ed6f7419ce459744c37026f7603c` |
+
+这三个 12B GGUF 文件在 2026-10-04 换过一次：在元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)）。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小（小约 2.4 KB）和校验值都是旧的，用续写接口照样能用。
 
 ## 3. llama.cpp（推荐）
 
@@ -138,7 +140,16 @@ llama-server -m ./humanizer-model/humanizer-12b-Q8_0.gguf -c 8192 -np 1 -ngl 99 
 
 `curl -s http://127.0.0.1:8080/health` 返回 `{"status":"ok"}` 就是准备好了。
 
-用 `/completion` 接口。不要用 `/v1/chat/completions`，它会套聊天模板。
+用 `/completion` 接口，见下面的例子；不管哪天下载的文件都能用。
+
+**聊天接口。**如果你的 GGUF 是 2026-10-04 或之后下载的（大小和 sha256 见[第 2 节](#2-选哪个文件)），并且服务带 `--jinja`（新版默认就开），`/v1/chat/completions` 也能用。文件里自带的对话模板把最后一条用户消息当作草稿，拼出和上面一模一样的提示词；系统提示词和之前的对话都不用，所以一次请求发一篇草稿。我们用 llama.cpp 核对过：模板拼出的提示词逐字相同；同一个 seed 下两个接口给出同一篇改写，都会自己停。更早下载的文件没有对话模板，用聊天接口会出怪输出。
+
+```bash
+jq -n --rawfile d draft.txt '{messages: [{role: "user", content: $d}],
+    temperature: 1.0, top_p: 0.95, top_k: 0, min_p: 0, repeat_penalty: 1.0, max_tokens: 2048}' \
+| curl -s http://127.0.0.1:8080/v1/chat/completions -H "Content-Type: application/json" -d @- \
+| jq -r '.choices[0].message.content'
+```
 
 ### 用 Python 调用（只用标准库）
 
@@ -293,13 +304,23 @@ jq -n --rawfile d draft.txt --slurpfile f humanizer-model/prompt_format.json \
 
 ## 7. Ollama
 
-不做设置的话，Ollama 会套聊天模板。要建一个把提示词原样透传的模型，再用原始（raw）模式调接口。Ollama 的引擎要支持 Gemma 4 才能加载。Ollama 我们自己没测过。
+Ollama 不用 GGUF 里存的对话模板，要在 `Modelfile` 里写它自己的模板。Ollama 的引擎要支持 Gemma 4 才能加载。Ollama 我们自己没跑过：下面的模板我们用 Go 的 `text/template`（Ollama 模板用的就是这套语法）渲染过，结果和[第 1 节](#1-这个模型哪里特殊)的提示词逐字相同，但没有在 Ollama 里实际试过。
 
-`Modelfile`（和 GGUF 放在一起）：
+`Modelfile`（和 GGUF 放在一起）。模板把最后一条用户消息当作草稿，按第 1 节原样拼好；系统提示词和之前的对话都不用，每条消息各改各的。
 
 ```
 FROM ./humanizer-12b-Q8_0.gguf
-TEMPLATE """{{ .Prompt }}"""
+TEMPLATE """{{- $draft := "" }}{{- range .Messages }}{{- if eq .Role "user" }}{{- $draft = .Content }}{{- end }}{{- end }}Rewrite the text below so it reads like a person wrote it, not a language model.
+
+Reorganize it as you see fit. Vary sentence length on purpose. Cut hedging,
+throat-clearing, and any sentence that only announces what comes next.
+Prefer the concrete word over the abstract one. It is fine to sound uneven.
+
+Every fact, number, unit, date, name and quotation must survive unchanged.
+
+{{ $draft }}
+
+### Rewritten:{{ "\n\n" }}"""
 PARAMETER temperature 1.0
 PARAMETER top_p 0.95
 PARAMETER top_k 0
@@ -312,9 +333,14 @@ PARAMETER num_predict 2048
 ```bash
 ollama create humanizer -f Modelfile
 ollama show humanizer --modelfile      # 确认没有被自动加上 "PARAMETER stop" 之类的行
+ollama run humanizer                   # 然后一条消息贴一篇草稿
 ```
 
-调 `/api/generate`，带 `"raw": true` 和完整提示词（指令 + 草稿 + 分隔符）：
+结尾的 `{{ "\n\n" }}` 就是 `### Rewritten:` 后面那个空行，这样写是为了模板末尾的空白万一被裁掉也还在。
+
+**聊天模式**（`ollama run`、`/api/chat`）：把草稿当作用户消息发。Ollama 模板没法去掉首尾空白，所以别带开头和结尾的空行（写代码就发 `draft.strip()`），否则提示词就和训练时不完全一样了。
+
+**原始（raw）模式**不经过模板，用哪个 Modelfile 都行。调 `/api/generate`，带 `"raw": true` 和完整提示词（指令 + 草稿 + 分隔符）：
 
 ```bash
 jq -n --rawfile d draft.txt --slurpfile f humanizer-model/prompt_format.json \
@@ -341,15 +367,16 @@ req = urllib.request.Request("http://127.0.0.1:11434/api/generate", json.dumps(b
 print(json.load(urllib.request.urlopen(req, timeout=900))["response"].strip())
 ```
 
-不要用交互式的 `ollama run` 或 `/api/chat`，它们都会走聊天格式。
+Ollama 自带的 Gemma 模板，或者没写上面那段 `TEMPLATE` 的 Modelfile，在聊天模式下都会把这个模型搞坏。
 
 ## 8. LM Studio
 
-LM Studio 我们自己没测过。
+LM Studio 我们自己没测过。LM Studio 用的是 GGUF 里存的对话模板。2026-10-04 及之后上传的文件自带一个模板，拼出的就是[第 1 节](#1-这个模型哪里特殊)的提示词（我们用 llama.cpp 核对过，见[第 3 节](#起服务)）；更早下载的文件没有，请重新下载，或者用第 4 步的续写接口。
 
-1. 加载 `humanizer-12b-Q8_0.gguf`（或 Q6_K），加载时把上下文长度设成 8192。
-2. 在模型的采样设置里设 **Temperature 1.0、Top P 0.95、Top K 0、Min P 0、Repeat Penalty 1.0**，删掉所有停止符。
-3. 在 Developer 页开本地服务，把完整提示词（指令 + 草稿 + 分隔符）发到**文本续写接口 `/v1/completions`**：
+1. 加载 `humanizer-12b-Q8_0.gguf`（或 Q6_K / Q4_K_M），加载时把上下文长度设成 8192。
+2. 在模型的采样设置里设 **Temperature 1.0、Top P 0.95、Top K 0、Min P 0、Repeat Penalty 1.0**，删掉所有停止符。提示词模板保持文件自带的，别改。
+3. **聊天页面：**系统提示词留空（模板反正不用它），一条消息贴一篇草稿。每条消息各改各的，之前的对话不会发给模型。本地服务的 `/v1/chat/completions` 也是这样。
+4. **文本续写**（哪天下载的文件都能用）：在 Developer 页开本地服务，把完整提示词（指令 + 草稿 + 分隔符）发到 **`/v1/completions`**：
 
 ```python
 import json, urllib.request
@@ -365,7 +392,7 @@ req = urllib.request.Request("http://127.0.0.1:1234/v1/completions", json.dumps(
 print(json.load(urllib.request.urlopen(req, timeout=900))["choices"][0]["text"].strip())
 ```
 
-不要用聊天页面，也不要用 `/v1/chat/completions`，两者都会套聊天模板。如果你的 LM Studio 版本不认请求里的 `top_k`、`min_p`、`repeat_penalty`，第 2 步的设置会生效。
+如果聊天回复以“Sure”开头、复述指令或者停不下来，说明文件里没有自带模板（2026-10-04 以前下载的），或者模型设置里的提示词模板被改过：重新下载文件、把模板恢复原样，或者改用 `/v1/completions`。如果你的 LM Studio 版本不认请求里的 `top_k`、`min_p`、`repeat_penalty`，第 2 步的设置会生效。
 
 ## 9. 批量改写一个文件夹
 
@@ -544,7 +571,7 @@ if __name__ == "__main__":
 
 | 现象 | 原因 | 解决 |
 |---|---|---|
-| 输出以“好的”“Sure”“Here is…”开头，或者复述指令 | 用了聊天模板或聊天接口 | 用续写接口（`/completion`、`/v1/completions`、Ollama 的 `raw: true`），发[第 1 节](#1-这个模型哪里特殊)里逐字的提示词 |
+| 输出以“好的”“Sure”“Here is…”开头、复述指令，或者停不下来 | 套上了通用的聊天模板：GGUF 是 2026-10-04 以前下载的（没有自带模板）、软件设置里改过模板、Ollama 没用[第 7 节](#7-ollama)的 Modelfile，或者对 safetensors 权重用了聊天接口 | 重新下载 GGUF，或者用续写接口（`/completion`、`/v1/completions`、Ollama 的 `raw: true`），发[第 1 节](#1-这个模型哪里特殊)里逐字的提示词 |
 | 输出里有 `<start_of_turn>`、`<end_of_turn>` 之类的标记 | 同上：聊天格式 | 同上 |
 | 输出在 `###` 处或很早就停了 | 设了停止符 | 删掉所有停止符，只靠 EOS |
 | 改写和草稿几乎一样 | 采样运气不好，或温度太低 | 确认 temperature 1.0，再采一次 |
