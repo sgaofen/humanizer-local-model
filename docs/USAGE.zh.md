@@ -76,13 +76,12 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 | 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 字节（约 12.7 GB） |
 | 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,616 字节（约 10.0 GB） |
 | 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，最小的 12B 文件 | 7,625,160,896 字节（约 7.6 GB） |
-| 8 GB | `lite/humanizer-lite-Q6_K.gguf`，即更早、更小的 E4B 版 | 约 6.2 GB |
+| 8 GB | 装不下 12B 模型。Q4_K_M 大约需要 12 GB。 | |
 
 仓库里还有：
 
 - `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的 12B，单个 GGUF，给需要参照或想自己量化的人。
 - 根目录的 `model.safetensors`（bf16，约 24 GB），以及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json`、`prompt_format.json`：transformers、vLLM 和 MLX 转换都用它们。
-- `lite/`（更早的 E4B 版）：`humanizer-lite-Q8_0.gguf`（约 8.0 GB）、`humanizer-lite-Q6_K.gguf`（约 6.2 GB）、`humanizer-lite-bf16.gguf`（约 14.9 GB），以及 4 个 safetensors 分片（约 15.9 GB）和 config、tokenizer、`prompt_format.json`。提示词格式一样。
 
 **量化版和 bf16 差多少。**三个 GGUF 文件的词表和输出层都保留 8 bit；Q6_K 和 Q4_K_M 另外用我们自己的改写数据做了 imatrix 校准。KL 在评测集草稿和改写上测了约 33,000 个 token（和校准数据不重叠）。最后一栏是 README 里那个从严的事实判官，用 llama.cpp 分别跑每个文件、判评测集全部 420 篇英文改写。
 
@@ -113,9 +112,8 @@ sha256 校验值（macOS 用 `shasum -a 256 文件名`，Linux 用 `sha256sum �
 | `humanizer-12b-Q6_K.gguf` | `c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184` |
 | `humanizer-12b-Q4_K_M.gguf` | `543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea` |
 | `humanizer-12b-bf16.gguf` | `7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72` |
-| `lite/humanizer-lite-Q6_K.gguf` | `dc5ace5107b81d2499e6c377adf10394f7608786349d6b42d27aeda788daa201` |
 
-所有 GGUF 文件（12B 和 `lite/`）在 2026-10-04 换过一次：元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)），并写入推荐的采样默认值（temperature 1.0、top-p 0.95、top-k 关、min-p 关、重复惩罚 1.0），请求里没设采样参数时 llama.cpp 就用它们。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小和校验值都是旧的，用续写接口、显式传采样参数照样能用。同一天还加了 `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的完整权重，单个 GGUF，给需要参照或想自己量化的人。
+所有 GGUF 文件在 2026-10-04 换过一次：元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)），并写入推荐的采样默认值（temperature 1.0、top-p 0.95、top-k 关、min-p 关、重复惩罚 1.0），请求里没设采样参数时 llama.cpp 就用它们。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小和校验值都是旧的，用续写接口、显式传采样参数照样能用。同一天还加了 `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的完整权重，单个 GGUF，给需要参照或想自己量化的人。
 
 ## 3. llama.cpp（推荐）
 
@@ -233,7 +231,7 @@ def humanize(draft: str) -> str:
 print(humanize(open("draft.txt", encoding="utf-8").read()))
 ```
 
-给 `generate()` 传纯字符串，不要调用 `tok.apply_chat_template`。命令行工具 `mlx_lm.generate` 默认会套聊天模板，要加 `--ignore-chat-template`；上面的 Python 接口不会套。lite（E4B）模型在 Mac 上请用它的 GGUF 配 llama.cpp。
+给 `generate()` 传纯字符串，不要调用 `tok.apply_chat_template`。命令行工具 `mlx_lm.generate` 默认会套聊天模板，要加 `--ignore-chat-template`；上面的 Python 接口不会套。
 
 ## 5. transformers（CUDA）
 
@@ -579,7 +577,7 @@ if __name__ == "__main__":
 | 改写和草稿几乎一样 | 采样运气不好，或温度太低 | 确认 temperature 1.0，再采一次 |
 | 胡言乱语、用词古怪或反复重复 | 采样参数不对（llama.cpp 默认的 top-k 40 / min-p 0.05、`generation_config.json` 里的 top-k 64，或者开了重复惩罚） | 显式设 top-k 0、min-p 0、重复惩罚 1.0 |
 | 改写在句子中间断了 | 输出上限或上下文太小 | 调大 `n_predict` / `max_tokens`；llama-server 加 `-c 8192 -np 1`；长稿分段 |
-| 加载时内存不够 | 文件对你的内存或显存太大 | 16 GB 用 Q6_K 或 Q4_K_M，8 GB 用 lite；调低 `-ngl` |
+| 加载时内存不够 | 文件对你的内存或显存太大 | 16 GB 用 Q6_K，更少用 Q4_K_M（约需 12 GB）；调低 `-ngl` |
 | 很慢 | 在用 CPU 跑 | 看 llama.cpp 日志里有没有 `offloaded N/N layers`；装 Metal、CUDA 或 Vulkan 版 |
 | 下载时 404 | 文件名写错 | 用[第 2 节](#2-选哪个文件)里的文件名 |
 | 指纹自检不过 | 提示词拼法和训练时不一样 | 直接复制[第 1 节](#提示词)里的 `build_prompt` |

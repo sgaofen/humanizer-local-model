@@ -30,7 +30,7 @@ powershell -c "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB"  
 |---|---|
 | 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes) |
 | 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,616 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,896 bytes) if memory or disk is tight |
-| 8 GB | `lite/humanizer-lite-Q6_K.gguf` (about 6.2 GB): the earlier, smaller E4B release. Same prompt format. |
+| Less than 12 GB | Not enough for the 12B model; tell the user. Q4_K_M needs about 12 GB. |
 
 You also need free disk space for the file you pick. In the commands below, replace the Q8_0 file name if you picked another file.
 
@@ -65,7 +65,6 @@ shasum -a 256 ./humanizer-model/*.gguf                       # macOS (Linux: sha
 # Q6_K:   c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184
 # Q4_K_M: 543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea
 # bf16 (humanizer-12b-bf16.gguf, 23832049568 bytes, optional): 7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72
-# lite/humanizer-lite-Q6_K.gguf: dc5ace5107b81d2499e6c377adf10394f7608786349d6b42d27aeda788daa201
 ```
 
 ## 5. Start the server
@@ -216,7 +215,7 @@ All of them need the same prompt (step 6) and the same sampling (step 7). Comple
 | Output is cut off at `###` | A stop string was set | Remove all stop strings; rely on EOS |
 | Output is almost the same as the draft | Sampling bad luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling or repeated phrases | Wrong sampler settings | Set `top_k: 0, min_p: 0, repeat_penalty: 1.0` explicitly |
-| Out of memory while loading | Not enough RAM or VRAM for Q8_0 | Use Q6_K (16 GB), Q4_K_M, or the lite model (8 GB); lower `-ngl` |
+| Out of memory while loading | Not enough RAM or VRAM for Q8_0 | Use Q6_K (16 GB) or Q4_K_M (about 12 GB); lower `-ngl` |
 | Very slow | Running on the CPU | Check `offloaded N/N layers` in the log; install the Metal, CUDA or Vulkan build |
 | 404 when downloading a file | Wrong file name | Use the file names in step 2 |
 

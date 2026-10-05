@@ -100,9 +100,8 @@ All numbers come from our own evaluation set: **312 drafts** (210 English, 102 C
 
 | Model | Flagged as AI | Judged human |
 |---|---|---|
-| **humanizer 12B, this release (RLRt2, bf16)** | **11 / 210 (5%)** | **95%** |
-| humanizer 12B, previous release (RLRt) | 26 / 210 (12%) | 88% |
-| humanizer E4B (r7, now in `lite/`) | 26 / 210 (12%) | 88% |
+| **humanizer 12B v2, this release (bf16)** | **11 / 210 (5%)** | **95%** |
+| humanizer 12B v1, previous release | 26 / 210 (12%) | 88% |
 
 This release is flagged less than half as often as the previous one. On the same drafts, 20 were flagged only for the previous release and 5 only for this one (paired test, p = 0.004). The `humanizer-12b-Q8_0.gguf` file you download measured 15 / 210 (7%) on the same drafts, within noise of bf16 (paired test, p = 0.48).
 
@@ -132,14 +131,14 @@ Detectors change over time; this is what one detector said on one date, not a pr
 
 **376 of 420 English rewrites came back with no factual problem** from a strict LLM judge (GLM-5.3, one vote per rewrite; 210 drafts × 2 samples), measured on the `humanizer-12b-Q8_0.gguf` file you download. The previous release: 369 of 420.
 
-| | **This release (RLRt2, Q8_0 file)** | Previous 12B release (RLRt) | E4B (r7, `lite/`) |
-|---|---|---|---|
-| No factual problem found (no changed number, event or meaning; higher is better) | **376 / 420** | 369 / 420 | 341 / 409 |
-| Dropped a format element (e.g. subject line, list, sign-off; lower is better) | **28 / 420** | 35 / 420 | 53 / 409 |
-| Median reuse (overlap with the draft; lower is better) | **0.165** | 0.19 | 0.31 |
-| Outputs that reuse more than half the draft (reuse > 0.5; lower is better) | **0.2%** | 1.0% | 5.5% |
+| | **v2, this release (Q8_0 file)** | v1, previous 12B release |
+|---|---|---|
+| No factual problem found (no changed number, event or meaning; higher is better) | **376 / 420** | 369 / 420 |
+| Dropped a format element (e.g. subject line, list, sign-off; lower is better) | **28 / 420** | 35 / 420 |
+| Median reuse (overlap with the draft; lower is better) | **0.165** | 0.19 |
+| Outputs that reuse more than half the draft (reuse > 0.5; lower is better) | **0.2%** | 1.0% |
 
-*Reuse* is the larger of verbatim 5-gram copy and syntactic-skeleton reuse; lower means a deeper rewrite. Some E4B rows have 409 judged outputs instead of 420; that is how they were recorded.
+*Reuse* is the larger of verbatim 5-gram copy and syntactic-skeleton reuse; lower means a deeper rewrite.
 
 **When the judge did find a problem, the fix is usually small.** A second pass of the same judge re-read every flagged rewrite against its draft and listed each problem with how much it takes to fix. It lists every nitpick it can find, down to small wording nuances. More than 9 in 10 of the fixes it listed (125 of 135) are a single word or short phrase, like the draft's "The remaining 37 complaints" coming out as "The other 37% of complaints". 8 take one sentence; 2 need a passage rewritten.
 
@@ -155,10 +154,10 @@ Detectors change over time; this is what one detector said on one date, not a pr
 
 1. **Supervised fine-tuning, 28,598 pairs** of *AI draft → real human original*. The human side is always real human writing: paper abstracts, government reports, student essays, company and mailing-list email, Reddit, Hacker News, Zhihu and more. The AI side is a draft that a frontier model wrote back from the human text.
 2. **DPO, 3,918 preference pairs**, chosen only on fact fidelity and on how much the output copies the draft (LLM judge GLM-5.3).
-3. **Reinforcement learning (GRPO) in three rounds, 500 steps in total.** Round 1, 200 steps, with a strict single-vote fact judge. Rounds 2 and 3 (**RLRt**, then **RLRt2**), 150 steps each: 16 drafts × 8 samples per step at temperature 1.0. The reward is an LLM judge that reads the whole rewrite against the draft and penalises severe errors, invented content, changed meaning and dropped formatting, plus a copy penalty on verbatim 5-gram and syntactic-skeleton reuse (free below .22, then linear). Round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL produced 41,600 rewrites, each scored by an LLM judge against its draft.
-4. **The release is the final RLRt2 checkpoint.**
+3. **Reinforcement learning (GRPO) in three rounds, 500 steps in total.** Round 1, 200 steps, with a strict single-vote fact judge. Rounds 2 and 3, 150 steps each (v1 was released after round 2, v2 after round 3): 16 drafts × 8 samples per step at temperature 1.0. The reward is an LLM judge that reads the whole rewrite against the draft and penalises severe errors, invented content, changed meaning and dropped formatting, plus a copy penalty on verbatim 5-gram and syntactic-skeleton reuse (free below .22, then linear). Round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL produced 41,600 rewrites, each scored by an LLM judge against its draft.
+4. **This release (v2) is the final round-3 checkpoint.**
 
-Training code for the 12B will be added under `training/`; the scripts there now are from the earlier E4B release.
+Training code for the 12B will be added under `training/`; the scripts there now are from an earlier, smaller model.
 
 ## Usage
 
@@ -173,7 +172,6 @@ Training code for the 12B will be added under `training/`; the scripts there now
 | `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB | The smallest 12B file, when memory or disk is tight. |
 | `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
 | `prompt_format.json` | tiny | The instruction and separator, verbatim. |
-| `lite/` | `humanizer-lite-Q8_0.gguf` about 8.0 GB, `humanizer-lite-Q6_K.gguf` about 6.2 GB, `humanizer-lite-bf16.gguf` about 14.9 GB, safetensors (4 shards) about 15.9 GB | The earlier E4B release, for 8 GB machines. Same prompt format. |
 
 In all three GGUF files the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. How close each is to bf16: KL over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data), and the same fact judge as in [Results](#fact-fidelity) on all 420 English rewrites:
 
@@ -335,6 +333,6 @@ Code and weights: [Apache License 2.0](LICENSE).
 
 humanizer is fine-tuned from [google/gemma-4-12B](https://huggingface.co/google/gemma-4-12B), which Google releases under Apache 2.0. This project is not affiliated with or endorsed by Google. The training data is not redistributed. <!-- TBD: confirm the reason/wording for not releasing training data -->
 
-This repository was previously `sgaofen/humanizer`, and the model repository was previously `jialinyyzz/humanizer-gemma-4-e4b`; that E4B release now lives in the `lite/` folder of `jialinyyzz/humanizer`. The first 12B release (RLRt, 2026-10-01) is in the Hugging Face commit history; the current files are RLRt2 (2026-10-02).
+This repository was previously `sgaofen/humanizer`, and the model repository was previously `jialinyyzz/humanizer-gemma-4-e4b` (an earlier, smaller model that is no longer offered; its files are in the Hugging Face commit history). The first 12B release (v1, 2026-10-01) is also in the commit history; the current model is v2 (2026-10-02).
 
 Links: [Hugging Face](https://huggingface.co/jialinyyzz/humanizer) · [App releases](https://github.com/sgaofen/humanize-model/releases/latest) · [Install guide](docs/INSTALL.md) · [AGENTS.md](AGENTS.md) · [llms.txt](llms.txt)

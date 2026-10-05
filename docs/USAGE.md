@@ -76,13 +76,12 @@ All files are in [`jialinyyzz/humanizer`](https://huggingface.co/jialinyyzz/huma
 | 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 bytes (about 12.7 GB) |
 | 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,616 bytes (about 10.0 GB) |
 | 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, the smallest 12B file | 7,625,160,896 bytes (about 7.6 GB) |
-| 8 GB | `lite/humanizer-lite-Q6_K.gguf`, the earlier, smaller E4B release | about 6.2 GB |
+| 8 GB | Not enough for the 12B model. Q4_K_M needs about 12 GB. | |
 
 Also in the repo:
 
 - `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB): the unquantised 12B as one GGUF, for reference or for quantising yourself.
 - `model.safetensors` (bf16, about 24 GB) with `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` and `prompt_format.json` at the root: what transformers, vLLM and the MLX converter use.
-- `lite/` (earlier E4B release): `humanizer-lite-Q8_0.gguf` (about 8.0 GB), `humanizer-lite-Q6_K.gguf` (about 6.2 GB), `humanizer-lite-bf16.gguf` (about 14.9 GB), and four safetensors shards (about 15.9 GB) with config, tokenizer and `prompt_format.json`. Same prompt format.
 
 **How much the quantised files differ from bf16.** In all three GGUF files the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. KL was measured over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data). The last column is the strict fact judge from the README on all 420 English rewrites of the evaluation set, run on each file with llama.cpp.
 
@@ -113,9 +112,8 @@ sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -has
 | `humanizer-12b-Q6_K.gguf` | `c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184` |
 | `humanizer-12b-Q4_K_M.gguf` | `543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea` |
 | `humanizer-12b-bf16.gguf` | `7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72` |
-| `lite/humanizer-lite-Q6_K.gguf` | `dc5ace5107b81d2499e6c377adf10394f7608786349d6b42d27aeda788daa201` |
 
-All GGUF files (12B and `lite/`) were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself.
+All GGUF files were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself.
 
 ## 3. llama.cpp (recommended)
 
@@ -233,7 +231,7 @@ def humanize(draft: str) -> str:
 print(humanize(open("draft.txt", encoding="utf-8").read()))
 ```
 
-Pass a plain string to `generate()` and never call `tok.apply_chat_template`. The `mlx_lm.generate` command-line tool applies the chat template unless you add `--ignore-chat-template`; the Python API above does not. For the lite (E4B) model on a Mac, use its GGUF with llama.cpp instead.
+Pass a plain string to `generate()` and never call `tok.apply_chat_template`. The `mlx_lm.generate` command-line tool applies the chat template unless you add `--ignore-chat-template`; the Python API above does not.
 
 ## 5. transformers (CUDA)
 
@@ -579,7 +577,7 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 | Output is almost the same as the draft | Sampling luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling, odd word choices, or repeated phrases | Wrong samplers (llama.cpp's default top-k 40 / min-p 0.05, the top-k 64 from `generation_config.json`, or a repetition penalty) | Set top-k 0, min-p 0, repetition penalty 1.0 explicitly |
 | Rewrite cut off mid-sentence | Output limit or context too small | Raise `n_predict` / `max_tokens`; give llama-server `-c 8192 -np 1`; split long drafts |
-| Out of memory while loading | File too large for your RAM or VRAM | Use Q6_K (16 GB), Q4_K_M, or the lite model (8 GB); lower `-ngl` |
+| Out of memory while loading | File too large for your RAM or VRAM | Use Q6_K (16 GB) or Q4_K_M (about 12 GB); lower `-ngl` |
 | Very slow | Running on the CPU | Look for `offloaded N/N layers` in the llama.cpp log; install the Metal, CUDA or Vulkan build |
 | 404 when downloading | Wrong file name | Use the names in [section 2](#2-pick-a-file) |
 | Self-test fingerprint fails | The prompt builder differs from training | Copy `build_prompt` from [section 1](#the-prompt) |

@@ -6,7 +6,7 @@ Facts this file must keep exact (see AGENTS.md in the release repo):
   from prompt_format.json beside the weights. Startup asserts the fingerprint cc51d66b4c593fbe.
 * Sampling: temperature 1.0, top_p 0.95, top_k 0 (explicit: generation_config.json says 64),
   repetition_penalty 1.0, stop on EOS only. max_new_tokens = 2.5 x draft tokens, clamped to 256-2048.
-* The weights at the repo root are the 12B (bf16 model.safetensors). lite/ is the old E4B: never used.
+* The weights at the repo root are the 12B (bf16 model.safetensors).
 
 ZeroGPU: the model is moved to cuda at import time (ZeroGPU's recommended pattern; the real GPU only
 exists inside @spaces.GPU calls). Each call asks for a GPU slot sized to the draft, and generation

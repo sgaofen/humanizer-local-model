@@ -14,11 +14,10 @@ import { lang, markSvg, esc, done } from './common.js';
 import { barRows, axis } from './chart.js';
 const zh = lang === 'zh';
 
-// 全部数字来自 humantune/.cache/tmp/rlrt2pub/FACTS.md「AI detection」一节(2026-10-02 实测,RLRt2 bf16;Q8_0 文件 15/210 只在脚注里),不要在这里改数。
+// 全部数字来自 内部发布核对笔记「AI detection」一节(2026-10-02 实测,v2 bf16;Q8_0 文件 15/210 只在脚注里),不要在这里改数。
 const A = [  // 210 篇英文草稿,每篇第 1 发
-  { name: zh ? 'humanizer 12B，本版（RLRt2，bf16）' : 'humanizer 12B, this release (RLRt2, bf16)', me: true, v: 199 / 210, big: '95%', note: zh ? '11 / 210 被判 AI' : '11 / 210 flagged as AI' },
-  { name: zh ? 'humanizer 12B，上一版（RLRt）' : 'humanizer 12B, previous release (RLRt)', v: 184 / 210, big: '88%', note: zh ? '26 / 210 被判 AI' : '26 / 210 flagged as AI' },
-  { name: zh ? 'humanizer E4B（r7，现在在 lite/）' : 'humanizer E4B (r7, now in lite/)', v: 184 / 210, big: '88%', note: zh ? '26 / 210 被判 AI' : '26 / 210 flagged as AI' },
+  { name: zh ? 'humanizer 12B v2（本版，bf16）' : 'humanizer 12B v2 (this release, bf16)', me: true, v: 199 / 210, big: '95%', note: zh ? '11 / 210 被判 AI' : '11 / 210 flagged as AI' },
+  { name: zh ? 'humanizer 12B v1（上一版）' : 'humanizer 12B v1 (previous release)', v: 184 / 210, big: '88%', note: zh ? '26 / 210 被判 AI' : '26 / 210 flagged as AI' },
 ];
 const B = [  // 同一批 60 篇
   { name: zh ? 'humanizer 12B，本版（bf16）' : 'humanizer 12B, this release (bf16)', me: true, v: 56 / 60, big: '56 / 60', note: zh ? '4 / 60 被判 AI' : '4 / 60 flagged as AI' },

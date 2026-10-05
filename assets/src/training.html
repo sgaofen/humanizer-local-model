@@ -48,7 +48,7 @@
 <script type="module">
 import { lang, markSvg, esc, done } from './common.js';
 const zh = lang === 'zh';
-// 数字全部来自 humantune/.cache/tmp/rlrt2pub/FACTS.md「Training」一节(RLRt2 发布,2026-10-02)。
+// 数字全部来自 内部发布核对笔记「Training」一节(v2 发布,2026-10-02)。
 const T = zh ? {
   eye: '怎么训的', h: '三段训练，检测器从不进训练环',
   sub: '模型只从两样东西里学：真人怎么写，以及事实有没有保住。',
@@ -58,8 +58,8 @@ const T = zh ? {
   s2n: '第 2 段', s2: '偏好优化 DPO', s2w: '学“别改错、别照抄”', s2b: '3,918 对', s2bs: '偏好对',
   s2p: '只按<b>事实忠实度</b>和<b>照抄程度</b>挑选好坏样本（LLM 判官 GLM-5.3）。风格和检测分数都不参与挑选。',
   s3n: '第 3 段', s3: '强化学习 GRPO', s3w: '三轮：200 + 150 + 150 步', s3a: '第 1 轮 · 200 步', s3ap: '单票从严的事实判官。',
-  s3b: '第 2、3 轮 · 各 150 步', s3bp: '第 2 轮 = RLRt，第 3 轮 = RLRt2。每步 16 篇草稿 × 8 发，采样温度 1.0。奖励 = LLM 判官通读核对事实（严重错 / 编造 / 改义 / 丢格式扣分）+ 照抄惩罚（5-gram 原词与句法骨架复用，.22 以下不罚，之后线性加重）。第 3 轮的草稿来自按体裁配平的 8,268 篇题库。RL 共生成 41,600 篇改写，每篇都由 LLM 判官对照草稿打分。',
-  rel: '发布版本 = RLRt2 终版',
+  s3b: '第 2、3 轮 · 各 150 步', s3bp: '第 2 轮结束时发布了 v1，第 3 轮结束时发布了 v2。每步 16 篇草稿 × 8 发，采样温度 1.0。奖励 = LLM 判官通读核对事实（严重错 / 编造 / 改义 / 丢格式扣分）+ 照抄惩罚（5-gram 原词与句法骨架复用，.22 以下不罚，之后线性加重）。第 3 轮的草稿来自按体裁配平的 8,268 篇题库。RL 共生成 41,600 篇改写，每篇都由 LLM 判官对照草稿打分。',
+  rel: '发布版本 = 第 3 轮终版（v2）',
   sigk: '信号', sig: ['真人文本', '事实判官 GLM-5.3', '照抄惩罚'],
   nh: 'AI 检测器：从不进入训练', np: '不当奖励、不当过滤条件、不用来挑检查点。',
   eh: '训练结束后才评测', ep: '312 篇自建草稿（未参与训练）：事实判官 + Originality.ai。检测器只做外部核对。',
@@ -72,8 +72,8 @@ const T = zh ? {
   s2n: 'Stage 2', s2: 'DPO', s2w: 'learn not to break facts or copy', s2b: '3,918 pairs', s2bs: 'preference pairs',
   s2p: 'Chosen and rejected samples are picked <b>only on fact fidelity and copying</b> (LLM judge GLM-5.3). Style and detector scores play no part.',
   s3n: 'Stage 3', s3: 'RL (GRPO)', s3w: 'three rounds: 200 + 150 + 150 steps', s3a: 'round 1 · 200 steps', s3ap: 'strict single-vote fact judge.',
-  s3b: 'rounds 2–3 · 150 steps each', s3bp: 'Round 2 = RLRt, round 3 = RLRt2. 16 drafts × 8 samples per step, temperature 1.0. Reward = an LLM judge reads the whole rewrite against the draft (severe errors, invented content, changed meaning, dropped format all cost) + a copy penalty (verbatim 5-gram and syntactic-skeleton reuse; free below .22, then linear). Round 3 drew from a genre-balanced pool of 8,268 drafts. 41,600 rewrites in all, each scored by an LLM judge against its draft.',
-  rel: 'Release = final RLRt2 checkpoint',
+  s3b: 'rounds 2–3 · 150 steps each', s3bp: 'v1 was released after round 2, v2 after round 3. 16 drafts × 8 samples per step, temperature 1.0. Reward = an LLM judge reads the whole rewrite against the draft (severe errors, invented content, changed meaning, dropped format all cost) + a copy penalty (verbatim 5-gram and syntactic-skeleton reuse; free below .22, then linear). Round 3 drew from a genre-balanced pool of 8,268 drafts. 41,600 rewrites in all, each scored by an LLM judge against its draft.',
+  rel: 'Release = final round-3 checkpoint (v2)',
   sigk: 'signals', sig: ['real human text', 'fact judge GLM-5.3', 'copy penalty'],
   nh: 'AI detectors: never in training', np: 'Not a reward, not a filter, not used to pick a checkpoint.',
   eh: 'Evaluation, after training', ep: '312 held-out drafts (never trained on): fact judge + Originality.ai. The detector is an external check only.',

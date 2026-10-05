@@ -17,9 +17,9 @@ Either way the model runs on your own computer. The only network access is the o
 |---|---|---|---|
 | 32 GB or more | **Q8_0** (best quality) | `humanizer-12b-Q8_0.gguf` | about 12.7 GB |
 | 16 GB | **Q6_K** | `humanizer-12b-Q6_K.gguf` | about 10.0 GB |
-| 8 GB | **Lite**: the earlier, smaller E4B release | `lite/humanizer-lite-Q6_K.gguf` | about 6.2 GB |
+| Less than 16 GB | **Q4_K_M**, the smallest 12B file | `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB |
 
-A smaller `humanizer-12b-Q4_K_M.gguf` (about 7.6 GB) is also on Hugging Face, for llama.cpp, Ollama or LM Studio; the app doesn't offer it. How close each file is to the full-precision model, including the fact judge on each file, is in [Usage without the app](USAGE.md#2-pick-a-file).
+Q4_K_M needs about 12 GB of memory; with less, the app warns that it may not load. How close each file is to the full-precision model, including the fact judge on each file, is in [Usage without the app](USAGE.md#2-pick-a-file).
 
 The app allows 1 GB of slack, so a 32 GB PC that reports 31.x GB still gets Q8_0. You can always pick a different size on the setup page. All sizes use the same prompt and settings.
 
@@ -139,13 +139,13 @@ The prompt must be built exactly like this; see [Prompt format](../README.md#pro
 
 ## FAQ
 
-**Which size should I pick if I'm not sure?** Let the app decide; it reads your memory. On the command line: 32 GB or more → Q8_0; 16 GB → Q6_K; 8 GB → Lite.
+**Which size should I pick if I'm not sure?** Let the app decide; it reads your memory. On the command line: 32 GB or more → Q8_0; 16 GB → Q6_K; less → Q4_K_M (about 12 GB is the practical minimum).
 
 **The download stopped halfway.** Open the app again; it continues where it stopped. With `hf download`, run the same command again.
 
 **It's very slow.** It is probably running on the CPU. On Windows, make sure your GPU driver is up to date. On the command line, look for `offloaded N/N layers` in the server log. For reference, on an M5 Max the app (llama.cpp Q8_0, Metal) runs at about 36–38 tokens/s: about 3.6 seconds for a hundred-word email, about 8.5 seconds for a Chinese email of about 300 characters.
 
-**It ran out of memory.** Pick a smaller size (Q8_0 → Q6_K → Lite). On the command line, also try a lower `-ngl` (fewer layers on the GPU) or a smaller `-c`.
+**It ran out of memory.** Pick a smaller size (Q8_0 → Q6_K → Q4_K_M). On the command line, also try a lower `-ngl` (fewer layers on the GPU) or a smaller `-c`.
 
 **The rewrite is almost the same as my draft.** Press **Regenerate** (each run is a fresh sample). The app does not resample automatically.
 
@@ -159,4 +159,4 @@ The prompt must be built exactly like this; see [Prompt format](../README.md#pro
 
 **How do I uninstall?** macOS: delete `Humanizer.app` and `~/Library/Application Support/Humanizer`. Windows: uninstall from Settings → Apps (or delete the portable folder), then delete `%LOCALAPPDATA%\Humanizer`.
 
-**How do I get the updated model?** The model files on Hugging Face were updated on 2026-10-02 (RLRt2, see the [README](../README.md#results)). The app doesn't replace a model it has already downloaded. Quit the app, delete the `.gguf` file in the `models` folder of its data folder (macOS `~/Library/Application Support/Humanizer/models`, Windows `%LOCALAPPDATA%\Humanizer\models`), and open the app again: it shows the size picker and downloads the current file. With `hf download`, run the same command again; it fetches the new version.
+**How do I get the updated model?** The model files on Hugging Face were updated on 2026-10-02 (v2, see the [README](../README.md#results)). The app doesn't replace a model it has already downloaded. Quit the app, delete the `.gguf` file in the `models` folder of its data folder (macOS `~/Library/Application Support/Humanizer/models`, Windows `%LOCALAPPDATA%\Humanizer\models`), and open the app again: it shows the size picker and downloads the current file. With `hf download`, run the same command again; it fetches the new version.

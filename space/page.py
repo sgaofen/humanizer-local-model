@@ -14,9 +14,9 @@ import diffmark
 
 GH = "https://github.com/sgaofen/humanize-model"
 REL = GH + "/releases/latest"
-APP_DL = GH + "/releases/download/app-v0.1.0/"   # direct files; bump with each app release
-MAC_DMG = APP_DL + "Humanizer-0.1.0-macos-arm64.dmg"
-WIN_EXE = APP_DL + "Humanizer-0.1.0-windows-x64-setup.exe"
+APP_DL = GH + "/releases/download/app-v0.2.0/"   # direct files; bump with each app release
+MAC_DMG = APP_DL + "Humanizer-0.2.0-macos-arm64.dmg"
+WIN_EXE = APP_DL + "Humanizer-0.2.0-windows-x64-setup.exe"
 BLOB = GH + "/blob/main/"
 HF_MODEL = "https://huggingface.co/jialinyyzz/humanizer"
 INSTALL_EN = BLOB + "docs/INSTALL.md#first-launch-warnings"
@@ -222,7 +222,7 @@ def local_section() -> str:
         <tr><th>{L("Memory", "内存")}</th><th>{L("File", "文件")}</th><th>{L("Download", "下载")}</th></tr>
         <tr><td>{L("32 GB or more", "32 GB 及以上")}</td><td>Q8_0</td><td>12.7 GB</td></tr>
         <tr><td>16 GB</td><td>Q6_K</td><td>10.0 GB</td></tr>
-        <tr><td>8 GB</td><td>{L("Lite (previous E4B)", "Lite（上一版 E4B）")}</td><td>6.2 GB</td></tr>
+        <tr><td>{L("Less than 16 GB", "16 GB 以下")}</td><td>Q4_K_M</td><td>7.6 GB</td></tr>
       </table>
       <div class="notice">{icon("warn")}<div>{P(
           f"<b>Not code-signed yet</b>, so the first launch is blocked once. macOS: System Settings → Privacy &amp; Security → <b>Open Anyway</b>. Windows: <b>More info</b> → <b>Run anyway</b>. Step by step: {A(INSTALL_EN, 'INSTALL.md')}.",
@@ -265,17 +265,17 @@ def bar(label: str, n: int, total: int, strong: bool) -> str:
 def results_section() -> str:
     tiles = [
         ("11 / 210", L("English drafts flagged as AI by Originality.ai", "篇英文草稿被 Originality.ai 判为 AI"),
-         L("API v3, AI Allowance 0% (its strictest setting), bf16 weights, measured 2026-10-02, first sample of each draft. 95% judged human. Previous release: 26 / 210. The Q8_0 file you download: 15 / 210, within noise of bf16.",
+         L("API v3, AI Allowance 0% (its strictest setting), bf16 weights, measured 2026-10-02, first sample of each draft. 95% judged human. Previous release (v1): 26 / 210. The Q8_0 file you download: 15 / 210, within noise of bf16.",
            "API v3，AI Allowance 0%（最严档），bf16 权重，2026-10-02 实测，每篇取第 1 发。95% 判为人写。上一版：26 / 210。你下载的 Q8_0 文件：15 / 210，和 bf16 的差别在噪声范围内。")),
         ("376 / 420", L("English rewrites with no factual problem found", "篇英文改写，判官没挑出事实问题"),
-         L("Strict LLM judge (GLM-5.3), one vote per rewrite, measured on the Q8_0 file you download. Previous release: 369 / 420; E4B: 341 / 409. Where it did find a problem, more than 9 in 10 fixes are a single word or phrase, like “The remaining 37 complaints” coming out as “The other 37% of complaints”.",
-           "LLM 判官 GLM-5.3，每篇一票、从严，测的是你下载的 Q8_0 文件。上一版：420 篇里 369 篇；E4B：409 篇里 341 篇。有问题的，9 成以上改一个词或短语就好，比如“The remaining 37 complaints”（剩下的 37 条投诉）被写成了“The other 37% of complaints”（另外 37% 的投诉）。")),
+         L("Strict LLM judge (GLM-5.3), one vote per rewrite, measured on the Q8_0 file you download. Previous release (v1): 369 / 420. Where it did find a problem, more than 9 in 10 fixes are a single word or phrase, like “The remaining 37 complaints” coming out as “The other 37% of complaints”.",
+           "LLM 判官 GLM-5.3，每篇一票、从严，测的是你下载的 Q8_0 文件。上一版（v1）：420 篇里 369 篇。有问题的，9 成以上改一个词或短语就好，比如“The remaining 37 complaints”（剩下的 37 条投诉）被写成了“The other 37% of complaints”（另外 37% 的投诉）。")),
         ("149 / 204", L("Chinese rewrites with no factual problem found", "篇中文改写，判官没挑出事实问题"),
          L("Chinese is still catching up with English (previous release: 135 / 204). Where the judge found a problem, about 9 in 10 fixes are a single word or phrase, like “本月20日前后” (around the 20th of this month) becoming “20号以前” (before the 20th).",
            "中文还在追赶英文（上一版：204 篇里 135 篇）。有问题的，约 9 成改一个词或短语就好，比如“本月20日前后”写成了“20号以前”。")),
         ("0.165", L("median reuse of the draft", "照抄程度中位数（复用率）"),
-         L("The larger of verbatim 5-gram copy and syntactic-skeleton reuse; lower means a deeper rewrite. Previous release: 0.19; E4B: 0.31.",
-           "取逐字 5-gram 照抄和句法骨架复用里较大的那个，越低改得越深。上一版：0.19；E4B：0.31。")),
+         L("The larger of verbatim 5-gram copy and syntactic-skeleton reuse; lower means a deeper rewrite. Previous release (v1): 0.19.",
+           "取逐字 5-gram 照抄和句法骨架复用里较大的那个，越低改得越深。上一版（v1）：0.19。")),
     ]
     tiles_html = "".join(f'<div class="tile"><div class="tile-num">{n}</div><div class="tile-label">{a}</div>'
                          f'<div class="tile-note">{b}</div></div>' for n, a, b in tiles)
@@ -307,8 +307,8 @@ def results_section() -> str:
            "<b>监督微调（SFT），28,598 对</b>“AI 草稿 → 真人原文”。人写一侧全是真人文本：论文摘要、政府报告、学生作文、公司和邮件列表邮件、Reddit、Hacker News、知乎等；AI 一侧是前沿模型照着真人原文反写出来的草稿。")}</li>
     <li>{P("<b>DPO, 3,918 preference pairs</b>, chosen only on fact fidelity and on how much the output copies the draft (LLM judge GLM-5.3).",
            "<b>DPO，3,918 对偏好对</b>，只按事实忠实度和照抄程度挑选（LLM 判官 GLM-5.3）。")}</li>
-    <li>{P("<b>Reinforcement learning (GRPO) in three rounds, 500 steps in total</b> (200 + 150 + 150). Round 1 used a strict single-vote fact judge. In rounds 2 and 3 (RLRt, then RLRt2) the reward is an LLM judge that reads the whole rewrite against the draft (penalising severe errors, invented content, changed meaning and dropped formatting), plus a copy penalty; round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL generated 41,600 rewrites, each scored by an LLM judge against its draft. The release is the final RLRt2 checkpoint.",
-           "<b>强化学习（GRPO）分三轮，共 500 步</b>（200 + 150 + 150）。第一轮用单票从严的事实判官；第二、三轮（RLRt，然后 RLRt2）的奖励 = LLM 判官把改写和草稿对照通读、核对事实（严重错、编造、改了意思、丢格式都扣分），再加照抄惩罚；第三轮的草稿取自按体裁配平的 8,268 篇草稿池。RL 一共生成了 41,600 篇改写，每篇都由 LLM 判官对照草稿打分。发布版本就是 RLRt2 的最后一个检查点。")}</li>
+    <li>{P("<b>Reinforcement learning (GRPO) in three rounds, 500 steps in total</b> (200 + 150 + 150). Round 1 used a strict single-vote fact judge. In rounds 2 and 3 the reward is an LLM judge that reads the whole rewrite against the draft (penalising severe errors, invented content, changed meaning and dropped formatting), plus a copy penalty; round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL generated 41,600 rewrites, each scored by an LLM judge against its draft. v1 was released after round 2; this release, v2, is the final checkpoint of round 3.",
+           "<b>强化学习（GRPO）分三轮，共 500 步</b>（200 + 150 + 150）。第一轮用单票从严的事实判官；第二、三轮的奖励 = LLM 判官把改写和草稿对照通读、核对事实（严重错、编造、改了意思、丢格式都扣分），再加照抄惩罚；第三轮的草稿取自按体裁配平的 8,268 篇草稿池。RL 一共生成了 41,600 篇改写，每篇都由 LLM 判官对照草稿打分。第二轮结束时发布了 v1；本版 v2 是第三轮的最后一个检查点。")}</li>
   </ol>
 </section>"""
 
@@ -341,9 +341,9 @@ def limits_section() -> str:
 def footer() -> str:
     return f"""<footer class="foot">
   {P(f"Code and weights: Apache 2.0. Fine-tuned from {A('https://huggingface.co/google/gemma-4-12B', 'google/gemma-4-12B')} (Apache 2.0); this project is not affiliated with or endorsed by Google. "
-     f"This Space used to run the smaller E4B release, which now lives in <code>lite/</code> of the model repo.",
+     f"",
      f"代码和权重：Apache 2.0。由 {A('https://huggingface.co/google/gemma-4-12B', 'google/gemma-4-12B')} 微调而来（Apache 2.0），本项目与 Google 无隶属或背书关系。"
-     f"这个 Space 以前跑的是较小的 E4B 版，那一版现在在模型仓库的 <code>lite/</code> 目录里。")}
+     f"")}
   <p class="foot-links">{A(HF_MODEL, "Hugging Face")} · {A(GH, "GitHub")} · {A(REL, L("App releases", "App 下载"))} · {A(USAGE_EN, "USAGE.md")} · {A(USAGE_ZH, "USAGE.zh.md")} · {A(AGENTS, "AGENTS.md")}</p>
 </footer>"""
 

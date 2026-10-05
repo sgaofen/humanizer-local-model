@@ -17,9 +17,9 @@
 |---|---|---|---|
 | 32 GB 及以上 | **Q8_0**（效果最好） | `humanizer-12b-Q8_0.gguf` | 约 12.7 GB |
 | 16 GB | **Q6_K** | `humanizer-12b-Q6_K.gguf` | 约 10.0 GB |
-| 8 GB | **Lite**：更早、更小的 E4B 版 | `lite/humanizer-lite-Q6_K.gguf` | 约 6.2 GB |
+| 16 GB 以下 | **Q4_K_M**：最小的 12B 文件 | `humanizer-12b-Q4_K_M.gguf` | 约 7.6 GB |
 
-更小的 `humanizer-12b-Q4_K_M.gguf`（约 7.6 GB）也已经放在 Hugging Face 上，给 llama.cpp、Ollama 或 LM Studio 用；App 里没有这一档。各档和全精度模型差多少（包括事实判官对每个文件的结果），见[不用 App 怎么用](USAGE.zh.md#2-选哪个文件)里的实测。
+Q4_K_M 大约需要 12 GB 内存，不到的话 App 会提示可能装不下。各档和全精度模型差多少（包括事实判官对每个文件的结果），见[不用 App 怎么用](USAGE.zh.md#2-选哪个文件)里的实测。
 
 App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。在选档页面上随时可以换别的档。所有档位的提示词和参数都一样。
 
@@ -139,13 +139,13 @@ print(json.load(urllib.request.urlopen(req))["content"].strip())
 
 ## 常见问题
 
-**不确定选哪档？**交给 App，它会读你的内存。命令行：32 GB 及以上用 Q8_0，16 GB 用 Q6_K，8 GB 用 Lite。
+**不确定选哪档？**交给 App，它会读你的内存。命令行：32 GB 及以上用 Q8_0，16 GB 用 Q6_K，更少用 Q4_K_M（实际最少要 12 GB 左右）。
 
 **下载到一半断了。**重新打开 App，会接着下。用 `hf download` 的话，再执行一遍同样的命令。
 
 **很慢。**多半是在用 CPU 跑。Windows 上先把显卡驱动更新到最新；命令行看服务日志里有没有 `offloaded N/N layers`。作为参考，App 在 M5 Max 上（llama.cpp Q8_0，Metal）约 36–38 token/s：百来词的英文邮件约 3.6 秒，300 字左右的中文邮件约 8.5 秒。
 
-**内存不够。**换小一档（Q8_0 → Q6_K → Lite）。命令行还可以调低 `-ngl`（少放几层到显卡上）或调小 `-c`。
+**内存不够。**换小一档（Q8_0 → Q6_K → Q4_K_M）。命令行还可以调低 `-ngl`（少放几层到显卡上）或调小 `-c`。
 
 **改写跟原稿几乎一样。**点「重新生成」，每次都是重新采样。App 不会自动重采。
 
@@ -159,4 +159,4 @@ print(json.load(urllib.request.urlopen(req))["content"].strip())
 
 **怎么卸载？**macOS：删掉 `Humanizer.app` 和 `~/Library/Application Support/Humanizer`。Windows：在「设置 → 应用」里卸载（便携版直接删文件夹），再删掉 `%LOCALAPPDATA%\Humanizer`。
 
-**怎么换成更新后的模型？**Hugging Face 上的模型文件在 2026-10-02 更新为 RLRt2（见 [README](../README.zh.md#评测结果)）。App 不会替换已经下好的模型：先退出 App，删掉数据目录里 `models` 文件夹中的 `.gguf` 文件（macOS 是 `~/Library/Application Support/Humanizer/models`，Windows 是 `%LOCALAPPDATA%\Humanizer\models`），再打开 App，它会弹出选档页面并下载当前版本。用 `hf download` 的话，再执行一遍同样的命令就会拿到新版。
+**怎么换成更新后的模型？**Hugging Face 上的模型文件在 2026-10-02 更新为 v2（见 [README](../README.zh.md#评测结果)）。App 不会替换已经下好的模型：先退出 App，删掉数据目录里 `models` 文件夹中的 `.gguf` 文件（macOS 是 `~/Library/Application Support/Humanizer/models`，Windows 是 `%LOCALAPPDATA%\Humanizer\models`），再打开 App，它会弹出选档页面并下载当前版本。用 `hf download` 的话，再执行一遍同样的命令就会拿到新版。

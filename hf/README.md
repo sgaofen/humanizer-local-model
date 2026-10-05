@@ -49,7 +49,6 @@ tags:
 | `humanizer-12b-bf16.gguf` | 23,832,049,568 bytes (about 23.8 GB) | Unquantised weights as one GGUF, for reference or for quantising yourself. |
 | `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
 | `prompt_format.json` | tiny | The instruction and separator, verbatim. |
-| `lite/` | `humanizer-lite-Q8_0.gguf` about 8.0 GB · `humanizer-lite-Q6_K.gguf` about 6.2 GB · `humanizer-lite-bf16.gguf` about 14.9 GB · safetensors (4 shards) about 15.9 GB, with config, tokenizer and `prompt_format.json` | The earlier E4B release (formerly `jialinyyzz/humanizer-gemma-4-e4b`), for 8 GB machines. Same prompt format. |
 
 In all three GGUF files the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. How close each is to bf16: KL over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data), and the fact judge from [Results](#results) on all 420 English rewrites:
 
@@ -273,9 +272,8 @@ Evaluation set: 312 drafts (210 English, 102 Chinese), 18 genres, written from s
 
 | Model | Flagged as AI | Judged human |
 |---|---|---|
-| **humanizer 12B, this release (RLRt2, bf16)** | **11 / 210 (5%)** | **95%** |
-| humanizer 12B, previous release (RLRt) | 26 / 210 (12%) | 88% |
-| humanizer E4B (r7, now in `lite/`) | 26 / 210 (12%) | 88% |
+| **humanizer 12B v2, this release (bf16)** | **11 / 210 (5%)** | **95%** |
+| humanizer 12B v1, previous release | 26 / 210 (12%) | 88% |
 
 Flagged less than half as often as the previous release: on the same drafts, 20 were flagged only for the previous release and 5 only for this one (paired test, p = 0.004). The `humanizer-12b-Q8_0.gguf` file measured 15 / 210 (7%), within noise of bf16 (p = 0.48).
 
@@ -285,12 +283,12 @@ Public baseline: the `blader/humanizer` skill (v3.1.0, 53k GitHub stars), applie
 
 **Fact fidelity.** **376 of 420 English rewrites came back with no factual problem** from a strict LLM judge (GLM-5.3, one vote per rewrite), measured on the `humanizer-12b-Q8_0.gguf` file you download. The previous release: 369 of 420.
 
-| | **This release (RLRt2, Q8_0 file)** | Previous 12B (RLRt) | E4B (r7, `lite/`) |
-|---|---|---|---|
-| No factual problem found (higher is better) | **376 / 420** | 369 / 420 | 341 / 409 |
-| Dropped a format element (lower is better) | **28 / 420** | 35 / 420 | 53 / 409 |
-| Median reuse, overlap with the draft (lower is better) | **0.165** | 0.19 | 0.31 |
-| Outputs with reuse > 0.5 (lower is better) | **0.2%** | 1.0% | 5.5% |
+| | **v2, this release (Q8_0 file)** | v1, previous 12B |
+|---|---|---|
+| No factual problem found (higher is better) | **376 / 420** | 369 / 420 |
+| Dropped a format element (lower is better) | **28 / 420** | 35 / 420 |
+| Median reuse, overlap with the draft (lower is better) | **0.165** | 0.19 |
+| Outputs with reuse > 0.5 (lower is better) | **0.2%** | 1.0% |
 
 Where the judge did find a problem, the fix is usually small: a second pass re-read each flagged rewrite against its draft and listed every problem, down to small wording nuances, and more than 9 in 10 of those fixes (125 of 135) are a single word or phrase (for example, the draft's "The remaining 37 complaints" came out as "The other 37% of complaints"). Chinese is still catching up with English: no factual problem in 149 of 204 Chinese rewrites (previous release: 135); where there was one, about 9 in 10 fixes (212 of 236) are a single word or phrase ("本月20日前后", around the 20th of this month, became "20号以前", before the 20th). **Still, read the result before you send it, especially numbers, dates and names.**
 
@@ -302,8 +300,8 @@ Where the judge did find a problem, the fix is usually small: a second pass re-r
 
 1. **SFT, 28,598 pairs** of AI draft → real human original. The human side is always real human writing (paper abstracts, government reports, student essays, company and mailing-list email, Reddit, Hacker News, Zhihu…); the AI side is a draft a frontier model wrote back from the human text.
 2. **DPO, 3,918 preference pairs**, chosen only on fact fidelity and copying (LLM judge GLM-5.3).
-3. **GRPO in three rounds, 500 steps in total**: 200 steps with a strict single-vote fact judge, then 150 steps of **RLRt** and 150 more of **RLRt2** (16 drafts × 8 samples per step, temperature 1.0). Reward: an LLM judge reads the whole rewrite against the draft (severe errors, invented content, changed meaning and dropped formatting cost), plus a copy penalty on 5-gram and syntactic-skeleton reuse (free below .22, then linear). Round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL produced 41,600 rewrites, each scored by an LLM judge against its draft.
-4. Release = the final RLRt2 checkpoint.
+3. **GRPO in three rounds, 500 steps in total**: 200 steps with a strict single-vote fact judge, then two rounds of 150 steps (v1 was released after the first of these, v2 after the second) (16 drafts × 8 samples per step, temperature 1.0). Reward: an LLM judge reads the whole rewrite against the draft (severe errors, invented content, changed meaning and dropped formatting cost), plus a copy penalty on 5-gram and syntactic-skeleton reuse (free below .22, then linear). Round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL produced 41,600 rewrites, each scored by an LLM judge against its draft.
+4. This release (v2) = the final checkpoint of the last round.
 
 <img src="assets/training-en.png" alt="Training pipeline" width="100%">
 
