@@ -6,7 +6,7 @@ Instructions for AI agents (Claude Code, Codex, Cursor, etc.) setting up **human
 
 - **What it does:** rewrites one AI-written draft (English or Chinese) so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote, and to add nothing. Output = the rewritten text only.
 - **Kind of model:** 12B **text-completion** model (fine-tuned from `google/gemma-4-12B`). **Not a chat model.** Call the completion endpoint with the exact prompt from step 6: no system prompt, no chat turns. (The GGUF files uploaded on or after 2026-10-04 also carry a chat template that builds the same prompt from the last user message, so chat front ends such as LM Studio should work; the authors have not tested them. In code, use the completion endpoint: it works with every download.)
-- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,304 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,520 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,800 bytes, about 7.6 GB) when memory or disk is tight. You also need `prompt_format.json` from the same repo.
+- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,616 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,896 bytes, about 7.6 GB) when memory or disk is tight. You also need `prompt_format.json` from the same repo.
 - **Runtime:** `llama-server` from llama.cpp (macOS, Windows, Linux). Alternatives in section 10.
 - **Sampling:** temperature 1.0, top_p 0.95, and nothing else: top_k 0, min_p 0, repeat_penalty 1.0. Stop on EOS only. No stop strings.
 - **License:** Apache 2.0.
@@ -28,8 +28,8 @@ powershell -c "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB"  
 
 | Memory | Use |
 |---|---|
-| 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,630,304 bytes) |
-| 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,520 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,800 bytes) if memory or disk is tight |
+| 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes) |
+| 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,616 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,896 bytes) if memory or disk is tight |
 | 8 GB | `lite/humanizer-lite-Q6_K.gguf` (about 6.2 GB): the earlier, smaller E4B release. Same prompt format. |
 
 You also need free disk space for the file you pick. In the commands below, replace the Q8_0 file name if you picked another file.
@@ -59,12 +59,13 @@ Check the download:
 
 ```bash
 head -c 4 ./humanizer-model/humanizer-12b-Q8_0.gguf; echo     # must print GGUF
-wc -c ./humanizer-model/*.gguf                                # Q8_0: 12669630304 bytes; Q6_K: 10029799520 bytes; Q4_K_M: 7625160800 bytes
+wc -c ./humanizer-model/*.gguf                                # Q8_0: 12669630368 bytes; Q6_K: 10029799616 bytes; Q4_K_M: 7625160896 bytes
 shasum -a 256 ./humanizer-model/*.gguf                       # macOS (Linux: sha256sum)
-# Q8_0:   bb9ef4eba1da2819541b74953b36f0bb62b16df9f2e594511243e75793fd76ca
-# Q6_K:   2d273af917345a953f8957ed3d59122fbebb7df97dfc0bf0db5658cd7d7e228e
-# Q4_K_M: 81ca23c59dbf8a885c855d79253c6daea90b2d69ef26e302fd180a03219a88c9
-# lite/humanizer-lite-Q6_K.gguf: baa27697697d87c85f5347b7673c357ff760ed6f7419ce459744c37026f7603c
+# Q8_0:   50a05cd3c31e68a12b432ab1203d414e8b8066acb5406b82392c35ffad683e84
+# Q6_K:   c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184
+# Q4_K_M: 543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea
+# bf16 (humanizer-12b-bf16.gguf, 23832049568 bytes, optional): 7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72
+# lite/humanizer-lite-Q6_K.gguf: dc5ace5107b81d2499e6c377adf10394f7608786349d6b42d27aeda788daa201
 ```
 
 ## 5. Start the server

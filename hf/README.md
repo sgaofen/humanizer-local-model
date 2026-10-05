@@ -43,9 +43,10 @@ tags:
 
 | File | Size | For |
 |---|---|---|
-| `humanizer-12b-Q8_0.gguf` | 12,669,630,304 bytes (about 12.7 GB) | 32 GB of memory or more. Recommended. |
-| `humanizer-12b-Q6_K.gguf` | 10,029,799,520 bytes (about 10.0 GB) | 16 GB of memory. |
-| `humanizer-12b-Q4_K_M.gguf` | 7,625,160,800 bytes (about 7.6 GB) | The smallest 12B file, when memory or disk is tight. |
+| `humanizer-12b-Q8_0.gguf` | 12,669,630,368 bytes (about 12.7 GB) | 32 GB of memory or more. Recommended. |
+| `humanizer-12b-Q6_K.gguf` | 10,029,799,616 bytes (about 10.0 GB) | 16 GB of memory. |
+| `humanizer-12b-Q4_K_M.gguf` | 7,625,160,896 bytes (about 7.6 GB) | The smallest 12B file, when memory or disk is tight. |
+| `humanizer-12b-bf16.gguf` | 23,832,049,568 bytes (about 23.8 GB) | Unquantised weights as one GGUF, for reference or for quantising yourself. |
 | `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
 | `prompt_format.json` | tiny | The instruction and separator, verbatim. |
 | `lite/` | `humanizer-lite-Q8_0.gguf` about 8.0 GB · `humanizer-lite-Q6_K.gguf` about 6.2 GB · `humanizer-lite-bf16.gguf` about 14.9 GB · safetensors (4 shards) about 15.9 GB, with config, tokenizer and `prompt_format.json` | The earlier E4B release (formerly `jialinyyzz/humanizer-gemma-4-e4b`), for 8 GB machines. Same prompt format. |
@@ -85,6 +86,7 @@ Every fact, number, unit, date, name and quotation must survive unchanged.
 - **Stop on EOS only.** No stop strings, especially not `"###"`.
 - **Sampling: temperature 1.0, top-p 0.95, nothing else** (top-k 0, min-p 0, repetition penalty 1.0). llama.cpp defaults to top-k 40 and min-p 0.05, and the bundled `generation_config.json` sets top-k 64, so switch them off explicitly.
 - Context 8192 tokens for instruction + draft + rewrite. Split long documents at paragraph breaks ([USAGE.md](USAGE.md#10-long-documents)).
+- **Built-in defaults:** since 2026-10-04 every GGUF file also stores these sampling settings in its metadata, so llama.cpp and apps built on it use them when a request sets none.
 - **Chat front ends:** since 2026-10-04 the GGUF files carry a chat template that builds exactly this prompt from the last user message (system prompts and earlier turns are ignored). llama-server's `/v1/chat/completions` (with `--jinja`, the default in recent builds) then works, one draft per message: with the same seed it gave the same rewrite as the completion endpoint. Chat apps that use the file's template, such as LM Studio's Chat tab, should work the same way (not tested by us). Files downloaded earlier have no template, and the safetensors weights have none either.
 
 ## Usage without the app

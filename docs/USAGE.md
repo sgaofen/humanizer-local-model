@@ -73,13 +73,14 @@ All files are in [`jialinyyzz/humanizer`](https://huggingface.co/jialinyyzz/huma
 
 | Your memory | File | Size |
 |---|---|---|
-| 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,630,304 bytes (about 12.7 GB) |
-| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,520 bytes (about 10.0 GB) |
-| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, the smallest 12B file | 7,625,160,800 bytes (about 7.6 GB) |
+| 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 bytes (about 12.7 GB) |
+| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,616 bytes (about 10.0 GB) |
+| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, the smallest 12B file | 7,625,160,896 bytes (about 7.6 GB) |
 | 8 GB | `lite/humanizer-lite-Q6_K.gguf`, the earlier, smaller E4B release | about 6.2 GB |
 
 Also in the repo:
 
+- `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB): the unquantised 12B as one GGUF, for reference or for quantising yourself.
 - `model.safetensors` (bf16, about 24 GB) with `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` and `prompt_format.json` at the root: what transformers, vLLM and the MLX converter use.
 - `lite/` (earlier E4B release): `humanizer-lite-Q8_0.gguf` (about 8.0 GB), `humanizer-lite-Q6_K.gguf` (about 6.2 GB), `humanizer-lite-bf16.gguf` (about 14.9 GB), and four safetensors shards (about 15.9 GB) with config, tokenizer and `prompt_format.json`. Same prompt format.
 
@@ -101,19 +102,20 @@ pip install -U "huggingface_hub[cli]"
 hf download jialinyyzz/humanizer humanizer-12b-Q8_0.gguf prompt_format.json --local-dir ./humanizer-model
 # 16 GB machine: humanizer-12b-Q6_K.gguf instead of humanizer-12b-Q8_0.gguf (or humanizer-12b-Q4_K_M.gguf if disk is tight)
 # Slow from mainland China: put HF_ENDPOINT=https://hf-mirror.com in front of the command
-wc -c ./humanizer-model/*.gguf     # Q8_0: 12669630304 bytes, Q6_K: 10029799520 bytes, Q4_K_M: 7625160800 bytes
+wc -c ./humanizer-model/*.gguf     # Q8_0: 12669630368 bytes, Q6_K: 10029799616 bytes, Q4_K_M: 7625160896 bytes
 ```
 
 sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -hashfile FILE SHA256` on Windows):
 
 | File | sha256 |
 |---|---|
-| `humanizer-12b-Q8_0.gguf` | `bb9ef4eba1da2819541b74953b36f0bb62b16df9f2e594511243e75793fd76ca` |
-| `humanizer-12b-Q6_K.gguf` | `2d273af917345a953f8957ed3d59122fbebb7df97dfc0bf0db5658cd7d7e228e` |
-| `humanizer-12b-Q4_K_M.gguf` | `81ca23c59dbf8a885c855d79253c6daea90b2d69ef26e302fd180a03219a88c9` |
-| `lite/humanizer-lite-Q6_K.gguf` | `baa27697697d87c85f5347b7673c357ff760ed6f7419ce459744c37026f7603c` |
+| `humanizer-12b-Q8_0.gguf` | `50a05cd3c31e68a12b432ab1203d414e8b8066acb5406b82392c35ffad683e84` |
+| `humanizer-12b-Q6_K.gguf` | `c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184` |
+| `humanizer-12b-Q4_K_M.gguf` | `543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea` |
+| `humanizer-12b-bf16.gguf` | `7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72` |
+| `lite/humanizer-lite-Q6_K.gguf` | `dc5ace5107b81d2499e6c377adf10394f7608786349d6b42d27aeda788daa201` |
 
-The three 12B GGUF files were replaced on 2026-10-04 to add a chat template to their metadata (for LM Studio and other chat front ends; see [section 3](#start-a-server)). The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes (about 2.4 KB smaller) and checksums, and still work through the completion endpoint.
+All GGUF files (12B and `lite/`) were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself.
 
 ## 3. llama.cpp (recommended)
 

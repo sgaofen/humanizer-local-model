@@ -211,6 +211,7 @@ In code: `prompt = INSTR + "\n\n" + draft.strip() + "\n\n### Rewritten:\n\n"`. `
 - **Stop on EOS only.** Don't pass `"###"` as a stop string; it truncates the rare output that contains it.
 - **Sampling:** temperature 1.0, top-p 0.95, nothing else (top-k off, min-p off, repetition penalty 1.0). llama-server turns on top-k 40 and min-p 0.05 by default, so switch them off as in the example above.
 - Allow about 2.5× the draft's token count for the output (the app uses 256 to 2048 tokens).
+- **Built-in defaults:** since 2026-10-04 every GGUF file also stores these sampling settings in its metadata, so llama.cpp and apps built on it use them when a request sets none.
 - **Chat front ends:** since 2026-10-04 the GGUF files carry a chat template that builds exactly this prompt from the last user message (system prompts and earlier turns are ignored). llama-server's `/v1/chat/completions` (with `--jinja`, the default in recent builds) then works, one draft per message: with the same seed it gave the same rewrite as the completion endpoint. Chat apps that use the file's template, such as LM Studio's Chat tab, should work the same way (not tested by us). Files downloaded earlier have no template, and the safetensors weights have none either.
 
 ### llama.cpp

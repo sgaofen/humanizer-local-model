@@ -213,6 +213,7 @@ Every fact, number, unit, date, name and quotation must survive unchanged.
 - **只靠 EOS 停。**不要把 `"###"` 设成停止符，极少数输出里本来就有它，会被截断。
 - **采样：**temperature 1.0、top-p 0.95，别的都关掉（top-k 关、min-p 关、重复惩罚 1.0）。llama-server 默认开着 top-k 40 和 min-p 0.05，要像上面的例子那样显式关掉。
 - 输出长度留草稿 token 数的 2.5 倍左右（App 的范围是 256 到 2048 token）。
+- **内置默认值：**2026-10-04 起，每个 GGUF 文件的元数据里也写好了这组采样设置，请求里没设采样参数时，llama.cpp 和基于它的软件就会用它们。
 - **聊天软件：**2026-10-04 起，GGUF 文件里自带一个对话模板，把最后一条用户消息拼成上面这段提示词（系统提示词和之前的对话都不用）。所以 llama-server 的 `/v1/chat/completions`（带 `--jinja`，新版默认就开）能用，一条消息一篇草稿：同一个 seed 下，它和续写接口给出的是同一篇改写。用文件自带模板的聊天软件（比如 LM Studio 的聊天页面）应该也一样（我们没测过）。更早下载的文件没有这个模板，safetensors 权重也没有。
 
 ### llama.cpp

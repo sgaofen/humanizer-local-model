@@ -73,13 +73,14 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 
 | 内存 | 文件 | 大小 |
 |---|---|---|
-| 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,630,304 字节（约 12.7 GB） |
-| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,520 字节（约 10.0 GB） |
-| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，最小的 12B 文件 | 7,625,160,800 字节（约 7.6 GB） |
+| 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 字节（约 12.7 GB） |
+| 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,616 字节（约 10.0 GB） |
+| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，最小的 12B 文件 | 7,625,160,896 字节（约 7.6 GB） |
 | 8 GB | `lite/humanizer-lite-Q6_K.gguf`，即更早、更小的 E4B 版 | 约 6.2 GB |
 
 仓库里还有：
 
+- `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的 12B，单个 GGUF，给需要参照或想自己量化的人。
 - 根目录的 `model.safetensors`（bf16，约 24 GB），以及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json`、`prompt_format.json`：transformers、vLLM 和 MLX 转换都用它们。
 - `lite/`（更早的 E4B 版）：`humanizer-lite-Q8_0.gguf`（约 8.0 GB）、`humanizer-lite-Q6_K.gguf`（约 6.2 GB）、`humanizer-lite-bf16.gguf`（约 14.9 GB），以及 4 个 safetensors 分片（约 15.9 GB）和 config、tokenizer、`prompt_format.json`。提示词格式一样。
 
@@ -101,19 +102,20 @@ pip install -U "huggingface_hub[cli]"
 hf download jialinyyzz/humanizer humanizer-12b-Q8_0.gguf prompt_format.json --local-dir ./humanizer-model
 # 16 GB 的机器:把 humanizer-12b-Q8_0.gguf 换成 humanizer-12b-Q6_K.gguf(硬盘紧张就用 humanizer-12b-Q4_K_M.gguf)
 # 国内下载慢:在命令前面加 HF_ENDPOINT=https://hf-mirror.com
-wc -c ./humanizer-model/*.gguf     # Q8_0 应为 12669630304 字节,Q6_K 应为 10029799520 字节,Q4_K_M 应为 7625160800 字节
+wc -c ./humanizer-model/*.gguf     # Q8_0 应为 12669630368 字节,Q6_K 应为 10029799616 字节,Q4_K_M 应为 7625160896 字节
 ```
 
 sha256 校验值（macOS 用 `shasum -a 256 文件名`，Linux 用 `sha256sum 文件名`，Windows 用 `certutil -hashfile 文件名 SHA256`）：
 
 | 文件 | sha256 |
 |---|---|
-| `humanizer-12b-Q8_0.gguf` | `bb9ef4eba1da2819541b74953b36f0bb62b16df9f2e594511243e75793fd76ca` |
-| `humanizer-12b-Q6_K.gguf` | `2d273af917345a953f8957ed3d59122fbebb7df97dfc0bf0db5658cd7d7e228e` |
-| `humanizer-12b-Q4_K_M.gguf` | `81ca23c59dbf8a885c855d79253c6daea90b2d69ef26e302fd180a03219a88c9` |
-| `lite/humanizer-lite-Q6_K.gguf` | `baa27697697d87c85f5347b7673c357ff760ed6f7419ce459744c37026f7603c` |
+| `humanizer-12b-Q8_0.gguf` | `50a05cd3c31e68a12b432ab1203d414e8b8066acb5406b82392c35ffad683e84` |
+| `humanizer-12b-Q6_K.gguf` | `c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184` |
+| `humanizer-12b-Q4_K_M.gguf` | `543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea` |
+| `humanizer-12b-bf16.gguf` | `7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72` |
+| `lite/humanizer-lite-Q6_K.gguf` | `dc5ace5107b81d2499e6c377adf10394f7608786349d6b42d27aeda788daa201` |
 
-这三个 12B GGUF 文件在 2026-10-04 换过一次：在元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)）。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小（小约 2.4 KB）和校验值都是旧的，用续写接口照样能用。
+所有 GGUF 文件（12B 和 `lite/`）在 2026-10-04 换过一次：元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)），并写入推荐的采样默认值（temperature 1.0、top-p 0.95、top-k 关、min-p 关、重复惩罚 1.0），请求里没设采样参数时 llama.cpp 就用它们。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小和校验值都是旧的，用续写接口、显式传采样参数照样能用。同一天还加了 `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的完整权重，单个 GGUF，给需要参照或想自己量化的人。
 
 ## 3. llama.cpp（推荐）
 
