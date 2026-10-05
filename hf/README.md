@@ -294,6 +294,8 @@ Public baseline: the `blader/humanizer` skill (v3.1.0, 53k GitHub stars), applie
 
 Where the judge did find a problem, the fix is usually small: a second pass re-read each flagged rewrite against its draft and listed every problem, down to small wording nuances, and more than 9 in 10 of those fixes (125 of 135) are a single word or phrase (for example, the draft's "The remaining 37 complaints" came out as "The other 37% of complaints"). Chinese is still catching up with English: no factual problem in 149 of 204 Chinese rewrites (previous release: 135); where there was one, about 9 in 10 fixes (212 of 236) are a single word or phrase ("本月20日前后", around the 20th of this month, became "20号以前", before the 20th). **Still, read the result before you send it, especially numbers, dates and names.**
 
+**Note: the fact judge is deliberately strict.** In a separate audit of the same judge model, a second judge (Claude Opus) re-read 150 rewrites it had flagged as serious (drawn from training, not from this evaluation set). On the fact the first judge pointed to, Opus agreed it was a serious error in 99, rated it minor in 41 (for example "may reduce" became "will help decrease", or a long name was shortened), and found the fact unchanged in 10. So some flags are harmless rewording. Still read numbers, dates and names before you send.
+
 <img src="assets/results-fidelity-en.png" alt="Fact fidelity compared with the previous releases" width="100%">
 
 ## Training

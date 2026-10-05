@@ -144,6 +144,8 @@ Detectors change over time; this is what one detector said on one date, not a pr
 
 **Chinese is still catching up with English.** The judge found no factual problem in **149 of 204** Chinese rewrites (previous release: 135; 7 of the other 55 only added a little content). Where it did, about 9 in 10 fixes (212 of 236) are a single word or phrase: "本月20日前后" (around the 20th of this month) became "20号以前" (before the 20th). 21 take one sentence; 3 need a passage rewritten.
 
+**Note: the fact judge is deliberately strict.** In a separate audit of the same judge model, a second judge (Claude Opus) re-read 150 rewrites it had flagged as serious (drawn from training, not from this evaluation set). On the fact the first judge pointed to, Opus agreed it was a serious error in 99, rated it minor in 41 (for example "may reduce" became "will help decrease", or a long name was shortened), and found the fact unchanged in 10. So some flags are harmless rewording. Still read numbers, dates and names before you send.
+
 **Still, read the result before you send it**, especially numbers, dates, names and the direction of every claim. The app checks that every number in the draft also appears in the rewrite and flags the ones that don't (Arabic digits only).
 
 ## How it was trained

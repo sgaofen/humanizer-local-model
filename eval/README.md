@@ -36,6 +36,8 @@ Everything behind the numbers in the main README. Nothing here was used in train
 
 One measurement per file on one date. Detectors change.
 
+The fact judge (GLM-5.3, one vote) is deliberately strict. In a separate audit of the same judge model on 150 rewrites from training that it had flagged as serious, a second judge (Claude Opus) agreed on the flagged fact in 99, rated it minor in 41 and found it unchanged in 10. Some flags in `fidelity/` are therefore harmless rewording.
+
 ---
 
 Privacy note: a few drafts (and the rewrites of them) contained a real person's name and email address that the draft-writing model had inserted into signatures. In this public copy they are replaced with the placeholder "Daniel Park" / daniel.park@example.com (Chinese: 林同学). All scores were computed before this replacement; only the name and address differ.
@@ -59,5 +61,7 @@ Privacy note: a few drafts (and the rewrites of them) contained a real person's 
 - `originality/`:Originality.ai(API v3,AI Allowance 0% 最严档)对每篇英文草稿第 1 发的检测结果;`label: 1` 表示被判为 AI。各文件的测量日期和结果见上表。
 
 检测结果只代表这一天、这一档位的一次测量,检测器会更新。
+
+事实判官(GLM-5.3,单票)是故意设得从严的。另一次对同一判官模型的抽查里(150 篇它判为"严重"的改写,来自训练过程),第二个判官 Claude Opus 对点名的那条事实:认为确实严重 99 篇、只算轻微 41 篇、事实没变 10 篇。所以 `fidelity/` 里有些被标出的地方只是无害的措辞变化。
 
 隐私说明：少数草稿（及其改写）的落款里有起草模型写进去的真实姓名和邮箱，公开版已统一换成占位的 "Daniel Park" / daniel.park@example.com（中文为"林同学"）。所有分数都是在替换之前算的，只有姓名和邮箱不同。
