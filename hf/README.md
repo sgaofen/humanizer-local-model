@@ -44,8 +44,8 @@ tags:
 | File | Size | For |
 |---|---|---|
 | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 bytes (about 12.7 GB) | 32 GB of memory or more. Recommended. |
-| `humanizer-12b-Q6_K.gguf` | 10,029,799,616 bytes (about 10.0 GB) | 16 GB of memory. |
-| `humanizer-12b-Q4_K_M.gguf` | 7,625,160,896 bytes (about 7.6 GB) | The smallest 12B file, when memory or disk is tight. |
+| `humanizer-12b-Q6_K.gguf` | 10,029,799,584 bytes (about 10.0 GB) | 16 GB of memory. |
+| `humanizer-12b-Q4_K_M.gguf` | 7,625,160,864 bytes (about 7.6 GB) | The smallest 12B file, when memory or disk is tight. |
 | `humanizer-12b-bf16.gguf` | 23,832,049,568 bytes (about 23.8 GB) | Unquantised weights as one GGUF, for reference or for quantising yourself. |
 | `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
 | `prompt_format.json` | tiny | The instruction and separator, verbatim. |

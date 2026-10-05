@@ -2,7 +2,7 @@
 
 > humanizer is a 12B text-completion model (fine-tuned from google/gemma-4-12B, Apache 2.0) that rewrites one AI-written draft, in English or Chinese, so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote and to add nothing. It is NOT a chat model: send a raw completion prompt. (The GGUF files uploaded on or after 2026-10-04 carry a chat template that builds the same prompt from the last user message, so chat front ends that use it should work; in code, use the completion endpoint.)
 
-Weights: https://huggingface.co/jialinyyzz/humanizer. Pick by memory: 32 GB or more → humanizer-12b-Q8_0.gguf (12,669,630,368 bytes); 16 GB → humanizer-12b-Q6_K.gguf (10,029,799,616 bytes), or humanizer-12b-Q4_K_M.gguf (7,625,160,896 bytes) if memory or disk is tight; under 12 GB of memory the 12B does not fit. Always also download prompt_format.json. bf16 model.safetensors (about 24 GB) is at the repo root for transformers, vLLM and MLX. Desktop app for macOS (Apple silicon) and Windows: https://github.com/sgaofen/humanize-model/releases/latest
+Weights: https://huggingface.co/jialinyyzz/humanizer. Pick by memory: 32 GB or more → humanizer-12b-Q8_0.gguf (12,669,630,368 bytes); 16 GB → humanizer-12b-Q6_K.gguf (10,029,799,584 bytes), or humanizer-12b-Q4_K_M.gguf (7,625,160,864 bytes) if memory or disk is tight; under 12 GB of memory the 12B does not fit. Always also download prompt_format.json. bf16 model.safetensors (about 24 GB) is at the repo root for transformers, vLLM and MLX. Desktop app for macOS (Apple silicon) and Windows: https://github.com/sgaofen/humanize-model/releases/latest
 
 Minimal recipe:
 
