@@ -40,13 +40,14 @@ import { tokenize, diffTokens, renderMarked } from '../../app/web/js/diff.js';
 import { lang, markSvg, MARK_PATH, done } from './common.js';
 const zh = lang === 'zh';
 
-// 右侧示例取自评测集真实样例(与对比卡同源):英文 email_work_00_luna、中文 zh_zhihu_08_sonnet 各一句。
+// 右侧示例取自评测集真实样例,与 README 前后对比图同源(eval/outputs/examples-12b-Q8_0_x8.json,8 发里挑的一发,未经修改),
+// 各取同一处的节选:英文 email_work_06_luna 第 4 发第 4 段的前两句、中文 zh_zhihu_04_luna 第 5 发第 1 段的第二句。草稿和改写都是原文逐字。
 const ex = zh ? {
-  a: '以前这套流程雷打不动要花我6-7个小时,现在压缩到40分钟以内。',
-  b: '之前全流程下来固定6-7个小时，现在优化后控制在40分钟以内。',
+  a: '看到“可疑恶性”四个字时，我第一反应是去私立医院，想着环境好、预约快，最好当天就能把问题解决。',
+  b: '看到可疑恶性四个字，第一反应就是去私立医院吧，环境好预约快点，当天能不能解决最好。',
 } : {
-  a: 'The deadline is Friday, March 14. Please prioritize the files marked “High” in the tracker, especially MB-2047, MB-2091, and MB-2110, since those are scheduled for management review first.',
-  b: 'The cutoff is Friday, March 14. Please focus on the "High" items in the tracker, particularly MB-2047, MB-2091 and MB-2110, as these will be reviewed by management first.',
+  a: 'If helpful, I can send the breakdown by Friday, January 24, or schedule a brief 20-minute call to walk through it.',
+  b: 'If it would be useful, I can send you a breakdown by Friday 1/24. Alternatively we could set up a quick 20 minute call to discuss.',
 };
 const T = zh ? {
   h1: '把 AI 写的草稿，改成<span class="hl">像人写的</span>。',
