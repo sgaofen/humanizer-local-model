@@ -90,9 +90,11 @@ Also in the repo:
 | bf16 (reference) | | | | 368 / 420 |
 | Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
 | Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
-| Q4_K_M | 0.0215 | 93.9% | +2.5% | 363 / 419 |
+| Q4_K_M (updated 2026-10-04, see below) | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
 
 Compared draft by draft with bf16, all three files are within noise on the fact judge.
+
+**Q4_K_M was refined on 2026-10-04 with quantization-aware training:** same size and format, about 1/3 lower KL to the full-precision model than a standard Q4_K_M. ¹ Measured on a larger KL set (30 blocks of English drafts and rewrites), where the standard Q4_K_M scores 0.0203 and 94.5% (Chinese: 0.0146 vs. 0.0225). On the fact judge, compared draft by draft with the standard Q4_K_M, it is within noise: 58 vs. 56 of 420 English rewrites flagged, 162 vs. 163 problems listed by the second pass, more than 9 in 10 of them a single word or phrase.
 
 **Download:**
 
@@ -110,7 +112,7 @@ sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -has
 |---|---|
 | `humanizer-12b-Q8_0.gguf` | `50a05cd3c31e68a12b432ab1203d414e8b8066acb5406b82392c35ffad683e84` |
 | `humanizer-12b-Q6_K.gguf` | `c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184` |
-| `humanizer-12b-Q4_K_M.gguf` | `543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea` |
+| `humanizer-12b-Q4_K_M.gguf` | `d666df4457228fc60b98ec7536640220a6f44bf72d1f9cf6ea712cf0de081564` |
 | `humanizer-12b-bf16.gguf` | `7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72` |
 
 All GGUF files were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself.

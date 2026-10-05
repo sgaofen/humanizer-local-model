@@ -180,9 +180,11 @@ In all three GGUF files the token embeddings and the output layer stay at 8-bit;
 | bf16 (reference) | | | | 368 / 420 |
 | Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
 | Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
-| Q4_K_M | 0.0215 | 93.9% | +2.5% | 363 / 419 |
+| Q4_K_M (updated 2026-10-04, see below) | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
 
-Compared draft by draft with bf16, all three files are within noise on the fact judge. sha256 checksums are in [USAGE.md](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#2-pick-a-file).
+Compared draft by draft with bf16, all three files are within noise on the fact judge.
+
+**Q4_K_M was refined on 2026-10-04 with quantization-aware training:** same size and format, about 1/3 lower KL to the full-precision model than a standard Q4_K_M. ¹ Measured on a larger KL set (30 blocks of English drafts and rewrites), where the standard Q4_K_M scores 0.0203 and 94.5% (Chinese: 0.0146 vs. 0.0225). On the fact judge, compared draft by draft with the standard Q4_K_M, it is within noise: 58 vs. 56 of 420 English rewrites flagged, 162 vs. 163 problems listed by the second pass, more than 9 in 10 of them a single word or phrase. sha256 checksums are in [USAGE.md](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#2-pick-a-file).
 
 ### Prompt format
 

@@ -63,7 +63,7 @@ wc -c ./humanizer-model/*.gguf                                # Q8_0: 1266963036
 shasum -a 256 ./humanizer-model/*.gguf                       # macOS (Linux: sha256sum)
 # Q8_0:   50a05cd3c31e68a12b432ab1203d414e8b8066acb5406b82392c35ffad683e84
 # Q6_K:   c784e91bd4fcc8146da674672a934f43beca01797ddc683a8eb368510676e184
-# Q4_K_M: 543ec7faf21674ceb208088fff13a219a23c494d12ce55319aa894a4260174ea
+# Q4_K_M: d666df4457228fc60b98ec7536640220a6f44bf72d1f9cf6ea712cf0de081564
 # bf16 (humanizer-12b-bf16.gguf, 23832049568 bytes, optional): 7db61377bde633b4f4d39592c74e07714e97c4c924c42d2c1a4fa0064f844b72
 ```
 
