@@ -36,7 +36,7 @@ echo "1. 首次运行:选档 → 下载(中途断线)→ 暂停 → 续传 → �
 "$OUT/humanizer" --data-dir "$W/d1" --engine "metal=$FAKE" --base-url http://127.0.0.1:9182 --no-browser --port 47720 --idle-exit 0 > "$W/l1.log" 2>&1 &
 L1=$!
 wait_phase 47720 setup 10 && ok "进入 setup" || bad "进入 setup"
-check "按内存推荐档位(≥32G→q8,≥16G→q6,其余 lite)" '[ "$(st 47720 | field "d[\"recommended\"]")" = "$(st 47720 | field "\"q8\" if d[\"sys\"][\"ram_gb\"]>=31 else \"q6\" if d[\"sys\"][\"ram_gb\"]>=15 else \"lite\"")" ]'
+check "按内存推荐档位(≥32G→q8,≥16G→q6,其余 q4)" '[ "$(st 47720 | field "d[\"recommended\"]")" = "$(st 47720 | field "\"q8\" if d[\"sys\"][\"ram_gb\"]>=31 else \"q6\" if d[\"sys\"][\"ram_gb\"]>=15 else \"q4\"")" ]'
 check "没带 X-Humanizer 的 POST 被拒" '[ "$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:47720/app/quit)" = 403 ]'
 check "伪造 Host 被拒" '[ "$(curl -s -o /dev/null -w "%{http_code}" -H "Host: attacker.test:47720" http://127.0.0.1:47720/)" = 403 ]'
 post 47720 /app/setup '{"tier":"q8"}' >/dev/null

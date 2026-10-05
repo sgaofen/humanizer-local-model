@@ -40,15 +40,15 @@
       }
     },
     {
-      "id": "lite",
-      "label": "Lite",
-      "file": "lite/humanizer-lite-Q6_K.gguf",
-      "approx_gb": 6.2,
-      "min_ram_gb": 8,
+      "id": "q4",
+      "label": "Q4_K_M",
+      "file": "humanizer-12b-Q4_K_M.gguf",
+      "approx_gb": 7.6,
+      "min_ram_gb": 12,
       "sha256": "",
       "note": {
-        "zh": "给 8 GB 内存的机器",
-        "en": "For 8 GB machines"
+        "zh": "最小的 12B 文件,给 16 GB 以下的机器",
+        "en": "Smallest 12B file, for machines under 16 GB"
       }
     }
   ],
@@ -63,7 +63,7 @@
     },
     {
       "min_gb": 0,
-      "tier": "lite"
+      "tier": "q4"
     }
   ],
   "ram_slack_gb": 1.0,

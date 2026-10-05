@@ -21,7 +21,7 @@ func testConfig(t *testing.T) Config {
 
 func TestRecommendTier(t *testing.T) {
 	c := testConfig(t)
-	cases := map[float64]string{128: "q8", 32: "q8", 31.4: "q8", 24: "q6", 16: "q6", 15.5: "q6", 8: "lite", 4: "lite"}
+	cases := map[float64]string{128: "q8", 32: "q8", 31.4: "q8", 24: "q6", 16: "q6", 15.5: "q6", 8: "q4", 4: "q4"}
 	for ram, want := range cases {
 		if got := c.recommendTier(ram); got != want {
 			t.Errorf("%.1f GB → %s,期望 %s", ram, got, want)
@@ -41,7 +41,7 @@ func TestFileURL(t *testing.T) {
 func TestConfigOverride(t *testing.T) {
 	b, _ := os.ReadFile("../../config/default.json")
 	p := filepath.Join(t.TempDir(), "config.json")
-	os.WriteFile(p, []byte(`{"tier_by_ram":[{"min_gb":32,"tier":"q8"},{"min_gb":16,"tier":"q6"},{"min_gb":0,"tier":"lite"}],"sampling":{"temperature":0.9}}`), 0o644)
+	os.WriteFile(p, []byte(`{"tier_by_ram":[{"min_gb":32,"tier":"q8"},{"min_gb":16,"tier":"q6"},{"min_gb":0,"tier":"q4"}],"sampling":{"temperature":0.9}}`), 0o644)
 	c, err := loadConfig(b, p)
 	if err != nil {
 		t.Fatal(err)

@@ -117,7 +117,7 @@ function tierOf(id) {
 
 function renderBrand() {
   const tier = tierOf(S.status?.tier);
-  const name = tier ? (tier.id === 'lite' ? 'LITE' : '12B') : '12B';
+  const name = '12B';
   $('brand-tag').textContent = t('brand.tag', { tier: name });
 }
 
@@ -177,10 +177,18 @@ function renderSetup() {
 
 function renderChoose() {
   const st = S.status;
-  if (!S.pickTier || !tierOf(S.pickTier)) S.pickTier = st.tier || st.recommended;
+  // 以前选的 lite 档已下线:默认换到 Q4_K_M(旧文件不删)
+  if (!S.pickTier || !tierOf(S.pickTier)) S.pickTier = (st.notice === 'lite_retired' && tierOf('q4')) ? 'q4' : (st.tier || st.recommended);
   if (!S.pickEndpoint) S.pickEndpoint = st.endpoint;
   const cpu = st.sys.cpu ? escapeHTML(st.sys.cpu.replace(/\(R\)|\(TM\)|CPU|@.*$/g, '').trim()) : st.sys.os;
   $('sysline').innerHTML = t('setup.sys', { cpu, ram: Math.round(st.sys.ram_gb) });
+  const noteEl = $('setup-notice');
+  const noFit = st.tiers.length > 0 && st.tiers.every((x) => !x.fits);
+  const msgs = [];
+  if (st.notice === 'lite_retired') msgs.push(t('setup.liteRetired'));
+  if (noFit) msgs.push(t('setup.lowRam', { ram: Math.round(st.sys.ram_gb) }));
+  noteEl.hidden = msgs.length === 0;
+  noteEl.textContent = msgs.join(' ');
 
   const sig = getLang() + '|' + S.pickTier + '|' + st.recommended + '|' + st.tiers.map((x) => `${x.id}:${x.downloaded}:${x.partial || 0}:${x.fits}`).join(',');
   if (sig !== S.tierSig) {

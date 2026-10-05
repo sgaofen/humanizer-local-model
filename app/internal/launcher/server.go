@@ -175,6 +175,8 @@ type statusResp struct {
 	DataDir         string       `json:"data_dir"`
 	IdleExitMinutes int          `json:"idle_exit_minutes"`
 	CtxSize         int          `json:"ctx_size"`
+	// Notice:"lite_retired" = 这台机器以前选的是已下线的 lite 档(E4B),网页提示换成 12B Q4_K_M;旧文件不删。
+	Notice string `json:"notice,omitempty"`
 }
 
 func (a *App) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -201,6 +203,9 @@ func (a *App) handleStatus(w http.ResponseWriter, r *http.Request) {
 	s.Phase = a.phase
 	s.Tier = a.tier
 	s.Endpoint = a.settings.Endpoint
+	if _, ok := a.cfg.tier(a.settings.Tier); !ok && a.settings.Tier == "lite" {
+		s.Notice = "lite_retired"
+	}
 	if s.Endpoint == "" {
 		s.Endpoint = a.cfg.Endpoints[0].ID
 	}
