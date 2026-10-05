@@ -157,7 +157,7 @@ Detectors change over time; this is what one detector said on one date, not a pr
 3. **Reinforcement learning (GRPO) in three rounds, 500 steps in total.** Round 1, 200 steps, with a strict single-vote fact judge. Rounds 2 and 3, 150 steps each (v1 was released after round 2, v2 after round 3): 16 drafts × 8 samples per step at temperature 1.0. The reward is an LLM judge that reads the whole rewrite against the draft and penalises severe errors, invented content, changed meaning and dropped formatting, plus a copy penalty on verbatim 5-gram and syntactic-skeleton reuse (free below .22, then linear). Round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL produced 41,600 rewrites, each scored by an LLM judge against its draft.
 4. **This release (v2) is the final round-3 checkpoint.**
 
-Training code for the 12B will be added under `training/`; the scripts there now are from an earlier, smaller model.
+The training code will be released later.
 
 ## Usage
 
