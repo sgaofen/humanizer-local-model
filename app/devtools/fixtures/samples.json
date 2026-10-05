@@ -1,5 +1,5 @@
 {
- "_note": "草稿来自 humantune/eval/ood_cases_300a,输出是 12B 模型在 cases_RLRt_300a.json 里的真实第一条输出(vLLM, T=1.0, top_p=0.95)。只给假 llama-server 用。",
+ "_note": "草稿来自 humantune/eval/ood_cases_300a,输出是 12B v1 模型在评测集上的真实第一条输出(vLLM, T=1.0, top_p=0.95)。只给假 llama-server 用。",
  "samples": [
   {
    "id": "en-social",
