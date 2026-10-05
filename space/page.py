@@ -109,7 +109,7 @@ def draft_head() -> str:
 
 
 def draft_foot(examples) -> str:
-    short = {"en-email": ("Email", "英文邮件"), "en-review": ("Film review", "影评"),
+    short = {"en-email": ("Email", "英文邮件"), "en-review": ("Review", "产品评测"),
              "en-essay": ("Essay", "英文作文"), "zh-email": ("中文邮件", "中文邮件"),
              "zh-social": ("中文社交帖", "中文社交帖")}
     btns = "".join(f'<button type="button" class="sample-btn" data-sample="{e["id"]}">{L(*short[e["id"]])}</button>'
@@ -166,7 +166,7 @@ def examples_section(examples) -> str:
     </article>
     <article class="sheet ex-sheet">
       <div class="sheet-head"><span class="idx">02</span><h3 class="sheet-title">{L("Rewrite", "改写")}</h3>
-        <span class="sheet-sub">{L("first sample, unedited", "第一发，未经修改")}</span>
+        <span class="sheet-sub">{L(f"1 of {e['of']} samples, unedited", f"{e['of']} 发里挑的一发，未经修改")}</span>
         <span class="meta mono"><b>{round(ratio * 100)}%</b> {L("changed", "改动")}</span></div>
       <div class="textview{lang_cls}">{o_html}</div>
     </article>
@@ -177,12 +177,12 @@ def examples_section(examples) -> str:
     return f"""<section class="sec" id="examples">
   <p class="eyebrow">{L("Examples", "示例")}</p>
   <h2 class="sec-title">{L("Real before and after", "改写前后，真实输出")}</h2>
-  {P("Drafts from our held-out evaluation set, never seen in training. The right side is the first sample from the Q8_0 file you download (llama.cpp, the app's settings), not edited; only whitespace is normalised. "
+  {P("Drafts from our held-out evaluation set, never seen in training. For each we generated 8 samples with the Q8_0 file you download (llama.cpp, the app's settings) and picked the one that reads best among those our fact judge passed; it is shown unedited, only whitespace is normalised. All 8 samples are in the public eval folder. "
      "<span class='ins'>Highlight</span> = new wording, <span class='del'>strikethrough</span> = draft wording that was replaced. "
-     "We picked these for readability from samples our fact judge passed. Across the whole set the model does sometimes change a detail; how often, and how small, is below.",
-     "草稿来自留出评测集，训练时从没见过。右边是你下载的 Q8_0 文件（llama.cpp，和 App 相同的设置）的第一发，未经任何修改，只统一了空白。"
+     "Across the whole set the model does sometimes change a detail, usually one word or one number; how often is below. Read the result before you send it, especially numbers, dates and names.",
+     "草稿来自留出评测集，训练时从没见过。每篇我们用你下载的 Q8_0 文件（llama.cpp，和 App 相同的设置）生成 8 发，在事实判官判为通过的几发里挑了读起来最好的一发，未经任何修改，只统一了空白；8 发全文都在公开的评测文件里。"
      "<span class='ins'>荧光笔</span> = 新写的，<span class='del'>删除线</span> = 被改掉的原文。"
-     "这几篇是从事实判官判为通过的样本里挑的，为了好读；放到整个评测集上，模型偶尔会改错细节，多常见、错得多小，见下方。",
+     "放到整个评测集上，模型偶尔还是会改错细节，多半是一个词或一个数字，多常见见下方。发出去之前请通读一遍，特别是数字、日期和人名。",
      "sec-lede")}
   <div class="ex-wrap">
     {"".join(radios)}

@@ -72,7 +72,9 @@ On stderr it lists every piece where a number from the draft is missing in the r
 
 ## Before and after
 
-Four drafts from the held-out evaluation set (never seen in training). The right side is this release's **first sample, not edited** (the `humanizer-12b-Q8_0.gguf` file, llama.cpp); only whitespace is normalised for display. Highlight = new wording, strikethrough = draft wording that was replaced. We picked these four by hand for readability and checked every number and name in them. Across the whole set the model does sometimes change a detail; how often, and how small those slips are, is in [Results](#results).
+Four drafts from the held-out evaluation set (never seen in training). For each draft we generated 8 samples with this release's `humanizer-12b-Q8_0.gguf` file (llama.cpp, the app's settings) and picked the one that reads best among those the fact judge passed. The right side is that sample, **not edited**; only whitespace is normalised for display. All 8 samples per draft are in [eval/outputs/examples-12b-Q8_0_x8.json](eval/outputs/examples-12b-Q8_0_x8.json). Highlight = new wording, strikethrough = draft wording that was replaced. We also checked every number and name in these four by hand.
+
+These are picks, not every sample. Across the whole evaluation set the model still changes details: the judge flagged 44 of the 420 English rewrites, 135 problems in all, and 125 of them are a single word or phrase (the draft's "The remaining 37 complaints" came out as "The other 37% of complaints"). **Read the result before you send it, especially numbers, dates and names.** Details in [Results](#results).
 
 <img src="assets/compare-en-email.png" alt="Work email: draft and rewrite" width="100%">
 
@@ -83,9 +85,7 @@ Four drafts from the held-out evaluation set (never seen in training). The right
 
 <img src="assets/compare-zh-email.png" alt="Chinese work email: draft and rewrite" width="100%">
 
-<img src="assets/compare-zh-zhihu.png" alt="Zhihu answer (excerpt): draft and rewrite" width="100%">
-
-The Zhihu example is an excerpt: the first 4 of 8 paragraphs, cut at the same paragraph on both sides.
+<img src="assets/compare-zh-zhihu.png" alt="Zhihu answer: draft and rewrite" width="100%">
 </details>
 
 ## Results

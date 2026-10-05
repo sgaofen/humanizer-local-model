@@ -1,86 +1,46 @@
 [
  {
   "id": "en-email",
-  "case": "email_work_09_luna",
+  "case": "email_work_06_luna",
+  "sample": 4,
+  "of": 8,
   "lang": "en",
   "genre": {
    "en": "Work email",
    "zh": "英文工作邮件"
   },
   "writer": "GPT-5.6 luna",
-  "draft": "Hi Priya,\n\nCould HR help us arrange two additional temporary staff members for our September inventory count at the Fremont warehouse? The count is scheduled for September 28–30, from 8:00 a.m. to 4:30 p.m., and we expect to process approximately 4,800 units across receiving, storage, and outbound staging.\n\nWe currently have six team members assigned, but two employees are out on scheduled leave and one is supporting a customer audit. Adding two temps would allow us to maintain normal shipping operations while completing the count accurately and on schedule.\n\nThe temporary staff would need basic warehouse experience, the ability to lift up to 40 pounds, and availability for all three days. Their main responsibilities would be scanning labels, recording quantities, and reconciling discrepancies under the supervision of Miguel Santos, our Inventory Control Lead. A short safety and process briefing will be provided at 7:45 a.m. on September 28.\n\nPlease let me know whether HR can source and onboard two people by September 25. If temporary staff are unavailable for all three days, coverage for September 28 and 29 would still be very helpful.\n\nThank you,\n\nJordan Lee",
-  "output": "Hey Priya,\n\nIs there any way that HR can help bring us two more temporary employees for our inventory count in our Fremont warehouse in September? The inventory count will be taking place on Sept 28th, 29th, and 30th (8:00 a.m.-4:30 p.m.)\n\nWe're going to be counting about 4,800 units in and out of the warehouse (receiving, storage, outbound staging).\n\nRight now we've got 6 people working on it. However, 2 of them are on planned leave and another is helping out on a customer audit. If we could get 2 temp employees that would help us keep up normal shipping and still get the count accurate and on schedule.\n\nWe would need them to have some warehouse experience. Be able to lift up to 40lbs. Be available all 3 days. Mostly just scanning labels and noting quantities, resolving discrepancies. They'd be working under the Inventory Control Lead Miguel Santos. (We'll do a quick safety/process briefing at 7:45 a.m. Sept 28th)\n\nIf HR can find and get 2 people onboard by Sept 25th? If we can't get any temps for all 3 days it would be really beneficial if we could at least get covered for the 28th and 29th.\n\nThanks,\n\nJordan Lee",
+  "draft": "Hi Maya,\n\nThank you again for joining our software demo on January 20. I appreciated the thoughtful questions from you and the Northstar Operations team, especially around user permissions, reporting, and integration with Salesforce.\n\nI wanted to follow up and see whether your team needs a detailed pricing breakdown as you evaluate next steps. We can provide costs by license type, implementation services, training, and optional add-ons, along with estimates for 25, 50, or 100 users. I’d also be happy to outline the differences between our Professional and Enterprise plans.\n\nIf helpful, I can send the breakdown by Friday, January 24, or schedule a brief 20-minute call to walk through it. Please let me know what would be most useful as you prepare for your February budget review.\n\nBest,\nJordan Lee",
+  "output": "Hey Maya -\n\nThanks for taking the time to join our software demo on 1/20. I appreciated the questions from you and your team at Northstar Operations around user permissions, reporting and Salesforce integration in particular.\n\nJust checking back in to see if you're looking for a more specific breakdown of pricing while you assess your options moving forward. Specifically I can give you a breakdown of pricing by license, implementation services, training, additional features (if interested) and estimated cost for 25, 50, 100 users. Also, I'd be happy to go over the difference between our Professional and Enterprise plans.\n\nIf it would be useful, I can send you a breakdown by Friday 1/24. Alternatively we could set up a quick 20 minute call to discuss. Let me know what would be most helpful as you go through your budget review for Feb.\n\nBest,\nJordan Lee",
   "words": [
-   187,
-   203
+   131,
+   145
   ],
-  "copy": 0.0,
+  "copy": 0.05,
   "numbers": [
-   11,
-   11
+   5,
+   5
   ],
   "judge_clean": true
  },
  {
   "id": "en-review",
-  "case": "review_product_02_luna",
+  "case": "review_product_09_sonnet",
+  "sample": 0,
+  "of": 8,
   "lang": "en",
   "genre": {
-   "en": "Film review",
-   "zh": "影评"
+   "en": "Product review",
+   "zh": "产品评测"
   },
-  "writer": "GPT-5.6 luna",
-  "draft": "Christopher Nolan’s *Oppenheimer* (2023) is an intense, ambitious film that feels especially powerful in IMAX. The huge format makes the Trinity test sequence genuinely overwhelming: the silence before the explosion, the sudden flash of light, and the delayed roar create a physical sense of dread rather than simple spectacle. Ludwig Göransson’s score and the pounding sound design add to the experience without making it feel like a conventional action movie.\n\nCillian Murphy gives a remarkable performance as J. Robert Oppenheimer, portraying him as brilliant, vain, anxious, and increasingly haunted by the consequences of his work. The supporting cast is exceptional too, particularly Robert Downey Jr. as Lewis Strauss, Emily Blunt as Kitty Oppenheimer, and Matt Damon as General Leslie Groves. The film’s shifting timelines and black-and-white sections initially feel complicated, but they gradually build a compelling picture of how scientific achievement became entangled with politics, ego, and fear.\n\nAt three hours, *Oppenheimer* is undeniably long. Some courtroom and security-hearing scenes move slowly, and the dense dialogue demands concentration. Still, the runtime feels mostly justified because the film is covering the Manhattan Project, Oppenheimer’s personal life, and the political fallout over several decades. In IMAX, the scale and detail make the length easier to accept, though it is worth taking a break beforehand. This is not a relaxed historical drama; it is an absorbing, exhausting experience that lingers long after the credits.",
-  "output": "Christopher Nolan's Oppenheimer (2023) is an epic and very intense film. It really comes into its own when viewed in IMAX as the sheer scale of the experience when seeing the Trinity test is overwhelming. The build-up to the explosion, the flash and the delayed sound of the explosion are genuinely intimidating rather than just being a spectacle. The score by Ludwig Göransson and the thunderous sound design compliment the film without it being a standard action film.\n\nThe performances are amazing and are led by a wonderful Cillian Murphy as J. Robert Oppenheimer. He shows Oppenheimer to be a genius, vain, neurotic and increasingly tortured by what he has done. The supporting cast is fantastic. Robert Downey Jr. is great as Lewis Strauss. Emily Blunt as Kitty Oppenheimer and Matt Damon as General Leslie Groves are also very good. While at first it seems confusing and complicated with multiple timelines and black and white segments it gradually coheres and paints a fascinating picture of the interplay of science with politics, ego and fear.\n\nThis is a very long film. At 3 hours it's a long sit. There are a few scenes in the court and security hearings which can drag a bit and require you to pay close attention to what can be dense dialog. Ultimately though, the length makes sense as it's not just telling the story of the Manhattan Project. It's telling that story, the personal story of Oppenheimer and the political aftermath of it all over a period of decades. In IMAX the detail and scale helps make it easier to swallow. But perhaps have a break first as it's not a lazy history lesson. It's a fascinating and tiring film. You won't forget it easily.",
+  "writer": "Claude Sonnet",
+  "draft": "Picked up the Logitech M240 Silent ($24.99, Best Buy, checkout Sept 2) to replace an MX Anywhere 3 ($79.99) that's been my daily driver for two years. Three weeks in, verdict: for most people, save the $55.\n\nThe M240 pairs over Bluetooth only — no Logi Bolt receiver — and connected to my M2 MacBook Air in about four seconds. Scroll wheel is a basic notched mechanism, not the MX's free-spin hyper-fast option, so flying through a 2,000-row spreadsheet takes noticeably longer. Side buttons: two, same as the MX, and both remap fine in Logi Options+. Sensor tops out at 4000 DPI versus 8000 on the MX Anywhere 3, which I never noticed on a desk but did on my lap using my knee as a mousepad — occasional skipping.\n\nWhere the M240 actually wins: battery. Logitech rates it at 18 months on a single AA; I'm one month in and the app still shows 100%. The MX charges via USB-C and needs a top-up every 2-3 months with regular use. The M240 is also 15g lighter (78g vs 99g), which matters if you're carrying it to a coffee shop daily like I do.\n\nBuild feels cheaper — more hollow-sounding click, visible seam on the underside — but the clicks themselves are genuinely quieter, which I appreciate on calls.\n\nIf you're pairing with one machine and don't need multi-device switching (the MX Anywhere 3 handles three via Logi Bolt or Bluetooth with a button press), the M240 covers 90% of the daily use case for a third of the price. I'm keeping the MX for my desk setup and using the M240 for travel.",
+  "output": "Bought a Logitech M240 Silent ($24.99 at best buy, checked out Sept 2) to replace my 2 year old main mouse (MX Anywhere 3, $79.99). 3 weeks in - For most people don't spend the extra $55\n\nThis mouse is Bluetooth only, no logi bolt reciever. It took like 4 seconds for it to connect to my M2 Mac Air.\nThe scroll wheel is a basic notched type of scroll, not the free spin \"hyper speed\" scroll like the MX has. It does take longer to fly through a 2000 row spreadsheet.\nHas two side buttons like the MX and can easily remap them in the logi options+ app.\nThe sensor is only 4000 DPI vs. 8000 with the MX anywhere 3. I never had a problem on the desk but using my lap, using my knee as a mousepad I had occasional skipping.\n\nM240 does have a battery life advantage. Logitech says 18 months on one AA. I've been using it a month and still 100% on the app. The MX Anywhere 3 charges with usb-c so i have to charge it every 2-3 months with normal usage.\nAlso, the M240 is 15g lighter. (78 vs. 99g). That might be a big deal for some if you're lugging it to a coffee shop every day like I am.\nIt does feel a little cheaper. (More \"click\" hollow sound, has a visible seam on the bottom)\nBut the actual clicks are quieter which is nice when I'm on calls.\n\nIf you only need to pair with 1 computer and don't really want the multi device switching. (The MX anywhere 3 supports 3 via Logi bolt or Bluetooth with button press)\nThis M240 can do 90% of the daily usage for 1/3 the price.\nI'll use the MX for desk use and M240 for travel.",
   "words": [
-   231,
-   290
+   269,
+   303
   ],
   "copy": 0.05,
-  "numbers": [
-   1,
-   1
-  ],
-  "judge_clean": true
- },
- {
-  "id": "en-essay",
-  "case": "essay_student_00_glm",
-  "lang": "en",
-  "genre": {
-   "en": "Student essay",
-   "zh": "学生作文"
-  },
-  "writer": "GLM-5.3",
-  "draft": "When the European Recovery Program—better known as the Marshall Plan—was signed into law by President Truman on April 3, 1948, West Germany's economic future looked bleak. Its industrial cities lay in ruins, its currency was nearly worthless, and its economy remained constrained by Allied occupation policies that had capped steel production and dismantled industrial plants. Yet over the next four years, roughly $1.4 billion in Marshall Plan aid flowed into what would become the Federal Republic of Germany, helping to catalyze one of the most remarkable economic recoveries of the twentieth century.\n\nThe aid itself, distributed through the Economic Cooperation Administration (ECA), mattered less for its raw quantity than for its timing and function. West Germany received goods—cotton, wheat, coal, machinery—paid for in nearly worthless Reichsmarks, with the proceeds funneled into a special counterpart fund. This fund, worth several billion Deutschmarks, was later reinvested in infrastructure and industry, helping finance projects like electrical grid modernization and the expansion of the Ruhr Valley's steel sector. Perhaps just as important, Marshall Plan money covered Germany's chronic trade deficit in 1949 and 1950, buying the young West German state time while its currency reform of June 1948—which introduced the Deutschmark—took hold.\n\nThe Marshall Plan also forced institutional changes that proved decisive. Acceptance of American aid required participation in the Organisation for European Economic Co-operation (OEEC), pulling West Germany into a framework of European cooperation that would culminate decades later in the European Coal and Steel Community of 1951. Moreover, American pressure helped soften occupation restrictions: limits on steel production were progressively raised from around 5.8 million tons to over 11 million by the early 1950s, and plant dismantling largely ceased. Economist Ludwig Erhard, appointed Economic Director in 1948, combined this new freedom with his policy of the \"social market economy,\" blending free-market competition with a social safety net.\n\nThe results were extraordinary. Industrial production in West Germany roughly doubled between 1948 and 1952, and by the mid-1950s the country was producing more than it had before the war—a phenomenon Chancellor Konrad Adenauer's government celebrated as the \"economic miracle,\" or Wirtschaftswunder. Historians rightly caution that the Marshall Plan was only one cause among many, alongside currency reform, Korean War demand, and a skilled labor force. Still, it is fair to say that American aid did not simply rebuild West Germany's economy; it reoriented it—toward Europe, toward trade, and toward the stable democratic capitalism that would define the Federal Republic for generations.",
-  "output": "On April 3, 1948, President Truman signed into law the European Recovery Program (Marshall Plan). At the time, the economic outlook for West Germany was grim. Much of the industrial heartland was destroyed. The currency had virtually no value. The economy was still hamstrung by Allied policies that had limited steel output and deindustrialized the country. But in the next four years, the Federal Republic of Germany would receive about $1.4 billion of Marshall Plan assistance to help propel it into one of the greatest economic turnarounds of the 20th century.\n\nThe aid, managed by the Economic Cooperation Administration (ECA) did not come so much in the amount of assistance received, as in the timing and the role of the money. The Federal Republic of Germany was given goods such as cotton, wheat, coal and machinery. The goods were purchased with near-worthless Reichsmarks and the receipts were placed into a special counterpart fund. Later, this fund (several billion Deutschmarks) was reinvested into infrastructure and industry, financing such projects as the modernization of the electrical grid and the development of the Ruhr Valley steel industry. Also, critical to the recovery was that the Marshall Plan funds helped fill West Germany's yawning trade deficit in 1949 and 1950, giving the new state of West Germany time for its June 1948 currency reform (new currency, the Deutschmark) to take effect.\n\nCrucial to the economic recovery was the way that the Marshall Plan created institutional change. For one thing, in order to take U.S. assistance, West Germany had to join the Organisation for European Economic Co-operation (OEEC). This meant that West Germany was being linked into European cooperation that would ultimately lead, decades later, to the 1951 European Coal and Steel Community. The U.S. also used pressure to relax occupation restrictions. Restrictions on steel output were increased gradually from about 5.8 million to over 11 million tons by the early 1950s. Dismantling of industrial facilities largely stopped. Economic Director (appointed in 1948) Ludwig Erhard took advantage of this and instituted his \"social market economy.\" Free-market competition would be combined with a social safety net.\n\nThe results were dramatic. Between 1948 and 1952, industrial output in West Germany rose roughly two-fold. By the mid-1950s, West Germany's output surpassed pre-war levels. This was something that Chancellor Konrad Adenauer's government would tout as the \"economic miracle,\" Wirtschaftswunder. Certainly, historians are careful to note that the Marshall Plan was just one of many factors that contributed to the recovery. Also important were currency reform, increased demand due to the Korean War and a workforce skilled in industrial production. But it is fair to say that not only did U.S. assistance revive West Germany's economy, it transformed it. It turned it towards Europe, it turned it towards trade. And it transformed it towards a stable form of democratic capitalism that would be the hallmark of the Federal Republic for many years to come.",
-  "words": [
-   407,
-   484
-  ],
-  "copy": 0.04,
-  "numbers": [
-   9,
-   9
-  ],
-  "judge_clean": true
- },
- {
-  "id": "en-forum",
-  "case": "forum_answer_04_luna",
-  "lang": "en",
-  "genre": {
-   "en": "Forum answer",
-   "zh": "论坛回答"
-  },
-  "writer": "GPT-5.6 luna",
-  "draft": "For a freelance designer, I’d aim for 6–12 months of essential personal expenses, not an arbitrary dollar amount. Irregular income makes the upper end more appropriate than the usual three-month target.\n\nFor example, if you live in Portland, Oregon, and your bare-bones monthly costs are:\n\n- Rent and utilities: $1,800\n- Health insurance and medical costs: $500\n- Food: $500\n- Transportation: $250\n- Minimum debt payments and other necessities: $150\n\nYour essential budget is $3,200 per month. A reasonable emergency-fund target would therefore be $19,200 for six months, with $28,800 providing a stronger 9-month cushion.\n\nKeep separate accounts for three different purposes:\n\n1. Emergency fund: job gaps, illness, or major unexpected expenses.\n2. Tax reserve: money for quarterly federal and state estimated taxes.\n3. Business reserve: software, equipment replacement, subcontractors, and slow client payments.\n\nOtherwise, a large tax bill or broken laptop can make your “emergency fund” look healthier than it really is.\n\nI’d calculate the target using your lowest realistic monthly spending, not your average lifestyle. Pay yourself a consistent amount—say $4,000 monthly—from your business account, and send unusually strong months into savings. Refill the fund after using it, and keep it in an easily accessible FDIC-insured savings account rather than investments.\n\nThe CFPB specifically identifies emergency funds as useful for people with irregular income, while the FDIC cites three to six months as a general guideline and notes that people with especially uncertain employment may need six months or more. [CFPB guidance](https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/) and [FDIC guidance](https://www.fdic.gov/consumer-resource-center/2025-01/saving-unexpected-and-your-future).",
-  "output": "As a freelance designer I think you'd want 6-12 months of core living expenses rather than a dollar number.  The irregular income means you'd want more than the typical 3-month emergency fund amount.\nSo say, if you're in Portland, Oregon and your absolutely-barebones monthly expenses are:\n- Rent & utilities: $1800\n- Health insurance & health costs: $500\n- Food: $500\n- Transportation: $250\n- Debt minimums & other necessities: $150\n\nSo your core expenses are $3200/month.  So you'd want something like $19.2k for 6 months emergency fund or a stronger $28.8k for 9 months.\nHave separate accounts for 3 types of things:\n1) Emergency fund: gaps in work, sickness, major unexpected expenses\n2) Tax buffer: For quarterly federal & state estimated tax payments\n3) Business buffer: Software & equipment replacement. Subcontractors.  Slow clients.\nOtherwise you'll have a big tax bill or busted laptop and then your \"emergency\" fund looks better than it actually is.\nFigure out your target based on your minimum real-world monthly expenses.  Not average lifestyle.  Set yourself a regular salary (e.g. $4k/month) to draw from business account and save on those really good months.  Replenish the fund when you draw from it.  Make it a liquid FDIC savings account.  Not investments.\nCFPB directly mentions emergency funds as good for irregular income folks.  FDIC mentions 3-6 months as a good guideline in general.  Also mentions if you're really uncertain about employment you may need 6+ months. [cfpb guidance](https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/) [fdic guidance](https://www.fdic.gov/consumer-resource-center/2025-01/saving-unexpected-and-your-future)",
-  "words": [
-   243,
-   233
-  ],
-  "copy": 0.1,
   "numbers": [
    15,
    15
@@ -88,46 +48,98 @@
   "judge_clean": true
  },
  {
+  "id": "en-essay",
+  "case": "essay_student_11_sonnet",
+  "sample": 3,
+  "of": 8,
+  "lang": "en",
+  "genre": {
+   "en": "Student essay",
+   "zh": "学生作文"
+  },
+  "writer": "Claude Sonnet",
+  "draft": "In September 2022, I watched my mother recalculate our grocery list three times at the Kroger on Elm Street before she put anything in the cart. That was the month the Bureau of Labor Statistics confirmed what our family had felt for weeks: inflation had hit roughly 9.1% year-over-year, the highest in forty years. For a household of five in a mid-sized Ohio suburb, that number stopped being an abstraction on the evening news and became a line-by-line negotiation over what we could still afford to eat.\n\nBefore 2022, my mother's weekly grocery run cost about $180 and filled two carts. By that October, the same list cost close to $240, and she'd trimmed it down to fit in one. Eggs, which had been $1.50 a dozen, jumped past $3.50 after an avian flu outbreak compounded the inflationary pressure. A gallon of milk went from $2.80 to nearly $4.20. Ground beef, once a Tuesday staple, became a once-a-week treat instead of five nights a week, replaced by lentils and canned beans that my father started buying in bulk from a Sam's Club membership he'd resisted getting for years.\n\nWe adapted in small, deliberate ways. My mother switched from name-brand cereal to the store's Kroger-brand version, saving about $1.20 per box. My younger brother, twelve at the time, stopped getting the individually wrapped snack packs he liked for school lunches because the per-unit cost had nearly doubled. We started a small vegetable garden that spring — tomatoes, peppers, and zucchini — not as a hobby but as a hedge against produce prices that had risen almost 8% that year alone.\n\nWhat struck me most wasn't the math itself but how it reshaped our conversations. Dinner planning, once an afterthought, became a Sunday-night budgeting session with a calculator on the kitchen table. My parents started comparing receipts from Kroger, Aldi, and Meijer, driving the extra fifteen minutes to Aldi because the savings, even $15 a week, mattered.\n\nBy early 2023, prices had stopped climbing as fast, but they never fell back. The $240 grocery bill became our new normal, not because we'd gotten used to it, but because there was nothing to return to. That year taught me that inflation isn't just a statistic — it's the quiet erosion of choices a family used to take for granted.",
+  "output": "I remember watching my mom go through her mental grocery list three times in September 2022, at Kroger on Elm Street. She didn't even add anything to her cart until then. September was when the Bureau of Labor Statistics finally confirmed for the world (and for us) that we had been in the midst of a historic inflation surge for weeks. The BLS determined inflation was near a 9.1% year-on-year increase (40 year high). What this meant for a family of 5 living in a mid-size Ohio suburb is that the once obscure number on TV during the nightly news became a detailed re-evaluation of our budget, item-by-item, asking ourselves: what can we still afford?\n\nA typical grocery trip for my mom before 2022 was about $180, and involved two shopping carts. Come October, the same list would end up closer to $240. And my mom would downsize to a single cart to handle the new costs. Egg prices, which used to be $1.50/dozen now went well over $3.50, due to the added burden of an avian flu outbreak. A gallon of milk used to be $2.80. Now it was close to $4.20. Ground beef, which we used to have most Tuesday's, was now a once a week \"splurge\", rather than 5 nights. Lentils, and canned beans entered the fray. My dad started buying bulk lentils and canned goods through his Sam's Club membership, which he had resisted for years.\n\nWe adjusted. My mom stopped buying name-brand cereals, and started buying Kroger brand from the store. This was a roughly $1.20 savings per box of cereal. My younger brother (12yo) stopped purchasing those individually wrapped snack packs for school lunch (he loved them), because the price per-pack nearly doubled. We planted a small vegetable garden that spring (tomatoes, peppers, zucchini) not out of a hobby, but more to guard against the almost 8% increase in produce prices for that year.\n\nIt wasn't so much the calculations and numbers that stood out to me. It was how these numbers really changed the way we communicated. Dinner became more than just an afterthought. It was now a Sunday night budgeting exercise with a calculator on the kitchen table. My parents would compare Kroger, Aldi and Meijer receipts. The 15 minute drive to Aldi was worth it. Those $15 savings per week added up.\n\nFast forward to early 2023, prices were no longer on the rapid rise they had been. But they didn't come down. That $240 grocery list just became our new reality. Not necessarily because we grew accustomed to it, but because there was no going back. And it taught me that inflation isn't just a number. It's the subtle (but painful) changes of a family losing access to choices it once had.",
+  "words": [
+   383,
+   462
+  ],
+  "copy": 0.03,
+  "numbers": [
+   12,
+   12
+  ],
+  "judge_clean": true
+ },
+ {
+  "id": "en-forum",
+  "case": "forum_answer_05_sonnet",
+  "sample": 2,
+  "of": 8,
+  "lang": "en",
+  "genre": {
+   "en": "Forum answer",
+   "zh": "论坛回答"
+  },
+  "writer": "Claude Sonnet",
+  "draft": "The oven (or better, a toaster oven / air fryer) beats the microwave every time — microwaving turns crust into rubbery cardboard because it just heats the moisture trapped in the breading.\n\nHere's what actually works:\n\n1. **Let the chicken come to room temp** for about 20-30 minutes before reheating. Cold-to-hot straight from the fridge cooks unevenly and you end up overshooting the outside to get the center warm.\n\n2. **Preheat oven to 400°F (200°C).** Set a wire rack inside a sheet pan — this is the part people skip and it matters most. Air circulating underneath keeps the bottom from steaming and going soggy, which is exactly what happens if you lay the pieces directly on the pan.\n\n3. **Bake bone-in pieces 15-20 minutes, boneless/tenders 10-12 minutes**, flipping once halfway through. You're aiming for an internal temp of 165°F (74°C) — check with an instant-read thermometer at the thickest part near the bone.\n\n4. **Skip foil or covering it** — that traps steam and undoes the whole point.\n\nIf you have an air fryer, it's even faster and arguably crispier: 375°F (190°C) for 4-6 minutes, no flipping needed since it circulates air on all sides. I've done this with leftover KFC-style thighs and Popeye's tenders and both came out nearly as crisp as fresh.\n\nOne more trick if the crust still feels a little soft after reheating: pop it under the broiler for the last 60-90 seconds, watching closely so it doesn't burn. That extra blast of direct heat crisps up any spots the convection missed.\n\nAvoid the microwave entirely unless you truly don't care about the crust — even 30 seconds will noticeably soften it.",
+  "output": "The oven (toaster oven/air fryer is even better) is vastly superior to the microwave, as microwaving just heats the water inside the breading so you're left with rubbery cardboard crust.\n\nHere's how to do it:\n\n1. Bring the chicken to room temp for 20-30 min before re-heating.  When you go from cold to hot from fridge, it's gonna be uneven and you'll overcook the outside to try to get the inside warmed up.\n\n2. Put oven on 400F (200C).  Put a wire rack on a sheet pan.  (This is the key part that most people forget.)  Having air circulation below prevents the bottom from turning into steam and getting soggy like it will if you put them directly on the sheet pan.\n\n3. Cook bone-in pieces for 15-20 min, and boneless/tenders for 10-12 min.  Flip after half the time.  Shoot for internal temp of 165F (74C)  Test with instant read thermometer in thickest part, near the bone.\n\n4. Don't wrap in foil or cover it.  This will just lock in steam and ruin everything.\n\nIf you have an air fryer, this will go even faster and probably be crispier.  375F (190C) for 4-6 min.  No need to flip because the air circulation is going around all sides.  I've reheated leftovers from kfc style thighs and popeyes tenders in the air fryer, and both got almost as crispy as new.\n\nIf the crust is still slightly soft after re-heating, the last trick is to blast it under the broiler for the final 60-90 seconds.  Just watch it so it doesn't burn.  This will give it another hit of direct heat to crisp up the spots that weren't as crispy from convection.\n\nThe microwave is a hard no unless you just don't care about the crust at all.  Even 30 seconds will make it noticeably softer.",
+  "words": [
+   271,
+   304
+  ],
+  "copy": 0.03,
+  "numbers": [
+   18,
+   18
+  ],
+  "judge_clean": true
+ },
+ {
   "id": "zh-email",
-  "case": "zh_email_08_luna",
+  "case": "zh_email_15_sonnet",
+  "sample": 3,
+  "of": 8,
   "lang": "zh",
   "genre": {
-   "en": "Chinese email to a landlord",
-   "zh": "给房东的中文邮件"
+   "en": "Chinese work email",
+   "zh": "中文工作邮件"
   },
-  "writer": "GPT-5.6 luna",
-  "draft": "尊敬的李女士：\n\n您好！我是承租您位于北京市海淀区中关村南大街18号华景公寓3号楼502室的租户张伟。根据租赁合同约定，我计划于2024年12月31日正式退租，并在当天完成房屋清洁、物品搬离及钥匙交接。退租前，我会结清截至12月31日的水费、电费、燃气费及物业相关费用，并配合您检查房屋设施。如房屋及家具没有超出正常使用范围的损坏，烦请告知押金退还的具体流程、所需材料及预计到账时间。我此前支付的押金为人民币6,000元，退还账户为中国工商银行，户名张伟，账号尾号为2386。如需预约验房，也请您告知合适的日期和时间。感谢您的配合，期待您的回复。\n\n此致\n敬礼！\n\n张伟\n2024年12月10日",
-  "output": "李女士，您好！\n\n我是您租给我的北京市海淀区中关村南大街18号华景公寓3号楼502室的房客张伟，按照合同约定，我将在2024年12月31日正式退出租房，并在此日当天完成房屋清理、物品搬离及钥匙移交。退房前我会结清至2024年12月31日为止水费电费燃气费物业费用等，并且协助您一同检查房屋设施。如果房屋及家具无超出合理使用范围的损害请告知我押金退还的流程、材料要求以及退还到账时间。我交的押金为人民币6000元，退款银行账户为中国工商银行，户名张伟，账号尾号2386。如有需要预约验房的，请告知我您方便的验房日期时间。谢谢！期待您的回复！\n\n此致 敬礼！\n\n张伟\n2024年12月10日",
+  "writer": "Claude Sonnet",
+  "draft": "林晓，你好：\n\n近期产品部计划针对新版本迭代前的设计质量把控，成立\"产品设计评审小组\"，负责对各条线的原型稿、交互流程及视觉规范进行统一评审。经和王涛总监商量，我们都觉得你在用户体验和交互细节上的把控一直很到位，特别是上个月\"订单中心\"改版时提出的几处优化建议非常关键，所以想邀请你正式加入这个小组，一起把关后续的设计输出。\n\n小组目前初定成员为你、我、以及来自研发侧的赵敏，后续视情况再补充人手。第一次会议安排在9月25日（周五）下午3点，在3楼B会议室进行，预计时长1小时，议程如下：\n\n1. 小组职责与评审流程说明（15分钟）\n2. 现行\"消息中心\"模块原型评审，收集初步反馈（25分钟）\n3. 确定后续评审排期（每两周一次，暂定周三下午）与责任分工（15分钟）\n4. 其他事项与答疑（5分钟）\n\n麻烦你提前看一下附件中的\"消息中心\"原型稿（我稍后单独发你），会上会请你重点谈谈交互层面的看法。如果9月25日下午不方便，也请提前告诉我，我们再协调时间。\n\n期待你的加入，谢谢！\n\nDaniel",
+  "output": "林晓：\n\n产品部近期新版迭代前对设计质量控制的机制作了新的安排，拟组建一个\"产品设计评审小组\"，对各线产品原型/交互/视觉规范做统一的评审。我和王涛总监讨论后，认为你对用户体验和交互上的把握都很到位。尤其上个月订单中心改版，一些优化建议非常重要。故想邀请你加入这个小组，一起来把控后续产品设计。\n\n这个小组人员初步定为：你、我、研发赵敏。可以根据情况再适当增加。9月25日（周五）下午3点在3楼B会议室开第一次会。大概1小时时间。具体内容如下：\n\n1、介绍小组职责、评审机制等（15分钟）\n2、评审现有的消息中心模块原型，初步反馈意见。（25分钟）\n3、安排下一次评审时间（2周一次，暂定周三下午）。分工。 （15分钟）\n4、其他，问答。（5分钟）\n\n请你先看下附件里的消息中心原型（我再给你发一份单独的），会上会请你重点就交互上说下观点。若9月25日下午不方便，请提前通知我，我们再调整。\n\n期待你的加入！谢谢！\n\nDaniel",
   "words": [
-   243,
-   241
+   366,
+   334
   ],
-  "copy": 0.29,
+  "copy": 0.14,
   "numbers": [
-   9,
-   9
+   8,
+   8
   ],
   "judge_clean": true
  },
  {
   "id": "zh-social",
-  "case": "zh_social_12_glm",
+  "case": "zh_social_15_glm",
+  "sample": 4,
+  "of": 8,
   "lang": "zh",
   "genre": {
    "en": "Chinese social post",
    "zh": "中文社交帖"
   },
   "writer": "GLM-5.3",
-  "draft": "在杭州做了5年全职妈妈后，我重新找工作的72小时\n\n周一早上8点，我把女儿送到滨江的幼儿园，站在门口深吸一口气，打开了尘封5年的招聘软件。\n\n简历改到凌晨一点。老公阿哲说：“你这5年的空白期，HR会问的。”我在“工作经历”里补了一行：“2020-2025 独立运营家庭及社区项目”——听起来体面，其实就是带娃加组织了三年小区团购。\n\n周二上午接到第一个面试电话，是滨江一家电商公司招运营。对方问：“孩子谁带？”我说婆婆每周来帮忙三天。电话那头沉默了两秒：“我们加班比较多。”我说我可以加班，孩子爸爸也在杭州工作。她说“回去等通知”，我就知道没戏了。\n\n周三下午，第二家，武林广场附近的MCN公司。面试官是个94年的姑娘，看完我2019年做的双11活动复盘，眼睛亮了：“数据sense还在啊。”她没问我结没结婚，只问：“薪资预期？”我说了个比5年前低20%的数，她笑了：“我们给到的是你原来的数。”\n\n周四中午offer到了。走出幼儿园接娃的路上，我在钱塘江边哭了十分钟。\n\n5年，我以为自己被职场淘汰了，其实只是被暂停了。妈妈们，别怕，你的能力一直在。",
-  "output": "5年杭州全职妈妈，找工作72小时\n\n周一早上8点送完滨江幼儿园女儿，我站在大门外吸了一口气，开启了自己沉寂了5年的招聘软件。\n\n改简历熬到凌晨1点。老公阿哲说：“5年你这空白期HR会问你。”\n\n于是我在“工作经历”这一栏加了一条：2020-2025 独立运营家庭/社区项目\n\n（听起来很高级其实就是带娃组织小区团购3年啦）\n\n周二上午接到了第一个面试电话。\n\n是滨江这边一个电商公司，要招运营。\n\n“你孩子谁带？”\n\n“我婆婆一个礼拜过来三天”\n\n电话那边停顿了两秒，“我们加班挺多的”\n\n“我能加班，我娃爸也在杭州工作”\n\n“回去等通知”\n\n“……”\n\n知道没戏了\n\n周三下午第二个面试。\n\nMCN公司。\n\n武林广场附近。\n\n面试是个94年的妹子。\n\n她看着我双11的活动复盘2019年做的。\n\n眼睛一亮。\n\n“数据sense还在啊”\n\n她没问我结婚没。\n\n只问我“薪资预期？”\n\n我说我比5年前低20%吧。\n\n她笑了一下：“我们给你的薪资还是你原来的。”\n\n周四中午offer拿到了。\n\n走出来接娃在钱塘江边哭10分钟。\n\n5年我以为被职场淘汰。\n\n原来被暂停。\n\n妈妈们别害怕！\n\n你的能力在的。",
+  "draft": "从深圳回长沙定居整整一年了，今天翻账本算了一笔账，跟大家聊聊长沙的真实物价。\n\n先说住的。2023年9月，我们在梅溪湖附近租了个两室一厅，月租2300，同样的钱在深圳宝安只能租个单间。今年3月咬牙买了套二手房，单价1万2，比深圳便宜了整整六倍。\n\n吃的方面真的幸福感拉满。小区楼下的粉店，一碗肉丝粉8块钱，加个蛋10块，老板娘认识我以后还经常多给一勺码子。周末去四方坪夜市，两个人吃小龙虾加烧烤，150块吃到扶墙出。我在深圳科技园吃个普通工作餐都要三四十。\n\n交通成本也低。地铁起步价2块，我办了张卡，一个月通勤花费不到150。打出租车起步8块，上周从岳麓区到高铁站也就40来块。\n\n但也不是什么都便宜。水果价格跟深圳差不多，车厘子还是要五六十一斤。商场里像平和堂、IFS的衣服，价格和深圳没区别，甚至新款还更少。孩子上兴趣班，一节钢琴课200块，也不算便宜。\n\n最大的变化是生活节奏。以前在深圳加班到十点是常态，现在六点半下班，能赶回家吃口热饭。周末约上老同学张磊去湘江边钓鱼，一分钱不花，快乐加倍。\n\n收入确实降了三成左右，但存款反而比在深圳时多了。这个账，怎么算都不亏。",
+  "output": "深圳到长沙定居一年了，今天盘盘账本，来跟大家分享一下长沙的真·物价。\n\n2023年9月我们在梅溪湖附近租了个两房一厅，一个月2300。在深圳宝安同样的钱连单间都搞不定。今年3月狠心买了个二手房，单价1万2。便宜深圳6倍！\n\n真·爽！小区楼下肉丝粉，8块钱一碗，加个蛋10块。老板娘后来认识我之后还经常给我多加一勺码子。周末可以去四方坪夜市，两个人吃小龙虾，烧烤。150扶墙出。我在深圳科技园一个普通的工作餐都要30多40的\n\n起步价地铁2块钱。我办了张卡，一个月通勤不到150\n\n打的8块起步价，上周岳麓区去高铁站，也就40多。\n\n水果和深圳差不多。车厘子还是得五六十一斤\n\n商场，比如平和堂，IFS。衣服价格和深圳是一样的，而且新款还不如深圳多。\n\n孩子兴趣班，钢琴一节课200块，也不便宜。\n\n最大的改变就是生活节奏。以前深圳，经常加班10点，现在6点半下班能回家吃口热的。周末约老同学张磊，钓鱼湘江。一毛钱不花，快乐翻倍。\n\n虽然收入真的少了3成左右。但是存款比深圳多。真的算下来不亏。",
   "words": [
-   371,
-   354
+   413,
+   364
   ],
-  "copy": 0.13,
+  "copy": 0.12,
   "numbers": [
-   9,
-   9
+   11,
+   11
   ],
   "judge_clean": true
  }

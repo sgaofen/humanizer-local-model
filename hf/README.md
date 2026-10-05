@@ -255,7 +255,7 @@ If a chat reply greets you, repeats the instruction or doesn't stop, the file ha
 
 ## Before and after
 
-First samples of this release (the Q8_0 file) on drafts from the held-out evaluation set, not edited. Hand-picked and fact-checked by hand; results over the whole set are below.
+Drafts from the held-out evaluation set. For each we generated 8 samples with the Q8_0 file (llama.cpp, the app's settings) and picked the one that reads best among those the fact judge passed; it is shown unedited, and all 8 samples are [on GitHub](https://github.com/sgaofen/humanize-model/blob/main/eval/outputs/examples-12b-Q8_0_x8.json). These are picks: across the whole set the judge flagged 44 of the 420 English rewrites, 135 problems in all, 125 of them a single word or phrase. Read the result before you send it, especially numbers, dates and names. Results over the whole set are below.
 
 <img src="assets/compare-en-email.png" alt="Work email: draft and rewrite" width="100%">
 

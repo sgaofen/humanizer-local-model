@@ -1,0 +1,119 @@
+[
+ {
+  "case": "zh_email_02_luna",
+  "i": 1,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 4,
+   "evidence": "日期、金额、姓名等事实全部保留,如\"推迟到9月27号\"\"280元运费\"\"168元备用传感器\"\"李晨每日更新\";问候、落款、段落格式均保留;句式口语化改写但\"请您在9月25号之前跟我可以联系\"略生硬。"
+  }
+ },
+ {
+  "case": "zh_email_15_sonnet",
+  "i": 3,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 3,
+   "evidence": "时间、地点、成员、议程各时长、双周排期均保留；称呼'林晓：'与落款'Daniel'在；条列仍为条列。改动非逐字。但列表项过于省略（'其他，问答。''分工。'）且'我再给你发一份单独的'稍欠自然。"
+  }
+ },
+ {
+  "case": "zh_email_15_sonnet",
+  "i": 6,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 4,
+   "evidence": "所有事实保留：成员、赵敏、9月25日周五15点、3楼B会议室、议程时长、附件说明均一致；问候称呼与落款Daniel保留；条列议程保留；仅同义改写，如“每两周一次”改“2周一次”，非逐字。"
+  }
+ },
+ {
+  "case": "zh_email_15_sonnet",
+  "i": 7,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 3,
+   "evidence": "会议时间、地点、时长、四条议程及分钟数、成员、王涛、赵敏、订单中心建议等均保留；问候'林晓：'与落款'期待你的加入。谢谢！Daniel'保留。但'小组组成员'等语病及标点不自然，稍欠流畅。"
+  }
+ },
+ {
+  "case": "zh_social_09_glm",
+  "i": 0,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 3,
+   "evidence": "所有数字与事实保留：100斤白菜、5毛8一斤、1960年姥爷、1962年山东济宁、1980年两口大缸等。无新增内容，无问候落款，段落结构保留。但'踏上三轮车''汗流浃背一身棉袄''80斤也跟了回来'等表达生硬不自然。"
+  }
+ },
+ {
+  "case": "zh_social_11_sonnet",
+  "i": 0,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 3,
+   "evidence": "所有数字与事实保留：1100+、500、近3000、400、4800、680/年、晋阳宠物医院、11月底、6个月、3次急诊、牙线误吞。三坑结构保留。但\"稀拉拉\"\"养猫就溜达\"\"吓的我\"等表述生硬别扭，影响自然度。"
+  }
+ },
+ {
+  "case": "zh_social_15_glm",
+  "i": 4,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 3,
+   "evidence": "所有数字与事实保留(月租2300、1万2、8块粉、200块钢琴课、收入降三成等)。但\"真·物价\"\"真·爽\"\"钓鱼湘江\"等措辞生硬，多处缺标点如\"两个人吃小龙虾，烧烤\"，像刻意模仿网感而非自然写作。"
+  }
+ },
+ {
+  "case": "zh_zhihu_04_luna",
+  "i": 5,
+  "verdict": {
+   "facts_all_kept": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 4,
+   "evidence": "全部数字与要点保留：3月18日、1.3×0.9cm、4A、980元、4.8万、4月2日1.3cm、4月9日穿刺、Bethesda II类、6个月复查、李医生/张主任均在，段落结构未变，无新增事实。"
+  }
+ },
+ {
+  "case": "zh_zhihu_10_luna",
+  "i": 0,
+  "verdict": {
+   "facts_all_kept": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 4,
+   "evidence": "各事实基本保留，但DRAFT'总花费不到3000元'被改为'总花费在3000块左右'，从'少于3000'变为'约3000'，改变了数量与确定性；其余数字、学校、日期均一致。格式段落保留，无问候落款。"
+  }
+ }
+]

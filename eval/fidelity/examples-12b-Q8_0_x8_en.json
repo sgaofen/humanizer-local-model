@@ -1,0 +1,212 @@
+[
+ {
+  "case": "email_work_03_luna",
+  "i": 4,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 4,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "email_work_06_luna",
+  "i": 4,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 5,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "email_work_06_luna",
+  "i": 6,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 3,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "email_work_12_luna",
+  "i": 1,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 3,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "essay_student_11_sonnet",
+  "i": 0,
+  "verdict": {
+   "facts_all_kept": false,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 3,
+   "severity": "minor",
+   "evidence": "Drops concrete details: 'felt for weeks' timeframe lost; dad's resistance implied ongoing rather than overcome by getting the membership; 'hedge' framing lost."
+  }
+ },
+ {
+  "case": "essay_student_11_sonnet",
+  "i": 3,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 4,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "essay_student_17_sonnet",
+  "i": 2,
+  "verdict": {
+   "facts_all_kept": false,
+   "meaning_changed": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 4,
+   "severity": "minor",
+   "evidence": "\"around seventy\" became \"at least 70\", strengthening a hedged estimate into a floor; also \"ordinary citizens\" became \"all citizens\", but the number shift is the worst problem."
+  }
+ },
+ {
+  "case": "essay_student_17_sonnet",
+  "i": 3,
+  "verdict": {
+   "facts_all_kept": false,
+   "meaning_changed": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 3,
+   "severity": "minor",
+   "evidence": "'Around seventy enslaved people' became '70 or more', and 'about thirteen' became exact '13'/'13 missions completed' — quantified boundaries hardened without basis."
+  }
+ },
+ {
+  "case": "forum_answer_05_sonnet",
+  "i": 2,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 5,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "forum_answer_13_luna",
+  "i": 0,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 5,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "forum_answer_13_luna",
+  "i": 4,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 4,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "review_product_02_luna",
+  "i": 4,
+  "verdict": {
+   "facts_all_kept": false,
+   "meaning_changed": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": false,
+   "reads_like_person": 4,
+   "severity": "minor",
+   "evidence": "Dropped 'ambitious' and 'compelling'; 'haunted by the consequences of his work' becomes 'haunted by his actions', subtly shifting what burdens him."
+  }
+ },
+ {
+  "case": "review_product_09_sonnet",
+  "i": 0,
+  "verdict": {
+   "facts_all_kept": true,
+   "meaning_changed": false,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 5,
+   "severity": "none",
+   "evidence": "none"
+  }
+ },
+ {
+  "case": "review_product_09_sonnet",
+  "i": 2,
+  "verdict": {
+   "facts_all_kept": false,
+   "meaning_changed": true,
+   "added_content": false,
+   "greeting_signoff_kept": true,
+   "format_kept": true,
+   "identity": true,
+   "reads_like_person": 5,
+   "severity": "minor",
+   "evidence": "Dropped 'daily driver for two years'; '2,000-row spreadsheet' became '2000+ rows', shifting the quantified boundary."
+  }
+ }
+]

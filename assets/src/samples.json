@@ -2,208 +2,225 @@
  {
   "id": "en-email",
   "lang": "en",
-  "case": "email_work_09_luna",
+  "case": "email_work_06_luna",
+  "sample": 4,
+  "of": 8,
   "genre": "Work email",
   "model": "GPT-5.6 luna",
   "facts": [
    [
-    "Priya"
+    "Maya"
    ],
    [
-    "Fremont warehouse"
+    "January 20",
+    "1/20"
    ],
    [
-    "September 28–30",
-    "Sept 28th, 29th, and 30th"
+    "Northstar Operations"
    ],
    [
-    "8:00 a.m. to 4:30 p.m.",
-    "8:00 a.m.-4:30 p.m."
+    "Salesforce"
    ],
    [
-    "4,800 units"
+    "25, 50, or 100 users",
+    "25, 50, 100 users"
    ],
    [
-    "40 pounds",
-    "40lbs"
+    "Professional and Enterprise"
    ],
    [
-    "Miguel Santos"
+    "Friday, January 24",
+    "Friday 1/24"
    ],
    [
-    "7:45 a.m."
+    "20-minute call",
+    "20 minute call"
    ],
    [
-    "September 25",
-    "Sept 25th"
+    "February budget review",
+    "budget review for Feb"
    ],
    [
-    "September 28 and 29",
-    "28th and 29th"
+    "Jordan Lee"
    ]
   ],
-  "half": "a",
-  "draft": "Hi Priya,\n\nCould HR help us arrange two additional temporary staff members for our September inventory count at the Fremont warehouse? The count is scheduled for September 28–30, from 8:00 a.m. to 4:30 p.m., and we expect to process approximately 4,800 units across receiving, storage, and outbound staging.\n\nWe currently have six team members assigned, but two employees are out on scheduled leave and one is supporting a customer audit. Adding two temps would allow us to maintain normal shipping operations while completing the count accurately and on schedule.\n\nThe temporary staff would need basic warehouse experience, the ability to lift up to 40 pounds, and availability for all three days. Their main responsibilities would be scanning labels, recording quantities, and reconciling discrepancies under the supervision of Miguel Santos, our Inventory Control Lead. A short safety and process briefing will be provided at 7:45 a.m. on September 28.\n\nPlease let me know whether HR can source and onboard two people by September 25. If temporary staff are unavailable for all three days, coverage for September 28 and 29 would still be very helpful.\n\nThank you,\n\nJordan Lee",
-  "output": "Hey Priya,\n\nIs there any way that HR can help bring us two more temporary employees for our inventory count in our Fremont warehouse in September? The inventory count will be taking place on Sept 28th, 29th, and 30th (8:00 a.m.-4:30 p.m.)\n\nWe're going to be counting about 4,800 units in and out of the warehouse (receiving, storage, outbound staging).\n\nRight now we've got 6 people working on it. However, 2 of them are on planned leave and another is helping out on a customer audit. If we could get 2 temp employees that would help us keep up normal shipping and still get the count accurate and on schedule.\n\nWe would need them to have some warehouse experience. Be able to lift up to 40lbs. Be available all 3 days. Mostly just scanning labels and noting quantities, resolving discrepancies. They'd be working under the Inventory Control Lead Miguel Santos. (We'll do a quick safety/process briefing at 7:45 a.m. Sept 28th)\n\nIf HR can find and get 2 people onboard by Sept 25th? If we can't get any temps for all 3 days it would be really beneficial if we could at least get covered for the 28th and 29th.\n\nThanks,\n\nJordan Lee"
+  "half": "b",
+  "draft": "Hi Maya,\n\nThank you again for joining our software demo on January 20. I appreciated the thoughtful questions from you and the Northstar Operations team, especially around user permissions, reporting, and integration with Salesforce.\n\nI wanted to follow up and see whether your team needs a detailed pricing breakdown as you evaluate next steps. We can provide costs by license type, implementation services, training, and optional add-ons, along with estimates for 25, 50, or 100 users. I’d also be happy to outline the differences between our Professional and Enterprise plans.\n\nIf helpful, I can send the breakdown by Friday, January 24, or schedule a brief 20-minute call to walk through it. Please let me know what would be most useful as you prepare for your February budget review.\n\nBest,\nJordan Lee",
+  "output": "Hey Maya -\n\nThanks for taking the time to join our software demo on 1/20. I appreciated the questions from you and your team at Northstar Operations around user permissions, reporting and Salesforce integration in particular.\n\nJust checking back in to see if you're looking for a more specific breakdown of pricing while you assess your options moving forward. Specifically I can give you a breakdown of pricing by license, implementation services, training, additional features (if interested) and estimated cost for 25, 50, 100 users. Also, I'd be happy to go over the difference between our Professional and Enterprise plans.\n\nIf it would be useful, I can send you a breakdown by Friday 1/24. Alternatively we could set up a quick 20 minute call to discuss. Let me know what would be most helpful as you go through your budget review for Feb.\n\nBest,\nJordan Lee"
  },
  {
   "id": "en-forum",
   "lang": "en",
-  "case": "forum_answer_00_glm",
+  "case": "forum_answer_05_sonnet",
+  "sample": 2,
+  "of": 8,
   "genre": "Forum answer",
-  "model": "GLM-5.3",
+  "model": "Claude Sonnet",
   "facts": [
    [
-    "acetone"
+    "20-30 minutes",
+    "20-30 min"
    ],
    [
-    "48–72 hours"
+    "400°F (200°C)",
+    "400F (200C)"
    ],
    [
-    "acetic acid and esters"
+    "15-20 minutes",
+    "15-20 min"
    ],
    [
-    "rye, whole wheat",
-    "rye or whole wheat"
+    "10-12 minutes",
+    "10-12 min"
    ],
    [
-    "3–4 days"
+    "165°F (74°C)",
+    "165F (74C)"
    ],
    [
-    "every 12 hours instead of every 24",
-    "every 12 hours instead of every 24 hours"
+    "375°F (190°C)",
+    "375F (190C)"
    ],
    [
-    "1:1:1"
+    "4-6 minutes",
+    "4-6 min"
    ],
    [
-    "50g starter, 50g flour, 50g water",
-    "50g starter : 50g flour : 50g water"
+    "KFC-style thighs",
+    "kfc style thighs"
    ],
    [
-    "78°F",
-    "78f"
+    "Popeye's tenders",
+    "popeyes tenders"
    ],
    [
-    "above 75°F",
-    "warmer than 75f"
+    "60-90 seconds"
    ],
    [
-    "68–75°F",
-    "68-75f"
-   ],
-   [
-    "days 4–6",
-    "day 4-6"
-   ],
-   [
-    "days 7–10"
-   ],
-   [
-    "4–6 hours"
-   ],
-   [
-    "pink or orange streaks",
-    "pink/orange streaks"
-   ],
-   [
-    "March 2021",
-    "march 2021"
+    "30 seconds"
    ]
   ],
-  "half": "b",
-  "draft": "That acetone/nail polish remover smell is completely normal for a young starter — it's a sign of fermentation, not failure.\n\n**What's happening:** After about 48–72 hours, the wild yeast and bacteria in your flour begin producing acetic acid and esters as they consume the starches. When the starter runs low on fresh food between feedings, the bacterial activity shifts and produces acetone-like compounds. It's especially common with whole grain flours (rye, whole wheat) because they ferment faster and more aggressively than all-purpose.\n\n**How to fix it:**\n\n1. **Feed more frequently.** For the next 3–4 days, feed your starter every 12 hours instead of every 24. Use a 1:1:1 ratio by weight (e.g., 50g starter, 50g flour, 50g water at roughly 78°F).\n\n2. **Check your flour-to-water balance.** If your starter is too thin, acids accumulate faster. A slightly thicker consistency (equal parts by weight) slows things down.\n\n3. **Keep the temperature steady.** If your counter is above 75°F (like near an oven or in a warm kitchen), fermentation accelerates and the starter exhausts its food supply quickly. Aim for 68–75°F. I keep mine next to the coffee maker away from the stove and it made a huge difference.\n\n**What to expect:** Around days 4–6 the smell often gets *worse* before it gets better — it can shift to gym socks or vomit-like odors as different bacterial populations battle it out. Don't panic and don't dump it. By days 7–10, most starters settle into a pleasant yeasty, slightly tangy, apple-cider vinegar smell with reliable rising (doubling within 4–6 hours of feeding).\n\n**When to actually worry:** Only if you see pink or orange streaks (mold) or fuzzy growth on the surface. The acetone smell alone is not a reason to discard — your starter is just hungry. Keep feeding on a consistent schedule and it will normalize.\n\nSource: kept the same starter going since March 2021, and it smelled like a nail salon every time I neglected it for a day too long.",
-  "output": "It’s completely normal for a newby to get that acetone (nailpolish remover) smell! It means it’s fermenting, not dying! \n What’s going on: after ~48-72 hours, the wild yeast & bacteria in your flour are producing acetic acid and esters as they eat through the starches. As the starter gets low on food between feedings, the bacteria will change it’s game and start putting out some acetone-y smells. This is especially true with whole grain flours like rye or whole wheat as they ferment faster/harder than your typical AP flour. \n How to fix: \n 1. Feed it more often. For the next 3-4 days, try feeding every 12 hours instead of every 24 hours. You want to do a 1:1:1 weight ratio (50g starter : 50g flour : 50g water ~78f) \n 2. Are you diluting it too much? If it’s too thin, the acids build up faster. Slightly thicker (equal parts by weight) will slow it down. \n 3. Is your counter warmer than 75f (near oven/warm kitchen)? This can speed up the fermentation and make it eat all it’s food faster. Try to keep between 68-75f. I put mine next to my coffee maker (not near stove) and it made a HUGE difference. \n What happens: often, day 4-6 it can actually start smelling worse. Like gym socks or vomit. It’s different bacterial populations duking it out. Don’t freak out! Don’t throw it away. By days 7-10, most starters will start to have a pleasant yeasty/slightly tangy/apple cider vinegar smell. It will also start to rise reliably (doubles 4-6 hours after a feed) \n When to really worry: if you see pink/orange streaks (mold) or furry stuff on top. Not to worry just because it smells like acetone. It’s just hungry. Stick to a consistent feeding schedule and it’ll be fine. \n source: I’ve been working on the same starter since march 2021. It smelled like a nail salon every time I forgot to feed it for a day too long 😅"
+  "half": "a",
+  "draft": "The oven (or better, a toaster oven / air fryer) beats the microwave every time — microwaving turns crust into rubbery cardboard because it just heats the moisture trapped in the breading.\n\nHere's what actually works:\n\n1. **Let the chicken come to room temp** for about 20-30 minutes before reheating. Cold-to-hot straight from the fridge cooks unevenly and you end up overshooting the outside to get the center warm.\n\n2. **Preheat oven to 400°F (200°C).** Set a wire rack inside a sheet pan — this is the part people skip and it matters most. Air circulating underneath keeps the bottom from steaming and going soggy, which is exactly what happens if you lay the pieces directly on the pan.\n\n3. **Bake bone-in pieces 15-20 minutes, boneless/tenders 10-12 minutes**, flipping once halfway through. You're aiming for an internal temp of 165°F (74°C) — check with an instant-read thermometer at the thickest part near the bone.\n\n4. **Skip foil or covering it** — that traps steam and undoes the whole point.\n\nIf you have an air fryer, it's even faster and arguably crispier: 375°F (190°C) for 4-6 minutes, no flipping needed since it circulates air on all sides. I've done this with leftover KFC-style thighs and Popeye's tenders and both came out nearly as crisp as fresh.\n\nOne more trick if the crust still feels a little soft after reheating: pop it under the broiler for the last 60-90 seconds, watching closely so it doesn't burn. That extra blast of direct heat crisps up any spots the convection missed.\n\nAvoid the microwave entirely unless you truly don't care about the crust — even 30 seconds will noticeably soften it.",
+  "output": "The oven (toaster oven/air fryer is even better) is vastly superior to the microwave, as microwaving just heats the water inside the breading so you're left with rubbery cardboard crust.\n\nHere's how to do it:\n\n1. Bring the chicken to room temp for 20-30 min before re-heating.  When you go from cold to hot from fridge, it's gonna be uneven and you'll overcook the outside to try to get the inside warmed up.\n\n2. Put oven on 400F (200C).  Put a wire rack on a sheet pan.  (This is the key part that most people forget.)  Having air circulation below prevents the bottom from turning into steam and getting soggy like it will if you put them directly on the sheet pan.\n\n3. Cook bone-in pieces for 15-20 min, and boneless/tenders for 10-12 min.  Flip after half the time.  Shoot for internal temp of 165F (74C)  Test with instant read thermometer in thickest part, near the bone.\n\n4. Don't wrap in foil or cover it.  This will just lock in steam and ruin everything.\n\nIf you have an air fryer, this will go even faster and probably be crispier.  375F (190C) for 4-6 min.  No need to flip because the air circulation is going around all sides.  I've reheated leftovers from kfc style thighs and popeyes tenders in the air fryer, and both got almost as crispy as new.\n\nIf the crust is still slightly soft after re-heating, the last trick is to blast it under the broiler for the final 60-90 seconds.  Just watch it so it doesn't burn.  This will give it another hit of direct heat to crisp up the spots that weren't as crispy from convection.\n\nThe microwave is a hard no unless you just don't care about the crust at all.  Even 30 seconds will make it noticeably softer."
  },
  {
   "id": "zh-email",
   "lang": "zh",
-  "case": "zh_email_12_sonnet",
+  "case": "zh_email_15_sonnet",
+  "sample": 3,
+  "of": 8,
   "genre": "工作邮件",
   "model": "Claude Sonnet",
   "facts": [
    [
-    "李总"
+    "林晓"
    ],
    [
-    "50万元",
-    "50W"
+    "王涛总监"
    ],
    [
-    "2024年1月"
+    "\"订单中心\"",
+    "订单中心"
    ],
    [
-    "今年3月",
-    "今年三月份"
+    "赵敏"
    ],
    [
-    "王工"
+    "9月25日（周五）下午3点"
    ],
    [
-    "2025年10月1日"
+    "3楼B会议室"
    ],
    [
-    "2026年9月30日"
+    "预计时长1小时",
+    "大概1小时"
    ],
    [
-    "项目经理张敏"
+    "15分钟"
    ],
    [
-    "9月底前"
+    "25分钟"
+   ],
+   [
+    "每两周一次",
+    "2周一次"
+   ],
+   [
+    "暂定周三下午"
+   ],
+   [
+    "\"消息中心\"",
+    "消息中心"
+   ],
+   [
+    "Daniel"
    ]
   ],
-  "half": "a",
-  "draft": "李总，您好！\n\n非常感谢您与我方续签2025年度服务合同！刚刚收到合同部转来的最终盖章版本，得知贵司决定继续携手，金额约为50万元人民币，我们全体团队都感到十分振奋，也倍感荣幸。\n\n回顾过去一年的合作，从2024年1月项目启动至今，我们双方团队在系统运维支持、季度数据分析以及月度业务咨询等方面配合默契，尤其是今年3月那次紧急数据迁移，贵司技术团队与我方王工连夜协作、顺利完成上线，这份信任和默契让我们印象深刻。此次能够续约，是对我们过去一年工作成果最好的肯定，也是双方长期合作关系的又一重要里程碑。\n\n新一轮合同将于2025年10月1日正式生效，服务期限至2026年9月30日。我们已安排项目经理张敏在9月底前与贵司对接团队沟通交接细节，确保服务无缝衔接。同时，针对贵司在上次季度会议中提出的响应速度优化建议，我们也已纳入新一年的服务改进计划，力求为贵司提供更高效、更贴心的支持。\n\n再次感谢您和贵司团队一直以来的支持与信任。期待新一年继续携手并进，共创佳绩。如有任何问题或需要进一步沟通的事项，请随时联系我。\n\n祝商祺！\n\n此致\n敬礼",
-  "output": "李总：\n\n感谢您跟我们延续2025年的服务合同。刚刚接了合同部传过来的最后的盖章合同。欣喜看到贵司还是选择跟我们继续合作，金额大约50W人民币。我们团队听闻这个消息之后，非常振奋，也很荣幸。\n\n从我们2024年1月的项目启动到现在一年时间，我们团队和贵司在系统运维支持，季度数据分析，月度业务咨询等方面的配合非常顺畅。尤其是今年三月份的紧急数据迁移，贵司技术团队跟我们王工一起加班加点顺利上线。让我们深刻体会到对我们的信任和彼此默契。这次能延续下来，就是对我们过去一年工作成果最好的嘉奖。也是我们双方长期合作的重要里程碑事件。\n\n新的合同在2025年10月1日开始生效。服务到期时间为2026年9月30日。我们安排好项目经理张敏在9月底前跟贵司对接团队来交接后续的细节。让后续服务无缝衔接。我们也有针对贵司在上次季度会议上面关于响应时间速度改善建议。我们也在新一年的服务中纳入到优化范围。让我们可以给到贵司更高效，更贴心的服务。\n\n再次感谢您和贵司团队对我们的支持和信任。新的一年，我们期待与您再次共创辉煌。有什么问题，需要沟通的，请随时跟我沟通。\n\n祝商祺！\n\n此致\n敬礼！"
+  "half": "b",
+  "draft": "林晓，你好：\n\n近期产品部计划针对新版本迭代前的设计质量把控，成立\"产品设计评审小组\"，负责对各条线的原型稿、交互流程及视觉规范进行统一评审。经和王涛总监商量，我们都觉得你在用户体验和交互细节上的把控一直很到位，特别是上个月\"订单中心\"改版时提出的几处优化建议非常关键，所以想邀请你正式加入这个小组，一起把关后续的设计输出。\n\n小组目前初定成员为你、我、以及来自研发侧的赵敏，后续视情况再补充人手。第一次会议安排在9月25日（周五）下午3点，在3楼B会议室进行，预计时长1小时，议程如下：\n\n1. 小组职责与评审流程说明（15分钟）\n2. 现行\"消息中心\"模块原型评审，收集初步反馈（25分钟）\n3. 确定后续评审排期（每两周一次，暂定周三下午）与责任分工（15分钟）\n4. 其他事项与答疑（5分钟）\n\n麻烦你提前看一下附件中的\"消息中心\"原型稿（我稍后单独发你），会上会请你重点谈谈交互层面的看法。如果9月25日下午不方便，也请提前告诉我，我们再协调时间。\n\n期待你的加入，谢谢！\n\nDaniel",
+  "output": "林晓：\n\n产品部近期新版迭代前对设计质量控制的机制作了新的安排，拟组建一个\"产品设计评审小组\"，对各线产品原型/交互/视觉规范做统一的评审。我和王涛总监讨论后，认为你对用户体验和交互上的把握都很到位。尤其上个月订单中心改版，一些优化建议非常重要。故想邀请你加入这个小组，一起来把控后续产品设计。\n\n这个小组人员初步定为：你、我、研发赵敏。可以根据情况再适当增加。9月25日（周五）下午3点在3楼B会议室开第一次会。大概1小时时间。具体内容如下：\n\n1、介绍小组职责、评审机制等（15分钟）\n2、评审现有的消息中心模块原型，初步反馈意见。（25分钟）\n3、安排下一次评审时间（2周一次，暂定周三下午）。分工。 （15分钟）\n4、其他，问答。（5分钟）\n\n请你先看下附件里的消息中心原型（我再给你发一份单独的），会上会请你重点就交互上说下观点。若9月25日下午不方便，请提前通知我，我们再调整。\n\n期待你的加入！谢谢！\n\nDaniel"
  },
  {
   "id": "zh-zhihu",
   "lang": "zh",
-  "case": "zh_zhihu_08_sonnet",
+  "case": "zh_zhihu_04_luna",
+  "sample": 5,
+  "of": 8,
   "genre": "知乎回答",
-  "model": "Claude Sonnet",
-  "excerpt": 4,
+  "model": "GPT-5.6 luna",
   "facts": [
    [
-    "天猫 · 京东 · 抖音 · 线下经销商"
+    "2025年3月18日",
+    "2025年3月18号"
    ],
    [
-    "6-7个小时",
-    "6、7h"
+    "1.3×0.9厘米",
+    "1.3×0.9cm"
    ],
    [
-    "40分钟以内"
+    "C-TIRADS 4A",
+    "C-TIRADS是4A"
    ],
    [
-    "每周一早上"
+    "3月21日",
+    "3月21号"
    ],
    [
-    "4个后台"
+    "980元"
    ],
    [
-    "TM-001 · JD_001"
+    "4.8万元",
+    "4.8万块"
    ],
    [
-    "2小时",
-    "2h"
+    "浙江大学医学院附属第一医院"
    ],
    [
-    "3小时起步",
-    "3h起步"
+    "100多元",
+    "100多"
    ],
    [
-    "Python · pandas · openpyxl"
+    "不到700元",
+    "不到700"
    ],
    [
-    "pd.read_excel · dict · merge · map"
+    "4月2日",
+    "4月2号"
+   ],
+   [
+    "4月9日",
+    "4月9号"
+   ],
+   [
+    "Bethesda II类"
+   ],
+   [
+    "6个月"
    ]
   ],
-  "paras_total": [
-   8,
-   8
-  ],
   "half": "a",
-  "draft": "我在一家消费品公司做运营分析,团队每周要处理各渠道(天猫、京东、抖音、线下经销商)的销售数据,合并、清洗、对账、出周报,以前这套流程雷打不动要花我6-7个小时,现在压缩到40分钟以内。分享一下具体怎么做的。\n\n先说清楚痛点:每周一早上,我要从4个后台各导一份Excel,格式还都不一样——天猫的SKU编码是\"TM-001\",京东是\"JD_001\",抖音干脆用商品名。人工对照、改列名、删重复行、核对总金额,光这一步就要2小时。然后要按品类汇总、算环比、标红异常波动,再贴进PPT模板,又是3小时起步。\n\n我用的方案是Python + pandas + openpyxl,分三层:\n\n第一层,数据清洗脚本。用pandas读取4份Excel(pd.read_excel),写了一个映射表(dict)把不同渠道的SKU编码统一到公司内部编码,再用merge把品类主表拼进去。这一步以前靠人眼对照,现在map函数一秒钟跑完,而且不会看错行。",
-  "output": "我在一家消费品公司做运营分析，每周要从各个渠道(天猫，京东，抖音，线下经销商)提销售数据，然后合并数据、清洗数据，对账，再做周报。以前这套流程固定雷打不动要6、7h才能搞定，现在能在40分钟以内搞定。现总结一下方法。\n\n痛点是什么？每周一早上我需要从4个后台提数据，提成4个excel格式，且各平台sku编码格式不一样。天猫会是TM-001，京东是JD_001，抖音用商品名……然后我需要一一对应起来，修改列名，去除重复行，再核对总额是否一致，光这一步就需要2h了。之后还需要按照品类汇总，环比，异常波动用红字标出，再粘贴到ppt模板上。3h起步。\n\n方法呢，我使用的是Python，pandas，openpyxl，三个层面:\n\n第一层是数据清洗脚本。使用pandas读取4份excel，pd.read_excel。然后准备一个映射表，dict类型，然后将不同渠道的sku编码映射为公司内部的sku编码。再使用merge与品类主表拼接。以前是手动一个个匹配，现在好了，map函数一秒钟就能搞定。并且不会出错。不会错行了。"
+  "draft": "2025年3月18日，我在杭州体检中心拿到报告：右叶有一个约1.3×0.9厘米的结节，C-TIRADS 4A。看到“可疑恶性”四个字时，我第一反应是去私立医院，想着环境好、预约快，最好当天就能把问题解决。\n\n3月21日，我去了城西一家私立专科医院，挂了李医生的号。问诊加超声一共980元，医生建议尽快穿刺，并告诉我如果确诊，手术套餐大约4.8万元。整个过程服务很周到，但我回家后发现，医生几乎没问家族史、既往超声变化，也没有详细看颈部淋巴结。我开始犹豫：这到底是专业判断，还是销售流程太顺了？\n\n3月25日，我又挂了浙江大学医学院附属第一医院甲状腺外科张主任的专家号。挂号费100多元，超声、甲功和相关检查加起来不到700元。张主任看完片子后说，4A只是超声风险分层，不等于癌症；我的结节边界尚清，颈部暂未见异常淋巴结，可以选择复核超声，也可以根据尺寸、形态和个人情况考虑穿刺。他还提醒我，穿刺是否必要，要看具体分级标准和结节大小，不能只凭“4A”三个字决定。\n\n最后我选择在三甲医院完成复查和穿刺。4月2日复查超声，结节仍为1.3厘米；4月9日做超声引导下细针穿刺，病理结果为Bethesda II类，倾向良性。医生让我6个月复查一次，不需要吃药，也不用盲目忌碘。\n\n这次经历让我明白，三甲和私立不是谁一定更好：私立的优势是预约快、服务细；三甲的优势是检查路径完整、学科协作和后续处理更稳。我的选择标准很简单：先在有规范诊疗流程的医院把性质弄清楚，再决定是否需要手术或长期管理。别被“4A”吓到，也别因为私立环境好就立刻签手术套餐。",
+  "output": "2025年3月18号，在杭州体检中心，右叶看到一个1.3×0.9cm左右的结节，C-TIRADS是4A。看到可疑恶性四个字，第一反应就是去私立医院吧，环境好预约快点，当天能不能解决最好。\n\n3月21号，到城西一个私立的专科医院，预约了李医生的号。挂号问诊+超声，一共980元，医生的建议就是尽快穿刺，并提示如果明确了，手术套餐大概4.8万块。总体服务非常好，但是回家的路上感觉医生没有特别询问家族史，之前的超声变化，也没细看颈部淋巴情况。这到底是因为专业还是流程太顺了，有点拿不定主意。\n\n3月25号，再到浙江大学医学院附属第一医院甲状腺外科，预约了张主任的专家号。挂号大概100多，超声加甲功等相关检查加起来不到700。张主任看了片子后说4A就是超声的分级风险。不代表就是癌症。因为结节本身边界比较清楚，目前还没有看到颈部异常的淋巴结。可以考虑复查超声，或者根据尺寸形态以及你的情况考虑穿刺。还需要提醒的是根据分级标准和大小决定穿不穿刺，不能就按照4A这个字去做判断。\n\n最后选择在三甲医院做一个复查和穿刺。4月2号复查超声，结节1.3cm还是1.3cm，4月9号做了一个超声引导下的细针穿刺。病理是Bethesda II类。倾向于良性。复查时间医生给到6个月，不用吃药，也不用盲目忌碘。\n\n三甲还是私立，谁也不一定更好。私立的好处是能快点预约和细致服务。三甲的好处在于整套流程，科室协作以及后续。我比较简单粗暴的原则是，先在有完善诊疗流程的医院把性质弄清楚。然后判断是需要手术还是长期管理。不要因为4A这个字慌，也不要因为私立环境好就直接签了手术套餐。"
  }
 ]

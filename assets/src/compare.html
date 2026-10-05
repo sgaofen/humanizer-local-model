@@ -49,11 +49,11 @@ const zh = s.lang === 'zh';
 document.documentElement.lang = zh ? 'zh-CN' : 'en';
 
 const T = zh ? {
-  lang: '中文', meta: '留出评测集草稿 · 第一发 · 未经修改', excerpt: (a) => `节选:全文 ${a} 段中的前 ${s.excerpt} 段`,
+  lang: '中文', meta: `留出评测集草稿 · ${s.of} 发里挑的一发 · 未经修改`, excerpt: (a) => `节选:全文 ${a} 段中的前 ${s.excerpt} 段`,
   d: '草稿', ds: 'AI 写的原稿', r: '改写', rs: '像人写的', by: `${s.model} 写`, me: 'humanizer 12B',
   kept: '保住的事实', ins: '新写的', del: '被改掉的', src: `case ${s.case}`,
 } : {
-  lang: 'English', meta: 'held-out eval draft · first sample · unedited', excerpt: (a) => `excerpt: first ${s.excerpt} of ${a} paragraphs`,
+  lang: 'English', meta: `held-out eval draft · 1 of ${s.of} samples · unedited`, excerpt: (a) => `excerpt: first ${s.excerpt} of ${a} paragraphs`,
   d: 'Draft', ds: 'what the AI wrote', r: 'Rewrite', rs: 'reads like a person', by: `by ${s.model}`, me: 'humanizer 12B',
   kept: 'Facts kept', ins: 'new wording', del: 'replaced', src: `case ${s.case}`,
 };
