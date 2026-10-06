@@ -181,6 +181,8 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 
 ### 量化版本
 
+所有 GGUF 文件连同这张表和制作方法，另有一个专门的仓库：**[jialinyyzz/humanizer-GGUF](https://huggingface.co/jialinyyzz/humanizer-GGUF)**。`jialinyyzz/humanizer` 里的文件照旧保留，这里的下载命令不受影响。
+
 | 文件 | 一句话 | 位数 / 类型 | 大小 | Mac 峰值内存 ¹ | 与 bf16 的 KL，英 / 中 ² | 同档普通 `llama-quantize` 版：KL 英 / 中（首选词一致）² | 首选词与 bf16 一致，英 / 中 ² | 事实检查（GLM）：标出篇数 · 列出几处 ³ | 同 60 篇被判 AI ⁵ |
 |---|---|---|---|---|---|---|---|---|---|
 | `humanizer-12b-bf16.gguf` | 基准（全精度） | 16 bit（bf16） | 23.8 GB | 约 24.8 GB（估） | 0（基准） | | 100%（基准） | 英 52 篇 · 160 处 <br> 中 50 篇 · 216 处 | 4 / 60 |
