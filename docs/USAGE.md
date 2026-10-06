@@ -1,10 +1,10 @@
 # Using humanizer without the app
 
-[中文](USAGE.zh.md) · [README](https://github.com/sgaofen/humanize-model#readme) · [AGENTS.md (for AI agents)](https://github.com/sgaofen/humanize-model/blob/main/AGENTS.md) · [Model files on Hugging Face](https://huggingface.co/jialinyyzz/humanizer/tree/main)
+[中文](USAGE.zh.md) · [README](https://github.com/sgaofen/humanizer-local-model#readme) · [AGENTS.md (for AI agents)](https://github.com/sgaofen/humanizer-local-model/blob/main/AGENTS.md) · [Model files on Hugging Face](https://huggingface.co/jialinyyzz/humanizer/tree/main)
 
-This guide is for people who want to run humanizer from their own code or the command line instead of the [desktop app](https://github.com/sgaofen/humanize-model/releases/latest). Every block can be copied as is.
+This guide is for people who want to run humanizer from their own code or the command line instead of the [desktop app](https://github.com/sgaofen/humanizer-local-model/releases/latest). Every block can be copied as is.
 
-**Just want to rewrite files?** The `hz` command does the prompt, the sampling, the splitting of long documents and the checks for you, on top of the app or a llama-server: `pipx install git+https://github.com/sgaofen/humanize-model`, then `hz draft.md -o out.md`. See [section 14](#14-hz-command-line-tool).
+**Just want to rewrite files?** The `hz` command does the prompt, the sampling, the splitting of long documents and the checks for you, on top of the app or a llama-server: `pipx install git+https://github.com/sgaofen/humanizer-local-model`, then `hz draft.md -o out.md`. See [section 14](#14-hz-command-line-tool).
 
 **Contents:** [1. What makes this model different](#1-what-makes-this-model-different) · [2. Pick a file](#2-pick-a-file) · [3. llama.cpp](#3-llamacpp-recommended) · [4. MLX](#4-mlx-apple-silicon) · [5. transformers](#5-transformers-cuda) · [6. vLLM](#6-vllm) · [7. Ollama](#7-ollama) · [8. LM Studio](#8-lm-studio) · [9. Rewrite a whole folder](#9-rewrite-a-whole-folder) · [10. Long documents](#10-long-documents) · [11. Chinese](#11-chinese) · [12. Quality checklist](#12-quality-checklist) · [13. Troubleshooting](#13-troubleshooting) · [14. hz command-line tool](#14-hz-command-line-tool)
 
@@ -75,15 +75,16 @@ All files are in [`jialinyyzz/humanizer`](https://huggingface.co/jialinyyzz/huma
 |---|---|---|
 | 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 bytes (about 12.7 GB) |
 | 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,584 bytes (about 10.0 GB) |
-| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, the smallest 12B file | 7,625,160,864 bytes (about 7.6 GB) |
-| 8 GB | Not enough for the 12B model. Q4_K_M needs about 12 GB. | |
+| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, quantization-aware trained; needs about 12 GB | 7,625,160,864 bytes (about 7.6 GB) |
+| Less than 12 GB | `humanizer-12b-Q3-QAT.gguf`, 3-bit class; plan for about 8 GB of free memory. A few more fact slips in English: check numbers and names | 5,587,794,816 bytes (about 5.6 GB) |
+| Less still | `humanizer-12b-IQ2_XS-QAT.gguf`, 2-bit, the smallest; plan for about 6 GB. More fact slips: check numbers and names | 3,893,632,896 bytes (about 3.9 GB) |
 
 Also in the repo:
 
 - `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB): the unquantised 12B as one GGUF, for reference or for quantising yourself.
 - `model.safetensors` (bf16, about 24 GB) with `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` and `prompt_format.json` at the root: what transformers, vLLM and the MLX converter use.
 
-**How much the quantised files differ from bf16.** In all three GGUF files the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. KL was measured over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data). The last column is the strict fact judge from the README on all 420 English rewrites of the evaluation set, run on each file with llama.cpp.
+**How much the quantised files differ from bf16.** In Q8_0, Q6_K and Q4_K_M the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. KL was measured over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data). The last column is the strict fact judge from the README on all 420 English rewrites of the evaluation set, run on each file with llama.cpp.
 
 | File | Mean KL vs. bf16 | Top token same as bf16 | Perplexity | No factual problem (English) |
 |---|---|---|---|---|
@@ -91,10 +92,12 @@ Also in the repo:
 | Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
 | Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
 | Q4_K_M (updated 2026-10-04, see below) | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
+| Q3 (`Q3-QAT`, added 2026-10-05) | 0.0300 ¹ | 93.6% ¹ | | 356 / 420 |
+| 2-bit (`IQ2_XS-QAT`) | 0.106 ¹ | 87.7% ¹ | | 350 / 420 |
 
-Compared draft by draft with bf16, all three files are within noise on the fact judge.
+Compared draft by draft with bf16, Q8_0, Q6_K and Q4_K_M are within noise on the fact judge. Q3 and 2-bit make a few more fact slips in English (64 and 70 rewrites flagged, against 52 for bf16), mostly a single word or number; in Chinese Q3 is on par with bf16 (53 vs. 50 of 204 flagged). Full table, Chinese results and how these two were made: [README, Quantized versions](https://github.com/sgaofen/humanizer-local-model#quantized-versions) or the [GGUF repo](https://huggingface.co/jialinyyzz/humanizer-GGUF).
 
-**Q4_K_M was refined on 2026-10-04 with quantization-aware training:** same size and format, about 1/3 lower KL to the full-precision model than a standard Q4_K_M. ¹ Measured on a larger KL set (30 blocks of English drafts and rewrites), where the standard Q4_K_M scores 0.0203 and 94.5% (Chinese: 0.0146 vs. 0.0225). On the fact judge, compared draft by draft with the standard Q4_K_M, it is within noise: 58 vs. 56 of 420 English rewrites flagged, 162 vs. 163 problems listed by the second pass, more than 9 in 10 of them a single word or phrase.
+**Q4_K_M was refined on 2026-10-04 with quantization-aware training:** same size and format, about 1/3 lower KL to the full-precision model than a standard Q4_K_M. ¹ Measured on a larger KL set (30 blocks of English drafts and rewrites), where the standard Q4_K_M scores 0.0203 and 94.5% (Chinese: 0.0146 vs. 0.0225). On the fact judge, compared draft by draft with the standard Q4_K_M, it is within noise: 58 vs. 56 of 420 English rewrites flagged, 162 vs. 163 problems listed by the second pass, more than 9 in 10 of them a single word or phrase. Q3 and 2-bit were measured on the same larger set (Chinese: 0.0318 and 0.106; Q3 on an A30, the others on an A100).
 
 **Download:**
 
@@ -102,8 +105,10 @@ Compared draft by draft with bf16, all three files are within noise on the fact 
 pip install -U "huggingface_hub[cli]"
 hf download jialinyyzz/humanizer humanizer-12b-Q8_0.gguf prompt_format.json --local-dir ./humanizer-model
 # 16 GB machine: humanizer-12b-Q6_K.gguf instead of humanizer-12b-Q8_0.gguf (or humanizer-12b-Q4_K_M.gguf if disk is tight)
+# less memory: humanizer-12b-Q3-QAT.gguf, or the smallest, humanizer-12b-IQ2_XS-QAT.gguf
 # Slow from mainland China: put HF_ENDPOINT=https://hf-mirror.com in front of the command
-wc -c ./humanizer-model/*.gguf     # Q8_0: 12669630368 bytes, Q6_K: 10029799584 bytes, Q4_K_M: 7625160864 bytes
+wc -c ./humanizer-model/*.gguf     # Q8_0: 12669630368 bytes, Q6_K: 10029799584 bytes, Q4_K_M: 7625160864 bytes,
+                                   # Q3-QAT: 5587794816 bytes, IQ2_XS-QAT: 3893632896 bytes
 ```
 
 sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -hashfile FILE SHA256` on Windows):
@@ -113,9 +118,11 @@ sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -has
 | `humanizer-12b-Q8_0.gguf` | `8d7a457b56de6530eaaf0151ccfa7550a4b20dab979737e259da9c63e960e0b0` |
 | `humanizer-12b-Q6_K.gguf` | `c98f03bb9e71456181f99b0e1d3391e07ce1afc357f9db4c33d6d379b8dd9f0d` |
 | `humanizer-12b-Q4_K_M.gguf` | `2229574dec5178629575ee4a153dfee7d9e924ab997d0ad9d2ac622b67e44834` |
+| `humanizer-12b-Q3-QAT.gguf` | `307bbfdf66fb22bf98aaa93fe7d54a713bf167e646073dc0cf10870b1525eb94` |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | `383e5ca8f1f48ab5f65013adbc1965fa70d1d1afa6c45d932c34b854e38edbb5` |
 | `humanizer-12b-bf16.gguf` | `47d79b44c3e15ea2540f4edb63556f2b7e456067d7dd252a42ff103a26a51be9` |
 
-All GGUF files were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself.
+All GGUF files were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself. `humanizer-12b-Q3-QAT.gguf` (added 2026-10-05) carries the same template and defaults.
 
 ## 3. llama.cpp (recommended)
 
@@ -375,7 +382,7 @@ Ollama's built-in Gemma templates and a Modelfile without the `TEMPLATE` above b
 
 We have not tested LM Studio ourselves. LM Studio uses the chat template stored in the GGUF. The files uploaded on or after 2026-10-04 carry one that builds exactly the prompt from [section 1](#1-what-makes-this-model-different) (we checked it with llama.cpp, see [section 3](#start-a-server)); files downloaded earlier don't, so download them again or use the completion endpoint in step 4.
 
-1. Load `humanizer-12b-Q8_0.gguf` (or Q6_K / Q4_K_M). Set the context length to 8192 when loading.
+1. Load `humanizer-12b-Q8_0.gguf` (or Q6_K / Q4_K_M / Q3-QAT / IQ2_XS-QAT). Set the context length to 8192 when loading.
 2. In the model's sampling settings, set **Temperature 1.0, Top P 0.95, Top K 0, Min P 0, Repeat Penalty 1.0** and remove any stop strings. Leave the prompt template as it came with the file.
 3. **Chat tab:** leave the system prompt empty (the template ignores it) and paste one draft per message. Each message is rewritten on its own; earlier turns are not sent to the model. The server's `/v1/chat/completions` works the same way.
 4. **Text completion** (works with any download): start the local server (Developer tab) and send the full prompt (instruction + draft + separator) to **`/v1/completions`**:
@@ -548,7 +555,7 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 - Split at **paragraph boundaries** (blank lines), never mid-sentence, and rewrite the pieces separately. The batch script above does this; its default piece size is 1,500 tokens.
 - The model was trained and evaluated on single emails, posts, essays and report sections of a few hundred words. Pieces of that size work best.
 - Each piece is rewritten without seeing the others, so tone can shift a little between pieces and a fact can't move from one piece to another. Read the joined result once from top to bottom.
-- Headings, code blocks and bullet lists are often dropped or turned into prose. Rewrite only the prose and keep headings and code yourself; [`humanizer/markdown_guard.py`](https://github.com/sgaofen/humanize-model/blob/main/humanizer/markdown_guard.py) does this block by block.
+- Headings, code blocks and bullet lists are often dropped or turned into prose. Rewrite only the prose and keep headings and code yourself; [`humanizer/markdown_guard.py`](https://github.com/sgaofen/humanizer-local-model/blob/main/humanizer/markdown_guard.py) does this block by block.
 - **[`hz`](#14-hz-command-line-tool) does all of this in one command**, for `.md`, `.txt` and `.docx`: it keeps headings, code, tables and links, splits the prose into pieces of about 350 words (600 Chinese characters) without crossing a heading, and checks every piece.
 
 ## 11. Chinese
@@ -579,26 +586,26 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 | Output is almost the same as the draft | Sampling luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling, odd word choices, or repeated phrases | Wrong samplers (llama.cpp's default top-k 40 / min-p 0.05, the top-k 64 from `generation_config.json`, or a repetition penalty) | Set top-k 0, min-p 0, repetition penalty 1.0 explicitly |
 | Rewrite cut off mid-sentence | Output limit or context too small | Raise `n_predict` / `max_tokens`; give llama-server `-c 8192 -np 1`; split long drafts |
-| Out of memory while loading | File too large for your RAM or VRAM | Use Q6_K (16 GB) or Q4_K_M (about 12 GB); lower `-ngl` |
+| Out of memory while loading | File too large for your RAM or VRAM | Use Q6_K (16 GB), Q4_K_M (about 12 GB), Q3-QAT or the 2-bit IQ2_XS-QAT; lower `-ngl` |
 | Very slow | Running on the CPU | Look for `offloaded N/N layers` in the llama.cpp log; install the Metal, CUDA or Vulkan build |
 | 404 when downloading | Wrong file name | Use the names in [section 2](#2-pick-a-file) |
 | Self-test fingerprint fails | The prompt builder differs from training | Copy `build_prompt` from [section 1](#the-prompt) |
 
-**Self-test.** [AGENTS.md, section 8](https://github.com/sgaofen/humanize-model/blob/main/AGENTS.md#8-self-test-verify-the-install) has a standard-library script that sends a real draft from the evaluation set to llama-server and checks the prompt format, the endpoint, chat-template leaks and copying. It prints `PASS` when the setup is right.
+**Self-test.** [AGENTS.md, section 8](https://github.com/sgaofen/humanizer-local-model/blob/main/AGENTS.md#8-self-test-verify-the-install) has a standard-library script that sends a real draft from the evaluation set to llama-server and checks the prompt format, the endpoint, chat-template leaks and copying. It prints `PASS` when the setup is right.
 
 ## 14. hz command-line tool
 
-`hz` rewrites a draft or a whole document in one command and works the same for people and AI agents. It talks to the [app](https://github.com/sgaofen/humanize-model/releases/latest) or to a llama-server ([section 3](#start-a-server)), builds the exact prompt, uses the evaluated sampling, splits long documents, keeps their structure, and checks every piece. Python 3.8 or newer, standard library only; `.docx` support is optional.
+`hz` rewrites a draft or a whole document in one command and works the same for people and AI agents. It talks to the [app](https://github.com/sgaofen/humanizer-local-model/releases/latest) or to a llama-server ([section 3](#start-a-server)), builds the exact prompt, uses the evaluated sampling, splits long documents, keeps their structure, and checks every piece. Python 3.8 or newer, standard library only; `.docx` support is optional.
 
 ### Install
 
 ```bash
-pipx install git+https://github.com/sgaofen/humanize-model
+pipx install git+https://github.com/sgaofen/humanizer-local-model
 pipx inject humanize-model python-docx            # only if you need .docx
 
 # or with pip, in any environment:
-pip install git+https://github.com/sgaofen/humanize-model
-pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanize-model"   # with .docx support
+pip install git+https://github.com/sgaofen/humanizer-local-model
+pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanizer-local-model"   # with .docx support
 
 # from a clone, without installing:
 python3 -m humanizer.hz draft.txt

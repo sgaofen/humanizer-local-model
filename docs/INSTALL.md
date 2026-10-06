@@ -33,7 +33,7 @@ The app allows 1 GB of slack, so a 32 GB PC that reports 31.x GB still gets Q8_0
 
 **Needs:** a Mac with Apple silicon (M1 or newer) and macOS 13.3 or later.
 
-1. Download `Humanizer-<version>-macos-arm64.dmg` from [Releases](https://github.com/sgaofen/humanize-model/releases/latest).
+1. Download `Humanizer-<version>-macos-arm64.dmg` from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest).
 2. Open the `.dmg` and drag **Humanizer** into **Applications**.
 3. Double-click Humanizer. The first time, macOS blocks it because the app isn't signed yet; see [First-launch warnings](#first-launch-warnings).
 4. Your browser opens the app at `http://127.0.0.1:47615/`. The setup page shows your memory and a recommended size. Click **Download**.
@@ -50,7 +50,7 @@ Good to know:
 
 **Needs:** 64-bit Windows. No administrator rights needed.
 
-1. Download `Humanizer-<version>-windows-x64-setup.exe` from [Releases](https://github.com/sgaofen/humanize-model/releases/latest). Prefer not to install? Use `Humanizer-<version>-windows-x64-portable.zip` and unzip it anywhere.
+1. Download `Humanizer-<version>-windows-x64-setup.exe` from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest). Prefer not to install? Use `Humanizer-<version>-windows-x64-portable.zip` and unzip it anywhere.
 2. Run the installer. SmartScreen will probably warn you the first time; see [First-launch warnings](#first-launch-warnings). It installs for your user only, to `%LOCALAPPDATA%\Programs\Humanizer`.
 3. Start Humanizer. Your browser opens the app; download the recommended size as on macOS.
 
@@ -59,7 +59,7 @@ Good to know:
 - **GPU:** the app tries NVIDIA (CUDA) first, then Vulkan (most AMD and Intel GPUs), then the CPU. The CPU works but is much slower.
 - Models and settings are in `%LOCALAPPDATA%\Humanizer`.
 - Quit from the **…** menu in the page, as on macOS.
-- The Windows build has not been run on real Windows hardware yet (only CI smoke tests). If something breaks, please [open an issue](https://github.com/sgaofen/humanize-model/issues).
+- The Windows build has not been run on real Windows hardware yet (only CI smoke tests). If something breaks, please [open an issue](https://github.com/sgaofen/humanizer-local-model/issues).
 
 ## First-launch warnings
 

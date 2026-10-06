@@ -27,8 +27,8 @@ docx = ["python-docx>=1.0"]
 hz = "humanizer.hz:main"
 
 [project.urls]
-Homepage = "https://github.com/sgaofen/humanize-model"
-Documentation = "https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md"
+Homepage = "https://github.com/sgaofen/humanizer-local-model"
+Documentation = "https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md"
 Model = "https://huggingface.co/jialinyyzz/humanizer"
 
 [tool.setuptools]

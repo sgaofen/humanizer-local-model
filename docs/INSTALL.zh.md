@@ -33,7 +33,7 @@ App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。**之后想
 
 **要求：**Apple 芯片的 Mac（M1 及以后），macOS 13.3 或更新。
 
-1. 到 [Releases](https://github.com/sgaofen/humanize-model/releases/latest) 下载 `Humanizer-<版本>-macos-arm64.dmg`。
+1. 到 [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest) 下载 `Humanizer-<版本>-macos-arm64.dmg`。
 2. 打开 `.dmg`，把 **Humanizer** 拖进「应用程序」。
 3. 双击 Humanizer。第一次会被 macOS 拦下（App 还没签名），处理方法见[第一次打开被拦](#第一次打开被拦)。
 4. 浏览器会打开 `http://127.0.0.1:47615/`。选档页面会显示你的内存和推荐档位，点「下载」。
@@ -50,7 +50,7 @@ App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。**之后想
 
 **要求：**64 位 Windows，不需要管理员权限。
 
-1. 到 [Releases](https://github.com/sgaofen/humanize-model/releases/latest) 下载 `Humanizer-<版本>-windows-x64-setup.exe`。不想安装就下 `Humanizer-<版本>-windows-x64-portable.zip`，解压到任意位置。
+1. 到 [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest) 下载 `Humanizer-<版本>-windows-x64-setup.exe`。不想安装就下 `Humanizer-<版本>-windows-x64-portable.zip`，解压到任意位置。
 2. 运行安装包。第一次 SmartScreen 多半会拦，见[第一次打开被拦](#第一次打开被拦)。它只为当前用户安装，位置是 `%LOCALAPPDATA%\Programs\Humanizer`。
 3. 打开 Humanizer，浏览器里会出现 App，和 macOS 一样下载推荐的档位。
 
@@ -59,7 +59,7 @@ App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。**之后想
 - **显卡：**App 先试 NVIDIA（CUDA），再试 Vulkan（多数 AMD、Intel 显卡），最后用 CPU。CPU 能跑，但慢很多。
 - 模型和设置放在 `%LOCALAPPDATA%\Humanizer`。
 - 退出同样在网页的「…」菜单。
-- Windows 版还没在真机上跑过（只有 CI 冒烟测试）。遇到问题请[提 issue](https://github.com/sgaofen/humanize-model/issues)。
+- Windows 版还没在真机上跑过（只有 CI 冒烟测试）。遇到问题请[提 issue](https://github.com/sgaofen/humanizer-local-model/issues)。
 
 ## 第一次打开被拦
 

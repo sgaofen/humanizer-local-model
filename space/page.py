@@ -12,7 +12,7 @@ import json
 
 import diffmark
 
-GH = "https://github.com/sgaofen/humanize-model"
+GH = "https://github.com/sgaofen/humanizer-local-model"
 REL = GH + "/releases/latest"
 APP_DL = GH + "/releases/download/app-v0.3.0/"   # direct files; bump with each app release
 MAC_DMG = APP_DL + "Humanizer-0.3.0-macos-arm64.dmg"
@@ -201,7 +201,7 @@ def code_block(text: str) -> str:
 
 
 def local_section() -> str:
-    hz_cmd = "pipx install git+https://github.com/sgaofen/humanize-model\nhz paper.md -o out.md"
+    hz_cmd = "pipx install git+https://github.com/sgaofen/humanizer-local-model\nhz paper.md -o out.md"
     llama_cmd = ("llama-server --hf-repo jialinyyzz/humanizer --hf-file humanizer-12b-Q8_0.gguf "
                  "-c 8192 -np 1 -ngl 99")
     return f"""<section class="sec" id="local">

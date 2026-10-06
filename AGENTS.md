@@ -1,19 +1,19 @@
 # AGENTS.md: install and call humanizer
 
-Instructions for AI agents (Claude Code, Codex, Cursor, etc.) setting up **humanizer** for a user. Follow the steps in order. Every command can be pasted as is. Human-oriented docs: [README.md](https://github.com/sgaofen/humanize-model/blob/main/README.md), [USAGE.md: usage without the app](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md) (every runtime, batch script, long documents), [INSTALL.md](https://github.com/sgaofen/humanize-model/blob/main/docs/INSTALL.md). This file is also in the root of the Hugging Face repo, next to `USAGE.md`.
+Instructions for AI agents (Claude Code, Codex, Cursor, etc.) setting up **humanizer** for a user. Follow the steps in order. Every command can be pasted as is. Human-oriented docs: [README.md](https://github.com/sgaofen/humanizer-local-model/blob/main/README.md), [USAGE.md: usage without the app](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md) (every runtime, batch script, long documents), [INSTALL.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/INSTALL.md). This file is also in the root of the Hugging Face repo, next to `USAGE.md`.
 
 ## 0. Facts you need
 
 - **What it does:** rewrites one AI-written draft (English or Chinese) so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote, and to add nothing. Output = the rewritten text only.
 - **Kind of model:** 12B **text-completion** model (fine-tuned from `google/gemma-4-12B`). **Not a chat model.** Call the completion endpoint with the exact prompt from step 6: no system prompt, no chat turns. (The GGUF files uploaded on or after 2026-10-04 also carry a chat template that builds the same prompt from the last user message, so chat front ends such as LM Studio should work; the authors have not tested them. In code, use the completion endpoint: it works with every download.)
-- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes, about 7.6 GB) when memory or disk is tight. You also need `prompt_format.json` from the same repo.
+- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes, about 7.6 GB) when memory or disk is tight; below about 12 GB, `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes, about 5.6 GB) or the smallest, `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, about 3.9 GB), which make a few more fact slips. You also need `prompt_format.json` from the same repo.
 - **Runtime:** `llama-server` from llama.cpp (macOS, Windows, Linux). Alternatives in section 10.
 - **Sampling:** temperature 1.0, top_p 0.95, and nothing else: top_k 0, min_p 0, repeat_penalty 1.0. Stop on EOS only. No stop strings.
 - **License:** Apache 2.0.
 
 ## 1. Pick the route
 
-- **The user wants an app, not code:** send them to <https://github.com/sgaofen/humanize-model/releases/latest> and have them download `Humanizer-<version>-macos-arm64.dmg` (Mac with Apple silicon) or `Humanizer-<version>-windows-x64-setup.exe` (Windows x64). The app is unsigned; the first-launch fix is in [INSTALL.md](https://github.com/sgaofen/humanize-model/blob/main/docs/INSTALL.md#first-launch-warnings). The app downloads the model itself. **You are done.**
+- **The user wants an app, not code:** send them to <https://github.com/sgaofen/humanizer-local-model/releases/latest> and have them download `Humanizer-<version>-macos-arm64.dmg` (Mac with Apple silicon) or `Humanizer-<version>-windows-x64-setup.exe` (Windows x64). The app is unsigned; the first-launch fix is in [INSTALL.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/INSTALL.md#first-launch-warnings). The app downloads the model itself. **You are done.**
 - **The user wants a long or structured document rewritten** (Markdown with headings, lists, code or tables; a `.docx`; anything over a few paragraphs): use the `hz` command, [section 12](#12-long-and-complex-documents-use-hz). It needs the app or a llama-server running the model (steps 2 to 5), and does the splitting, the prompt, the sampling and the checks itself.
 - **Otherwise** (scripts, pipelines, a local API): continue with step 2.
 
@@ -30,7 +30,7 @@ powershell -c "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB"  
 |---|---|
 | 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes) |
 | 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes) if memory or disk is tight |
-| Less than 12 GB | Not enough for the 12B model; tell the user. Q4_K_M needs about 12 GB. |
+| Less than 12 GB | `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes; plan for about 8 GB of free memory). Less still: `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, 2-bit; about 6 GB). Both make a few more fact slips than the larger files; tell the user to proofread numbers and names. |
 
 You also need free disk space for the file you pick. In the commands below, replace the Q8_0 file name if you picked another file.
 
@@ -59,11 +59,14 @@ Check the download:
 
 ```bash
 head -c 4 ./humanizer-model/humanizer-12b-Q8_0.gguf; echo     # must print GGUF
-wc -c ./humanizer-model/*.gguf                                # Q8_0: 12669630368 bytes; Q6_K: 10029799584 bytes; Q4_K_M: 7625160864 bytes
+wc -c ./humanizer-model/*.gguf                                # Q8_0: 12669630368 bytes; Q6_K: 10029799584 bytes; Q4_K_M: 7625160864 bytes;
+                                                              # Q3-QAT: 5587794816 bytes; IQ2_XS-QAT: 3893632896 bytes
 shasum -a 256 ./humanizer-model/*.gguf                       # macOS (Linux: sha256sum)
 # Q8_0:   8d7a457b56de6530eaaf0151ccfa7550a4b20dab979737e259da9c63e960e0b0
 # Q6_K:   c98f03bb9e71456181f99b0e1d3391e07ce1afc357f9db4c33d6d379b8dd9f0d
 # Q4_K_M: 2229574dec5178629575ee4a153dfee7d9e924ab997d0ad9d2ac622b67e44834
+# Q3-QAT: 307bbfdf66fb22bf98aaa93fe7d54a713bf167e646073dc0cf10870b1525eb94
+# IQ2_XS-QAT: 383e5ca8f1f48ab5f65013adbc1965fa70d1d1afa6c45d932c34b854e38edbb5
 # bf16 (humanizer-12b-bf16.gguf, 23832049568 bytes, optional): 47d79b44c3e15ea2540f4edb63556f2b7e456067d7dd252a42ff103a26a51be9
 ```
 
@@ -190,7 +193,7 @@ if missing: print("NOTE: numbers not found in this sample:", missing,
 
 ## 9. Rules when you use it for a user
 
-- Send **one draft per request**. Our setup uses an 8192-token context, so the draft plus the rewrite must fit. For long or structured documents, use `hz` ([section 12](#12-long-and-complex-documents-use-hz)); it splits them for you. For a folder of `.txt` files, [USAGE.md section 9](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#9-rewrite-a-whole-folder) has a batch script.
+- Send **one draft per request**. Our setup uses an 8192-token context, so the draft plus the rewrite must fit. For long or structured documents, use `hz` ([section 12](#12-long-and-complex-documents-use-hz)); it splits them for you. For a folder of `.txt` files, [USAGE.md section 9](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md#9-rewrite-a-whole-folder) has a batch script.
 - **Never edit the output silently**, and never tell the user the result is guaranteed to pass an AI detector. Detection numbers in the README are one measurement on one date.
 - **Ask the user to proofread** numbers, dates, names and the direction of each claim. On the evaluation set a strict judge found no factual problem in 376 of 420 English rewrites; where it found one, more than 9 in 10 fixes are a single word or phrase (for example "37 complaints" became "37% of complaints"). Compare the numbers in the draft and the output yourself and point out any that differ.
 - If an output copies most of the draft, or a number differs, **sample again** (same prompt; sampling is random).
@@ -199,12 +202,12 @@ if missing: print("NOTE: numbers not found in this sample:", missing,
 
 ## 10. Other runtimes
 
-All of them need the same prompt (step 6) and the same sampling (step 7). Complete code for each is in [USAGE.md](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md).
+All of them need the same prompt (step 6) and the same sampling (step 7). Complete code for each is in [USAGE.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md).
 
 - **MLX (Apple silicon):** `mlx_lm.convert --hf-path jialinyyzz/humanizer --mlx-path humanizer-mlx-8bit -q --q-bits 8 --q-group-size 64`, then `mlx_lm.generate`'s Python API with `make_sampler(temp=1.0, top_p=0.95)`. Pass the prompt string directly; don't apply a chat template.
 - **transformers (CUDA):** `AutoModelForCausalLM.from_pretrained("jialinyyzz/humanizer", dtype=torch.bfloat16)`, `generate(do_sample=True, temperature=1.0, top_p=0.95, top_k=0)`. `top_k=0` overrides the top-k 64 in the bundled `generation_config.json`. The bf16 `model.safetensors` (about 24 GB) is at the repo root.
 - **vLLM:** `LLM(model="jialinyyzz/humanizer", dtype="bfloat16", max_model_len=8192, limit_mm_per_prompt={"image": 0, "audio": 0, "video": 0})` and `SamplingParams(temperature=1.0, top_p=0.95, top_k=-1, min_p=0.0, repetition_penalty=1.0, max_tokens=2048)`. For `vllm serve`, add `--generation-config vllm` and use `/v1/completions`.
-- **Ollama:** it ignores the GGUF's chat template. Use the Modelfile in [USAGE.md section 7](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#7-ollama), whose `TEMPLATE` builds the step 6 prompt from the last user message, or call `/api/generate` with `"raw": true` and the full prompt. Untested by the authors.
+- **Ollama:** it ignores the GGUF's chat template. Use the Modelfile in [USAGE.md section 7](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md#7-ollama), whose `TEMPLATE` builds the step 6 prompt from the last user message, or call `/api/generate` with `"raw": true` and the full prompt. Untested by the authors.
 - **LM Studio:** the chat template in the GGUF (files uploaded on or after 2026-10-04) builds the step 6 prompt, so the Chat tab and `/v1/chat/completions` should work with one draft per message and an empty system prompt. The text-completion endpoint `/v1/completions` with the full prompt works with any download. Untested by the authors.
 
 ## 11. Troubleshooting
@@ -215,21 +218,21 @@ All of them need the same prompt (step 6) and the same sampling (step 7). Comple
 | Output is cut off at `###` | A stop string was set | Remove all stop strings; rely on EOS |
 | Output is almost the same as the draft | Sampling bad luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling or repeated phrases | Wrong sampler settings | Set `top_k: 0, min_p: 0, repeat_penalty: 1.0` explicitly |
-| Out of memory while loading | Not enough RAM or VRAM for Q8_0 | Use Q6_K (16 GB) or Q4_K_M (about 12 GB); lower `-ngl` |
+| Out of memory while loading | Not enough RAM or VRAM for Q8_0 | Use Q6_K (16 GB), Q4_K_M (about 12 GB), Q3-QAT or IQ2_XS-QAT (smaller still); lower `-ngl` |
 | Very slow | Running on the CPU | Check `offloaded N/N layers` in the log; install the Metal, CUDA or Vulkan build |
 | 404 when downloading a file | Wrong file name | Use the file names in step 2 |
 
 ## 12. Long and complex documents: use `hz`
 
-For a document longer than a few paragraphs, or one with structure (Markdown headings, lists, code blocks, tables; `.docx`), call `hz` instead of building requests yourself. It keeps the structure, rewrites the prose in pieces, uses the exact prompt and sampling above, checks every piece and retries once when a check fails. Full reference: [USAGE.md, section 14](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#14-hz-command-line-tool).
+For a document longer than a few paragraphs, or one with structure (Markdown headings, lists, code blocks, tables; `.docx`), call `hz` instead of building requests yourself. It keeps the structure, rewrites the prose in pieces, uses the exact prompt and sampling above, checks every piece and retries once when a check fails. Full reference: [USAGE.md, section 14](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md#14-hz-command-line-tool).
 
 **Install** (Python 3.8 or newer, no dependencies):
 
 ```bash
-pipx install git+https://github.com/sgaofen/humanize-model
+pipx install git+https://github.com/sgaofen/humanizer-local-model
 pipx inject humanize-model python-docx       # only for .docx
-# without pipx: pip install git+https://github.com/sgaofen/humanize-model
-#               pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanize-model"
+# without pipx: pip install git+https://github.com/sgaofen/humanizer-local-model
+#               pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanizer-local-model"
 hz --version                                 # must print: hz 0.1.0
 ```
 

@@ -3,7 +3,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="协议 Apache 2.0" src="https://img.shields.io/badge/license-Apache_2.0-CDF54B?style=flat-square&labelColor=101216"></a>
   <a href="https://huggingface.co/jialinyyzz/humanizer"><img alt="Hugging Face 模型" src="https://img.shields.io/badge/model-jialinyyzz%2Fhumanizer-CDF54B?style=flat-square&labelColor=101216&logo=huggingface&logoColor=white"></a>
-  <a href="https://github.com/sgaofen/humanize-model/releases/latest"><img alt="App:macOS 与 Windows" src="https://img.shields.io/badge/app-macOS%20%7C%20Windows-CDF54B?style=flat-square&labelColor=101216"></a>
+  <a href="https://github.com/sgaofen/humanizer-local-model/releases/latest"><img alt="App:macOS 与 Windows" src="https://img.shields.io/badge/app-macOS%20%7C%20Windows-CDF54B?style=flat-square&labelColor=101216"></a>
   <img alt="底座 google/gemma-4-12B" src="https://img.shields.io/badge/fine--tuned_from-google%2Fgemma--4--12B-ECEEF1?style=flat-square&labelColor=101216">
   <img alt="语言:英文、中文" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-ECEEF1?style=flat-square&labelColor=101216">
 </p>
@@ -25,8 +25,8 @@
 
 | 你的电脑 | 下载 |
 |---|---|
-| **Mac**（Apple 芯片，M1 及以后） | 到 **[Releases](https://github.com/sgaofen/humanize-model/releases/latest)** 下载 `Humanizer-<版本>-macos-arm64.dmg` |
-| **Windows**（x64） | 到 **[Releases](https://github.com/sgaofen/humanize-model/releases/latest)** 下载 `Humanizer-<版本>-windows-x64-setup.exe`（或免安装的 `.zip`） |
+| **Mac**（Apple 芯片，M1 及以后） | 到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下载 `Humanizer-<版本>-macos-arm64.dmg` |
+| **Windows**（x64） | 到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下载 `Humanizer-<版本>-windows-x64-setup.exe`（或免安装的 `.zip`） |
 
 双击后 App 会在浏览器里打开。第一次运行时它会看你的内存、推荐一个档位，从 Hugging Face 下载一次模型；之后完全离线。左边贴草稿，右边流式出改写，新写的部分用荧光笔标出，被改掉的部分在原稿上划掉。在 M5 Max 上，一封百来词的英文邮件约 3.6 秒，一封 300 字左右的中文邮件约 8.5 秒。
 
@@ -42,7 +42,8 @@ App 目前没有代码签名，macOS 和 Windows 第一次打开都会拦一下�
 
 ```bash
 # 1) 起本地服务;第一次会下载 humanizer-12b-Q8_0.gguf(约 12.7 GB)
-#    16 GB 内存的机器:换成 humanizer-12b-Q6_K.gguf(约 10.0 GB)
+#    16 GB 内存的机器:换成 humanizer-12b-Q6_K.gguf(约 10.0 GB);内存更少:
+#    humanizer-12b-Q4_K_M.gguf(7.6 GB)、humanizer-12b-Q3-QAT.gguf(5.6 GB)或 humanizer-12b-IQ2_XS-QAT.gguf(3.9 GB)
 llama-server --hf-repo jialinyyzz/humanizer --hf-file humanizer-12b-Q8_0.gguf -c 8192 -np 1 -ngl 99 --port 8080
 
 # 2) 另开一个终端:改写 draft.txt(需要 curl 和 jq)
@@ -60,7 +61,7 @@ jq -n --rawfile d draft.txt --slurpfile f prompt_format.json \
 `hz` 一行命令改写整个文件：短稿、长篇 Markdown 或 `.docx` 都行。它自己去找方式一的 App 或方式二的 llama-server（macOS 上 App 装了没开会自动拉起），标题、代码块、表格和链接原样保留，正文分块改写，每块都检查有没有丢数字、是不是照抄。需要 Python 3.8 及以上，没有别的依赖。
 
 ```bash
-pipx install git+https://github.com/sgaofen/humanize-model     # 或者:pip install git+https://github.com/sgaofen/humanize-model
+pipx install git+https://github.com/sgaofen/humanizer-local-model     # 或者:pip install git+https://github.com/sgaofen/humanizer-local-model
 hz draft.txt                          # 打印改写结果
 hz paper.md -o paper.out.md           # 长篇 Markdown:结构保留,正文分块改写
 hz report.docx -o report.out.docx     # .docx 需要 python-docx:pipx inject humanize-model python-docx
@@ -176,6 +177,7 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 | `humanizer-12b-Q8_0.gguf` | 约 12.7 GB | 32 GB 及以上内存。推荐。 |
 | `humanizer-12b-Q6_K.gguf` | 约 10.0 GB | 16 GB 内存。 |
 | `humanizer-12b-Q4_K_M.gguf` | 约 7.6 GB | 内存或硬盘紧张时用。做过量化感知训练。 |
+| `humanizer-12b-Q3-QAT.gguf` | 约 5.6 GB | 更小。3 bit 档，做过量化感知训练；英文事实小错比 Q4_K_M 稍多（见下）。 |
 | `humanizer-12b-IQ2_XS-QAT.gguf` | 约 3.9 GB | 最小。2 bit；事实错误比大文件多（见下）。 |
 | `humanizer-12b-bf16.gguf` | 约 23.8 GB | 未量化权重的单文件 GGUF，作参考或自己量化用。 |
 | `model.safetensors` 及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json` | 约 24 GB（bf16） | transformers、vLLM、转 MLX。 |
@@ -190,18 +192,21 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 | `humanizer-12b-bf16.gguf` | 基准（全精度） | 16 bit（bf16） | 23.8 GB | 约 24.8 GB（估） | 0（基准） | | 100%（基准） | 英 52 篇 · 160 处 <br> 中 50 篇 · 216 处 | 4 / 60 |
 | `humanizer-12b-Q8_0.gguf` | **质量最好** | 8 bit（Q8_0） | 12.7 GB | 13.7 GB | 0.0017 / 0.0017 | 同一个文件：Q8_0 就是普通量化 | 98.45% / 98.25% | 英 44 篇 · 135 处 <br> 中 54 篇 · 236 处 | 7 / 60 |
 | `humanizer-12b-Q6_K.gguf` | 无可测损失 | 6 bit（Q6_K） | 10.0 GB | 约 11.0 GB（估） | 0.0031 / 0.0035 | 同一个文件：Q6_K 就是普通量化 | 97.95% / 97.48% | 英 56 篇 · 153 处 <br> 中 56 篇 · 255 处 | 未测 |
-| `humanizer-12b-Q4_K_M.gguf` | 近乎无损 | 4 bit（Q4_K_M），量化感知训练 | 7.6 GB | 约 8.6 GB（估） | **0.0136 / 0.0146** | Q4_K_M，7.6 GB：0.0203 / 0.0225（94.46% / 93.46%） | 95.62% / 94.77% | 英 58 篇 · 162 处 <br> 中 51 篇 · 194 处 <br>（普通 Q4_K_M：英 56 · 163，中 48 · 218） | 未测 |
-| `humanizer-12b-IQ2_XS-QAT.gguf` | AI 检测结果最好；事实小错稍多（多是单个词或数字），发出前核对数字和名字 | 2 bit（以 IQ2_XS 为主）⁴，量化感知训练 | 3.9 GB | 4.9 GB | **0.106 / 0.106** ⁴ | IQ2_XS，3.8 GB：0.474 / 0.769（74.43% / 65.53%）<br> 3 bit 的 IQ3_XXS，4.7 GB，作参考：0.138 / 0.190（85.72% / 82.55%） | 87.72% / 87.07% | 英 70 篇 · 265 处 <br> 中 66 篇 · 361 处 | 0 / 60 |
+| `humanizer-12b-Q4_K_M.gguf` | 略有损失 | 4 bit（Q4_K_M），量化感知训练 | 7.6 GB | 约 8.6 GB（估） | **0.0136 / 0.0146** | Q4_K_M，7.6 GB：0.0203 / 0.0225（94.46% / 93.46%） | 95.62% / 94.77% | 英 58 篇 · 162 处 <br> 中 51 篇 · 194 处 <br>（普通 Q4_K_M：英 56 · 163，中 48 · 218） | 未测 |
+| `humanizer-12b-Q3-QAT.gguf` | 小幅损失（英文事实） | 3 bit 档，混合精度（平均约 3.9 bit/权重）⁴，量化感知训练 | 5.6 GB | 约 6.6 GB（估）¹ | **0.0300 / 0.0318** ² | IQ3_XXS（3 bit），4.7 GB：0.138 / 0.190（85.72% / 82.55%） | 93.63% / 92.64% | 英 64 篇 · 210 处 <br> 中 53 篇 · 233 处 | 4 / 60 |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | AI 检测结果最好；事实小错稍多（多是单个词或数字），发出前核对数字和名字 | 2 bit（以 IQ2_XS 为主）⁴，量化感知训练 | 3.9 GB | 4.9 GB | **0.106 / 0.106** ⁴ | IQ2_XS，3.8 GB：0.474 / 0.769（74.43% / 65.53%） | 87.72% / 87.07% | 英 70 篇 · 265 处 <br> 中 66 篇 · 361 处 | 0 / 60 |
 
 **KL 是什么：**量化文件预测"下一个词"的概率和完整 bf16 模型差多远，在真实草稿和改写的每个词上取平均。越低越好，0 就是完全一样。"首选词一致"是量化文件和 bf16 选中同一个最可能的下一个词的比例。"普通量化"指同一类型、用我们这版起步时同一个 imatrix、直接跑 `llama-quantize`，不做额外训练。
 
-Q4_K_M 在 2026-10-04 用量化感知训练重新做过：大小和格式不变，KL 比普通 Q4_K_M 低约三分之一。2 bit 版比大 0.8 GB 的普通 3 bit 版更接近完整模型；普通 2 bit 量化最伤中文，这一版中文和英文一样。但它的事实错误仍比大文件多（见 ³），只在内存紧张时用，输出要多核对。3 bit 版正在做。
+Q4_K_M 在 2026-10-04 用量化感知训练重新做过：大小和格式不变，KL 比普通 Q4_K_M 低约三分之一。2 bit 版比大 0.8 GB 的普通 3 bit 版更接近完整模型；普通 2 bit 量化最伤中文，这一版中文和英文一样。但它的事实错误仍比大文件多（见 ³），只在内存紧张时用，输出要多核对。
 
-¹ llama-server（llama.cpp，Metal）在 Apple M5 Max 上、用 App 的设置（8,192 token 上下文，一次一个请求）改写一篇 470 token 草稿时的最大常驻内存，约等于文件大小加 1 GB。Q8_0 和 2 bit 是实测，其余按同样方法估算（估）。上下文开到 32,768 token 约多 0.4 GB。另外要给系统和其他程序留出空间。
-² llama.cpp `llama-perplexity --kl-divergence`，每种语言 30 块、每块 2,048 token（各约 30,700 个打分 token），取自评测集里没参与校准和训练的草稿与改写，基准是 bf16 GGUF，全部在同一张 A100 上测。没测第三方量化。Q8_0、Q6_K、Q4_K_M 的词表和输出层保留 8 bit；IQ2_XS、IQ3_XXS 对照版的词表是 4 bit。
-³ 用[评测结果](#事实忠实度)里那个从严的事实判官（GLM-5.3，每篇一票）判全部 420 篇英文、204 篇中文改写（每篇草稿两发；bf16 有 4 篇中文没判出结果）。"标出篇数"是判官认为有事实问题的改写篇数；第二遍把每篇标出的改写和草稿对照重读，列出每一处问题（"几处"）。每个文件都有约 9 成只是一个词、一个数字或一个短语（2 bit：英文 265 处里 243 处，中文 361 处里 330 处）。和 Q8_0 逐篇对比，Q6_K、Q4_K_M 都在噪声范围内，量化感知训练版 Q4_K_M 和普通 Q4_K_M 也在噪声范围内。2 bit 版不是：同一批草稿上英文标出 70 篇，Q8_0 是 44 篇，差别超出噪声；中文 66 对 54，在噪声范围内。和 Q4_K_M 比是 70 对 58、66 对 51，在噪声范围内。
-⁴ 2 bit 版保留了 262,144 个词表 token 里的约 13 万个：英文和中文实际用到的，加上拼出任何输入所需的全部。任何文本都能原样编码、解码；罕见符号、emoji 和其他文字只是多占几个 token。裁词表本身让模型偏移 KL 0.0013（英）/ 0.0002（中），上表 2 bit 的 KL 是对着同样裁过词表的 bf16 测的。位数按敏感度分配（以 IQ2_XS 为主，关键处用 3 bit、4 bit），然后逐层做量化感知训练，再用中英文改写数据从 bf16 蒸馏缩放系数。文件里类型显示为 IQ2_XS，但它不是普通的 IQ2_XS。
-⁵ 2 比特版的 AI 率表现最好：0/60 被判 AI（Q8 7/60，bf16 4/60；Originality 最严档）。可能的原因是量化带来的细微漂移让措辞更难被预测，检测器就更少把它认成机器写的。
+Q3 版（2026-10-05 加入）介于两者之间：5.6 GB，比 Q4_K_M 小 2 GB；KL 中英文都在 0.03 左右，只有普通 3 bit IQ3_XXS（0.138 / 0.190，小 0.9 GB）的几分之一。中文事实检查和 AI 检测结果都和 bf16 持平。英文事实小错稍多（420 篇里标出 64 篇，bf16 52 篇，Q4_K_M 58 篇），几乎都是一个词或一个短语，发出前核对数字和名字。
+
+¹ llama-server（llama.cpp，Metal）在 Apple M5 Max 上、用 App 的设置（8,192 token 上下文，一次一个请求）改写一篇 470 token 草稿时的最大常驻内存，约等于文件大小加 1 GB。Q8_0 和 2 bit 是实测，其余按同样方法估算（估）。上下文开到 32,768 token 约多 0.4 GB。后来在同一台 Mac 上把几档放在一起再测了一轮（App 自带的 llama.cpp，四篇真实草稿），每档峰值都更高：2 bit 6.2 GB、Q3 8.0 GB、Q4_K_M 10.0 GB，生成速度约 69、65、52 token/秒。按较高的数准备，另外要给系统和其他程序留出空间。
+² llama.cpp `llama-perplexity --kl-divergence`，每种语言 30 块、每块 2,048 token（各约 30,700 个打分 token），取自评测集里没参与校准和训练的草稿与改写，基准是 bf16 GGUF，全部在同一张 A100 上测；Q3 是用同样方法在 A30 上测的（之后会在 A100 上重测）。没测第三方量化。Q8_0、Q6_K、Q4_K_M 的词表和输出层保留 8 bit；IQ2_XS、IQ3_XXS 对照版的词表是 4 bit。
+³ 用[评测结果](#事实忠实度)里那个从严的事实判官（GLM-5.3，每篇一票）判全部 420 篇英文、204 篇中文改写（每篇草稿两发；bf16 有 4 篇中文没判出结果）。"标出篇数"是判官认为有事实问题的改写篇数；第二遍把每篇标出的改写和草稿对照重读，列出每一处问题（"几处"）。每个文件都有约 9 成只是一个词、一个数字或一个短语（2 bit：英文 265 处里 243 处，中文 361 处里 330 处）。和 Q8_0 逐篇对比，Q6_K、Q4_K_M 都在噪声范围内，量化感知训练版 Q4_K_M 和普通 Q4_K_M 也在噪声范围内。2 bit 版不是：同一批草稿上英文标出 70 篇，Q8_0 是 44 篇，差别超出噪声；中文 66 对 54，在噪声范围内。和 Q4_K_M 比是 70 对 58、66 对 51，在噪声范围内。Q3：英文标出 64 篇（bf16 52，Q4_K_M 58），210 处里 191 处只差一个词或短语；中文 53 篇（bf16 50）。
+⁴ Q3 和 2 bit 版保留了 262,144 个词表 token 里的约 13 万个：英文和中文实际用到的，加上拼出任何输入所需的全部。任何文本都能原样编码、解码；罕见符号、emoji 和其他文字只是多占几个 token。裁词表本身让模型偏移 KL 0.0013（英）/ 0.0002（中），上表这两档的 KL 是对着同样裁过词表的 bf16 测的。位数按敏感度分配：2 bit 版以 IQ2_XS 为主，关键处用 3 bit、4 bit；Q3 版按字节算约一半是 Q4_K、五分之一是 Q6_K，最不敏感的张量用 IQ3_XXS 和 IQ2_XS（平均约 3.9 bit/权重）。然后逐层做量化感知训练，再用中英文改写数据从 bf16 蒸馏缩放系数。两个文件里类型分别显示为 IQ2_XS 和 IQ3_XXS，但都不是该类型的普通量化。
+⁵ 2 bit 版的 AI 检测结果最好：0/60 被判 AI（Q8_0 7/60，bf16 4/60；Originality.ai 最严档）。可能的原因是量化带来的细微漂移让措辞更难被预测，检测器就更少把它认成机器写的。Q3：4/60，和 bf16 持平（只在 Q3 被判的 3 篇，只在 bf16 被判的 3 篇）。
 
 sha256 校验值见 [USAGE.zh.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.zh.md)。
 
@@ -356,4 +361,4 @@ humanizer 由 [google/gemma-4-12B](https://huggingface.co/google/gemma-4-12B) �
 
 本仓库原名 `sgaofen/humanizer`；模型仓库原名 `jialinyyzz/humanizer-gemma-4-e4b`（更早的一个小模型，已不再提供，文件留在 Hugging Face 的提交历史里）。第一个 12B 版（v1，2026-10-01）也在提交历史里；现在的模型是 v2（2026-10-02）。
 
-链接：[Hugging Face](https://huggingface.co/jialinyyzz/humanizer) · [App 下载](https://github.com/sgaofen/humanize-model/releases/latest) · [安装指南](docs/INSTALL.zh.md) · [AGENTS.md](AGENTS.md) · [llms.txt](llms.txt)
+链接：[Hugging Face](https://huggingface.co/jialinyyzz/humanizer) · [App 下载](https://github.com/sgaofen/humanizer-local-model/releases/latest) · [安装指南](docs/INSTALL.zh.md) · [AGENTS.md](AGENTS.md) · [llms.txt](llms.txt)

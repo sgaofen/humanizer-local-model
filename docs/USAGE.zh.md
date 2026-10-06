@@ -1,10 +1,10 @@
 # 不用 App 怎么用 humanizer
 
-[English](USAGE.md) · [README](https://github.com/sgaofen/humanize-model/blob/main/README.zh.md) · [AGENTS.md（给 AI Agent）](https://github.com/sgaofen/humanize-model/blob/main/AGENTS.md) · [Hugging Face 上的模型文件](https://huggingface.co/jialinyyzz/humanizer/tree/main)
+[English](USAGE.md) · [README](https://github.com/sgaofen/humanizer-local-model/blob/main/README.zh.md) · [AGENTS.md（给 AI Agent）](https://github.com/sgaofen/humanizer-local-model/blob/main/AGENTS.md) · [Hugging Face 上的模型文件](https://huggingface.co/jialinyyzz/humanizer/tree/main)
 
-这份文档写给不想用[桌面 App](https://github.com/sgaofen/humanize-model/releases/latest)、要在自己的代码或命令行里跑 humanizer 的人。每个代码块都可以直接复制。
+这份文档写给不想用[桌面 App](https://github.com/sgaofen/humanizer-local-model/releases/latest)、要在自己的代码或命令行里跑 humanizer 的人。每个代码块都可以直接复制。
 
-**只是想改写文件？**命令行工具 `hz` 替你处理提示词、采样参数、长文切块和检查，后端用 App 或 llama-server 都行：`pipx install git+https://github.com/sgaofen/humanize-model`，然后 `hz draft.md -o out.md`。见[第 14 节](#14-命令行工具-hz)。
+**只是想改写文件？**命令行工具 `hz` 替你处理提示词、采样参数、长文切块和检查，后端用 App 或 llama-server 都行：`pipx install git+https://github.com/sgaofen/humanizer-local-model`，然后 `hz draft.md -o out.md`。见[第 14 节](#14-命令行工具-hz)。
 
 **目录：**[1. 这个模型哪里特殊](#1-这个模型哪里特殊) · [2. 选哪个文件](#2-选哪个文件) · [3. llama.cpp](#3-llamacpp推荐) · [4. MLX](#4-mlxapple-芯片) · [5. transformers](#5-transformerscuda) · [6. vLLM](#6-vllm) · [7. Ollama](#7-ollama) · [8. LM Studio](#8-lm-studio) · [9. 批量改写一个文件夹](#9-批量改写一个文件夹) · [10. 长文](#10-长文) · [11. 中文](#11-中文) · [12. 质量检查清单](#12-质量检查清单) · [13. 排错](#13-排错) · [14. 命令行工具 hz](#14-命令行工具-hz)
 
@@ -75,15 +75,16 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 |---|---|---|
 | 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 字节（约 12.7 GB） |
 | 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,584 字节（约 10.0 GB） |
-| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，最小的 12B 文件 | 7,625,160,864 字节（约 7.6 GB） |
-| 8 GB | 装不下 12B 模型。Q4_K_M 大约需要 12 GB。 | |
+| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，量化感知训练；大约需要 12 GB | 7,625,160,864 字节（约 7.6 GB） |
+| 不到 12 GB | `humanizer-12b-Q3-QAT.gguf`，3 bit 档；按约 8 GB 空闲内存准备。英文事实小错稍多，核对数字和名字 | 5,587,794,816 字节（约 5.6 GB） |
+| 更少 | `humanizer-12b-IQ2_XS-QAT.gguf`，2 bit，最小；按约 6 GB 准备。事实小错更多，核对数字和名字 | 3,893,632,896 字节（约 3.9 GB） |
 
 仓库里还有：
 
 - `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的 12B，单个 GGUF，给需要参照或想自己量化的人。
 - 根目录的 `model.safetensors`（bf16，约 24 GB），以及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json`、`prompt_format.json`：transformers、vLLM 和 MLX 转换都用它们。
 
-**量化版和 bf16 差多少。**三个 GGUF 文件的词表和输出层都保留 8 bit；Q6_K 和 Q4_K_M 另外用我们自己的改写数据做了 imatrix 校准。KL 在评测集草稿和改写上测了约 33,000 个 token（和校准数据不重叠）。最后一栏是 README 里那个从严的事实判官，用 llama.cpp 分别跑每个文件、判评测集全部 420 篇英文改写。
+**量化版和 bf16 差多少。**Q8_0、Q6_K、Q4_K_M 的词表和输出层都保留 8 bit；Q6_K 和 Q4_K_M 另外用我们自己的改写数据做了 imatrix 校准。KL 在评测集草稿和改写上测了约 33,000 个 token（和校准数据不重叠）。最后一栏是 README 里那个从严的事实判官，用 llama.cpp 分别跑每个文件、判评测集全部 420 篇英文改写。
 
 | 文件 | 与 bf16 的平均 KL | 首选词与 bf16 一致 | 困惑度 | 没挑出事实问题（英文） |
 |---|---|---|---|---|
@@ -91,10 +92,12 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 | Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
 | Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
 | Q4_K_M（2026-10-04 更新，见下） | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
+| Q3（`Q3-QAT`，2026-10-05 加入） | 0.0300 ¹ | 93.6% ¹ | | 356 / 420 |
+| 2 bit（`IQ2_XS-QAT`） | 0.106 ¹ | 87.7% ¹ | | 350 / 420 |
 
-逐篇和 bf16 对比，三档在事实判官上的差别都在噪声范围内。
+逐篇和 bf16 对比，Q8_0、Q6_K、Q4_K_M 在事实判官上的差别都在噪声范围内。Q3 和 2 bit 英文事实小错稍多（标出 64 篇、70 篇，bf16 是 52 篇），多是一个词或一个数字；中文 Q3 和 bf16 持平（204 篇里标出 53 篇对 50 篇）。完整表格、中文结果和这两档怎么做的，见 [README 的量化版本一节](https://github.com/sgaofen/humanizer-local-model/blob/main/README.zh.md#量化版本)或 [GGUF 仓库](https://huggingface.co/jialinyyzz/humanizer-GGUF)。
 
-**Q4_K_M 在 2026-10-04 用量化感知训练重新做过一遍：**大小和格式不变，和全精度模型的 KL 比普通 Q4_K_M 低约三分之一。¹ 这两个数是在更大的一套 KL 测试上量的（30 块英文草稿和改写），普通 Q4_K_M 在同一套上是 0.0203 和 94.5%（中文：0.0146 对 0.0225）。事实判官上，和普通 Q4_K_M 逐篇对比在噪声范围内：英文 420 篇改写里标出 58 篇对 56 篇，第二遍复核列出的问题 162 处对 163 处，9 成以上只是一个词或短语。
+**Q4_K_M 在 2026-10-04 用量化感知训练重新做过一遍：**大小和格式不变，和全精度模型的 KL 比普通 Q4_K_M 低约三分之一。¹ 这两个数是在更大的一套 KL 测试上量的（30 块英文草稿和改写），普通 Q4_K_M 在同一套上是 0.0203 和 94.5%（中文：0.0146 对 0.0225）。事实判官上，和普通 Q4_K_M 逐篇对比在噪声范围内：英文 420 篇改写里标出 58 篇对 56 篇，第二遍复核列出的问题 162 处对 163 处，9 成以上只是一个词或短语。Q3 和 2 bit 也是在这套更大的测试上量的（中文：0.0318 和 0.106；Q3 在 A30 上测，其余在 A100 上）。
 
 **下载：**
 
@@ -102,8 +105,10 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 pip install -U "huggingface_hub[cli]"
 hf download jialinyyzz/humanizer humanizer-12b-Q8_0.gguf prompt_format.json --local-dir ./humanizer-model
 # 16 GB 的机器:把 humanizer-12b-Q8_0.gguf 换成 humanizer-12b-Q6_K.gguf(硬盘紧张就用 humanizer-12b-Q4_K_M.gguf)
+# 内存更少:humanizer-12b-Q3-QAT.gguf,或最小的 humanizer-12b-IQ2_XS-QAT.gguf
 # 国内下载慢:在命令前面加 HF_ENDPOINT=https://hf-mirror.com
-wc -c ./humanizer-model/*.gguf     # Q8_0 应为 12669630368 字节,Q6_K 应为 10029799584 字节,Q4_K_M 应为 7625160864 字节
+wc -c ./humanizer-model/*.gguf     # Q8_0 应为 12669630368 字节,Q6_K 应为 10029799584 字节,Q4_K_M 应为 7625160864 字节,
+                                   # Q3-QAT 应为 5587794816 字节,IQ2_XS-QAT 应为 3893632896 字节
 ```
 
 sha256 校验值（macOS 用 `shasum -a 256 文件名`，Linux 用 `sha256sum 文件名`，Windows 用 `certutil -hashfile 文件名 SHA256`）：
@@ -113,9 +118,11 @@ sha256 校验值（macOS 用 `shasum -a 256 文件名`，Linux 用 `sha256sum �
 | `humanizer-12b-Q8_0.gguf` | `8d7a457b56de6530eaaf0151ccfa7550a4b20dab979737e259da9c63e960e0b0` |
 | `humanizer-12b-Q6_K.gguf` | `c98f03bb9e71456181f99b0e1d3391e07ce1afc357f9db4c33d6d379b8dd9f0d` |
 | `humanizer-12b-Q4_K_M.gguf` | `2229574dec5178629575ee4a153dfee7d9e924ab997d0ad9d2ac622b67e44834` |
+| `humanizer-12b-Q3-QAT.gguf` | `307bbfdf66fb22bf98aaa93fe7d54a713bf167e646073dc0cf10870b1525eb94` |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | `383e5ca8f1f48ab5f65013adbc1965fa70d1d1afa6c45d932c34b854e38edbb5` |
 | `humanizer-12b-bf16.gguf` | `47d79b44c3e15ea2540f4edb63556f2b7e456067d7dd252a42ff103a26a51be9` |
 
-所有 GGUF 文件在 2026-10-04 换过一次：元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)），并写入推荐的采样默认值（temperature 1.0、top-p 0.95、top-k 关、min-p 关、重复惩罚 1.0），请求里没设采样参数时 llama.cpp 就用它们。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小和校验值都是旧的，用续写接口、显式传采样参数照样能用。同一天还加了 `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的完整权重，单个 GGUF，给需要参照或想自己量化的人。
+所有 GGUF 文件在 2026-10-04 换过一次：元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)），并写入推荐的采样默认值（temperature 1.0、top-p 0.95、top-k 关、min-p 关、重复惩罚 1.0），请求里没设采样参数时 llama.cpp 就用它们。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小和校验值都是旧的，用续写接口、显式传采样参数照样能用。同一天还加了 `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的完整权重，单个 GGUF，给需要参照或想自己量化的人。`humanizer-12b-Q3-QAT.gguf`（2026-10-05 加入）带同样的模板和默认值。
 
 ## 3. llama.cpp（推荐）
 
@@ -375,7 +382,7 @@ Ollama 自带的 Gemma 模板，或者没写上面那段 `TEMPLATE` 的 Modelfil
 
 LM Studio 我们自己没测过。LM Studio 用的是 GGUF 里存的对话模板。2026-10-04 及之后上传的文件自带一个模板，拼出的就是[第 1 节](#1-这个模型哪里特殊)的提示词（我们用 llama.cpp 核对过，见[第 3 节](#起服务)）；更早下载的文件没有，请重新下载，或者用第 4 步的续写接口。
 
-1. 加载 `humanizer-12b-Q8_0.gguf`（或 Q6_K / Q4_K_M），加载时把上下文长度设成 8192。
+1. 加载 `humanizer-12b-Q8_0.gguf`（或 Q6_K / Q4_K_M / Q3-QAT / IQ2_XS-QAT），加载时把上下文长度设成 8192。
 2. 在模型的采样设置里设 **Temperature 1.0、Top P 0.95、Top K 0、Min P 0、Repeat Penalty 1.0**，删掉所有停止符。提示词模板保持文件自带的，别改。
 3. **聊天页面：**系统提示词留空（模板反正不用它），一条消息贴一篇草稿。每条消息各改各的，之前的对话不会发给模型。本地服务的 `/v1/chat/completions` 也是这样。
 4. **文本续写**（哪天下载的文件都能用）：在 Developer 页开本地服务，把完整提示词（指令 + 草稿 + 分隔符）发到 **`/v1/completions`**：
@@ -548,7 +555,7 @@ if __name__ == "__main__":
 - 按**段落**（空行）切开，不要在句子中间切，然后分段改写。上面的批处理脚本就是这么做的，默认每段最多 1,500 token。
 - 模型训练和评测用的都是单篇邮件、帖子、作文、报告段落，几百词的长度，这个长度的段效果最好。
 - 每段改写时看不到其他段，所以段与段之间语气可能略有变化，事实也不会在段之间挪动。拼好之后从头到尾读一遍。
-- 标题、代码块和列表常被删掉或改成正文。只改写正文，标题和代码自己留着；[`humanizer/markdown_guard.py`](https://github.com/sgaofen/humanize-model/blob/main/humanizer/markdown_guard.py) 就是这样逐块处理的。
+- 标题、代码块和列表常被删掉或改成正文。只改写正文，标题和代码自己留着；[`humanizer/markdown_guard.py`](https://github.com/sgaofen/humanizer-local-model/blob/main/humanizer/markdown_guard.py) 就是这样逐块处理的。
 - **[`hz`](#14-命令行工具-hz) 一行命令就能做完上面这些**，支持 `.md`、`.txt` 和 `.docx`：标题、代码、表格、链接原样保留，正文按约 350 个英文词（中文约 600 字）一块切开，不跨标题，每块都做检查。
 
 ## 11. 中文
@@ -579,26 +586,26 @@ if __name__ == "__main__":
 | 改写和草稿几乎一样 | 采样运气不好，或温度太低 | 确认 temperature 1.0，再采一次 |
 | 胡言乱语、用词古怪或反复重复 | 采样参数不对（llama.cpp 默认的 top-k 40 / min-p 0.05、`generation_config.json` 里的 top-k 64，或者开了重复惩罚） | 显式设 top-k 0、min-p 0、重复惩罚 1.0 |
 | 改写在句子中间断了 | 输出上限或上下文太小 | 调大 `n_predict` / `max_tokens`；llama-server 加 `-c 8192 -np 1`；长稿分段 |
-| 加载时内存不够 | 文件对你的内存或显存太大 | 16 GB 用 Q6_K，更少用 Q4_K_M（约需 12 GB）；调低 `-ngl` |
+| 加载时内存不够 | 文件对你的内存或显存太大 | 16 GB 用 Q6_K，更少用 Q4_K_M（约需 12 GB），再少用 Q3-QAT 或 2 bit 的 IQ2_XS-QAT；调低 `-ngl` |
 | 很慢 | 在用 CPU 跑 | 看 llama.cpp 日志里有没有 `offloaded N/N layers`；装 Metal、CUDA 或 Vulkan 版 |
 | 下载时 404 | 文件名写错 | 用[第 2 节](#2-选哪个文件)里的文件名 |
 | 指纹自检不过 | 提示词拼法和训练时不一样 | 直接复制[第 1 节](#提示词)里的 `build_prompt` |
 
-**自检。**[AGENTS.md 第 8 节](https://github.com/sgaofen/humanize-model/blob/main/AGENTS.md#8-self-test-verify-the-install)有一个只用标准库的脚本：它把评测集里的一篇真实草稿发给 llama-server，检查提示词格式、接口、聊天模板有没有漏进来、有没有照抄。设置正确会打印 `PASS`。
+**自检。**[AGENTS.md 第 8 节](https://github.com/sgaofen/humanizer-local-model/blob/main/AGENTS.md#8-self-test-verify-the-install)有一个只用标准库的脚本：它把评测集里的一篇真实草稿发给 llama-server，检查提示词格式、接口、聊天模板有没有漏进来、有没有照抄。设置正确会打印 `PASS`。
 
 ## 14. 命令行工具 hz
 
-`hz` 一行命令改写一篇草稿或一整份文档，人和 AI Agent 用法一样。它连接 [App](https://github.com/sgaofen/humanize-model/releases/latest) 或 llama-server（[第 3 节](#起服务)），逐字拼好提示词，用评测时的采样参数，把长文切块、保留结构，并检查每一块。需要 Python 3.8 及以上，只用标准库；`.docx` 支持是可选的。
+`hz` 一行命令改写一篇草稿或一整份文档，人和 AI Agent 用法一样。它连接 [App](https://github.com/sgaofen/humanizer-local-model/releases/latest) 或 llama-server（[第 3 节](#起服务)），逐字拼好提示词，用评测时的采样参数，把长文切块、保留结构，并检查每一块。需要 Python 3.8 及以上，只用标准库；`.docx` 支持是可选的。
 
 ### 安装
 
 ```bash
-pipx install git+https://github.com/sgaofen/humanize-model
+pipx install git+https://github.com/sgaofen/humanizer-local-model
 pipx inject humanize-model python-docx            # 只有要处理 .docx 时才需要
 
 # 或者用 pip,装进任意环境:
-pip install git+https://github.com/sgaofen/humanize-model
-pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanize-model"   # 连同 .docx 支持
+pip install git+https://github.com/sgaofen/humanizer-local-model
+pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanizer-local-model"   # 连同 .docx 支持
 
 # 克隆了仓库、不想安装:
 python3 -m humanizer.hz draft.txt

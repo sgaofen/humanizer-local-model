@@ -10,7 +10,7 @@
 
 It talks to the Humanizer desktop app (http://127.0.0.1:47615) when it is running or installed, otherwise
 to a llama-server running the model (--server, default http://127.0.0.1:8080). Standard library only.
-Docs: https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#14-hz-command-line-tool
+Docs: https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md#14-hz-command-line-tool
 """
 from __future__ import annotations
 
@@ -56,8 +56,8 @@ APP_URL = "http://127.0.0.1:47615"
 SERVER_URL = "http://127.0.0.1:8080"
 WAIT_SECONDS = 180
 REQUEST_TIMEOUT = 900
-USAGE_URL = "https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md"
-RELEASES_URL = "https://github.com/sgaofen/humanize-model/releases/latest"
+USAGE_URL = "https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md"
+RELEASES_URL = "https://github.com/sgaofen/humanizer-local-model/releases/latest"
 
 NO_BACKEND_HELP = f"""no humanizer model is running, and the Humanizer app could not be found or started.
 

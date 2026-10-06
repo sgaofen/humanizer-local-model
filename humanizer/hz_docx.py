@@ -33,7 +33,7 @@ def load(path: str):
     except ImportError:
         raise DocxMissing('.docx files need python-docx. Install it with:\n'
                           '  pipx inject humanize-model python-docx      (if you installed hz with pipx)\n'
-                          '  pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanize-model"')
+                          '  pip install "humanize-model[docx] @ git+https://github.com/sgaofen/humanizer-local-model"')
     return docx.Document(path)
 
 
