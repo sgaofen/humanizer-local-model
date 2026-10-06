@@ -36,7 +36,7 @@ tags:
 
 ## Quick start
 
-**App:** download the `.dmg` (Mac with Apple silicon) or the Windows installer from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest). On first run it picks a model size for your memory and downloads it once; after that it works offline.
+**App:** download the `.dmg` (Mac with Apple silicon) or the Windows installer from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest). On first run it suggests one of five sizes for your memory (Q8_0, Q6_K, Q4_K_M, Q3 or 2-bit, down to 8 GB machines; app 0.3.0) and downloads it once; after that it works offline. Sizes and quality notes: [Quantized versions](#quantized-versions).
 
 **Command line, for long documents and agents:** `pipx install git+https://github.com/sgaofen/humanizer-local-model`, then `hz paper.md -o paper.out.md` (also `.txt` and `.docx`). It uses the app or a llama-server, keeps headings, code, tables and links, rewrites the prose piece by piece and flags any piece where a number went missing. See [USAGE.md, section 14](USAGE.md#14-hz-command-line-tool).
 
