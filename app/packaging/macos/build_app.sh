@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 组装 Humanizer.app 并打成 .dmg(在 macOS 上跑;CI 用 macos-14 arm64 runner)。
 #
-#   bash packaging/macos/build_app.sh 0.1.0
+#   bash packaging/macos/build_app.sh 0.3.0
 #
 # 前置:python3 packaging/fetch_engine.py --target macos --out dist/engine
 #

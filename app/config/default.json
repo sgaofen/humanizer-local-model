@@ -47,8 +47,32 @@
       "min_ram_gb": 12,
       "sha256": "",
       "note": {
-        "zh": "最小的 12B 文件,给 16 GB 以下的机器",
-        "en": "Smallest 12B file, for machines under 16 GB"
+        "zh": "略有损失,给 16 GB 以下的机器",
+        "en": "Slight loss, for machines under 16 GB"
+      }
+    },
+    {
+      "id": "q3",
+      "label": "Q3",
+      "file": "humanizer-12b-Q3-QAT.gguf",
+      "approx_gb": 5.6,
+      "min_ram_gb": 10,
+      "sha256": "307bbfdf66fb22bf98aaa93fe7d54a713bf167e646073dc0cf10870b1525eb94",
+      "note": {
+        "zh": "小幅损失,英文的事实小错略多一些",
+        "en": "Small loss; a few more fact slips in English"
+      }
+    },
+    {
+      "id": "q2",
+      "label": "2-bit",
+      "file": "humanizer-12b-IQ2_XS-QAT.gguf",
+      "approx_gb": 3.9,
+      "min_ram_gb": 8,
+      "sha256": "383e5ca8f1f48ab5f65013adbc1965fa70d1d1afa6c45d932c34b854e38edbb5",
+      "note": {
+        "zh": "AI 检测表现最好,事实小错多一些,数字人名要核对",
+        "en": "Lowest AI-detector score; a few more fact slips (proofread numbers and names)"
       }
     }
   ],
@@ -62,8 +86,16 @@
       "tier": "q6"
     },
     {
-      "min_gb": 0,
+      "min_gb": 14,
       "tier": "q4"
+    },
+    {
+      "min_gb": 12,
+      "tier": "q3"
+    },
+    {
+      "min_gb": 0,
+      "tier": "q2"
     }
   ],
   "ram_slack_gb": 1.0,

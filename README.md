@@ -30,6 +30,8 @@
 
 Double-click it and the app opens in your browser. On first run it looks at your memory, suggests a model size and downloads it once from Hugging Face. After that it works offline. Paste a draft on the left; the rewrite streams in on the right, with new wording highlighted and replaced wording struck through. On an M5 Max a hundred-word email takes about 3.6 seconds.
 
+The app offers five sizes: Q8_0 (best), Q6_K (no measurable loss), Q4_K_M (slight loss), Q3 (small loss; a few more fact slips in English) and 2-bit (lowest AI-detector score; a few more fact slips). It suggests one for your memory, down to 8 GB machines; switch any time from the **…** menu → **Change model size**. Details: [which model size](docs/INSTALL.md#which-model-size).
+
 The app is not code-signed yet, so macOS and Windows will warn you the first time. The one-time fix is in [docs/INSTALL.md](docs/INSTALL.md#first-launch-warnings).
 
 <img src="assets/app-en.png" alt="The humanizer app: draft on the left, rewrite on the right" width="100%">

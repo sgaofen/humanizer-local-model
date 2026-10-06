@@ -175,7 +175,7 @@ type statusResp struct {
 	DataDir         string       `json:"data_dir"`
 	IdleExitMinutes int          `json:"idle_exit_minutes"`
 	CtxSize         int          `json:"ctx_size"`
-	// Notice:"lite_retired" = 这台机器以前选的是已下线的 lite 档,网页提示换成 12B Q4_K_M;旧文件不删。
+	// Notice:"lite_retired" = 这台机器以前选的是已下线的 lite 档,网页提示换成推荐的 12B 档位;旧文件不删。
 	Notice string `json:"notice,omitempty"`
 }
 

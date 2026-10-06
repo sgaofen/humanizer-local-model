@@ -21,7 +21,9 @@ func testConfig(t *testing.T) Config {
 
 func TestRecommendTier(t *testing.T) {
 	c := testConfig(t)
-	cases := map[float64]string{128: "q8", 32: "q8", 31.4: "q8", 24: "q6", 16: "q6", 15.5: "q6", 8: "q4", 4: "q4"}
+	// 门槛 = 峰值内存 + 系统余量,另有 1 GB 容差(16 GB 的 Windows 常报 15.x,集显再占一块就是 13.x)
+	cases := map[float64]string{128: "q8", 32: "q8", 31.4: "q8", 24: "q6", 16: "q6", 15.5: "q6",
+		14: "q4", 13.4: "q4", 12: "q3", 11.2: "q3", 10.5: "q2", 8: "q2", 7.6: "q2", 4: "q2"}
 	for ram, want := range cases {
 		if got := c.recommendTier(ram); got != want {
 			t.Errorf("%.1f GB → %s,期望 %s", ram, got, want)

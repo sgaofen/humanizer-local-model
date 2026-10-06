@@ -14,9 +14,9 @@ import diffmark
 
 GH = "https://github.com/sgaofen/humanize-model"
 REL = GH + "/releases/latest"
-APP_DL = GH + "/releases/download/app-v0.2.0/"   # direct files; bump with each app release
-MAC_DMG = APP_DL + "Humanizer-0.2.0-macos-arm64.dmg"
-WIN_EXE = APP_DL + "Humanizer-0.2.0-windows-x64-setup.exe"
+APP_DL = GH + "/releases/download/app-v0.3.0/"   # direct files; bump with each app release
+MAC_DMG = APP_DL + "Humanizer-0.3.0-macos-arm64.dmg"
+WIN_EXE = APP_DL + "Humanizer-0.3.0-windows-x64-setup.exe"
 BLOB = GH + "/blob/main/"
 HF_MODEL = "https://huggingface.co/jialinyyzz/humanizer"
 INSTALL_EN = BLOB + "docs/INSTALL.md#first-launch-warnings"

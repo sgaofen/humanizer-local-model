@@ -13,15 +13,21 @@ Either way the model runs on your own computer. The only network access is the o
 
 ## Which model size
 
-| Your memory (RAM) | What the app picks | File | Download size |
-|---|---|---|---|
-| 32 GB or more | **Q8_0** (best quality) | `humanizer-12b-Q8_0.gguf` | about 12.7 GB |
-| 16 GB | **Q6_K** | `humanizer-12b-Q6_K.gguf` | about 10.0 GB |
-| Less than 16 GB | **Q4_K_M**, the smallest 12B file | `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB |
+The app offers five sizes of the same 12B model (app 0.3.0 and later):
 
-Q4_K_M needs about 12 GB of memory; with less, the app warns that it may not load. How close each file is to the full-precision model, including the fact judge on each file, is in [Usage without the app](USAGE.md#2-pick-a-file).
+| Your memory (RAM) | What the app picks | Quality | File | Download size | Mac memory in use ¹ |
+|---|---|---|---|---|---|
+| 32 GB or more | **Q8_0** | Best | `humanizer-12b-Q8_0.gguf` | about 12.7 GB | about 14 GB |
+| 16 GB | **Q6_K** | No measurable loss | `humanizer-12b-Q6_K.gguf` | about 10.0 GB | about 11 GB |
+| about 14 GB | **Q4_K_M** | Slight loss | `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB | about 10 GB |
+| 12 GB | **Q3** | Small loss; a few more fact slips in English | `humanizer-12b-Q3-QAT.gguf` | about 5.6 GB | about 8 GB |
+| 8 GB | **2-bit** | Lowest AI-detector score; a few more fact slips | `humanizer-12b-IQ2_XS-QAT.gguf` | about 3.9 GB | about 6.2 GB |
 
-The app allows 1 GB of slack, so a 32 GB PC that reports 31.x GB still gets Q8_0. You can always pick a different size on the setup page. All sizes use the same prompt and settings.
+¹ Peak memory of the model server while rewriting, measured on an Apple M5 Max (Q6_K estimated). The app picks the largest size that leaves about 4 GB for the system and your browser. Speed on that Mac: about 38 tokens/s for Q8_0, 52 for Q4_K_M, 65 for Q3 and 69 for 2-bit.
+
+With less than 8 GB the app warns that the model may not load. With Q3 and especially 2-bit, read numbers, dates and names before you send. How close each file is to the full-precision model, including the fact judge on each file, is in [Usage without the app](USAGE.md#2-pick-a-file).
+
+The app allows 1 GB of slack, so a 32 GB PC that reports 31.x GB still gets Q8_0. **To switch sizes later**, open the **…** menu at the top right → **Change model size**, pick one and click **Download** (or **Use**, if it is already downloaded). Files you downloaded before stay in the models folder. All sizes use the same prompt and settings.
 
 ## App on macOS
 
@@ -139,13 +145,13 @@ The prompt must be built exactly like this; see [Prompt format](../README.md#pro
 
 ## FAQ
 
-**Which size should I pick if I'm not sure?** Let the app decide; it reads your memory. On the command line: 32 GB or more → Q8_0; 16 GB → Q6_K; less → Q4_K_M (about 12 GB is the practical minimum).
+**Which size should I pick if I'm not sure?** Let the app decide; it reads your memory. On the command line: 32 GB or more → Q8_0; 16 GB → Q6_K; about 14 GB → Q4_K_M; 12 GB → Q3; 8 GB → 2-bit.
 
 **The download stopped halfway.** Open the app again; it continues where it stopped. With `hf download`, run the same command again.
 
 **It's very slow.** It is probably running on the CPU. On Windows, make sure your GPU driver is up to date. On the command line, look for `offloaded N/N layers` in the server log. For reference, on an M5 Max the app (llama.cpp Q8_0, Metal) runs at about 36–38 tokens/s: about 3.6 seconds for a hundred-word email, about 8.5 seconds for a Chinese email of about 300 characters.
 
-**It ran out of memory.** Pick a smaller size (Q8_0 → Q6_K → Q4_K_M). On the command line, also try a lower `-ngl` (fewer layers on the GPU) or a smaller `-c`.
+**It ran out of memory.** Pick a smaller size (Q8_0 → Q6_K → Q4_K_M → Q3 → 2-bit). On the command line, also try a lower `-ngl` (fewer layers on the GPU) or a smaller `-c`.
 
 **The rewrite is almost the same as my draft.** Press **Regenerate** (each run is a fresh sample). The app does not resample automatically.
 

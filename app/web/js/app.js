@@ -177,8 +177,8 @@ function renderSetup() {
 
 function renderChoose() {
   const st = S.status;
-  // 以前选的 lite 档已下线:默认换到 Q4_K_M(旧文件不删)
-  if (!S.pickTier || !tierOf(S.pickTier)) S.pickTier = (st.notice === 'lite_retired' && tierOf('q4')) ? 'q4' : (st.tier || st.recommended);
+  // 以前选的 lite 档已下线:默认选这台机器的推荐档(旧文件不删)
+  if (!S.pickTier || !tierOf(S.pickTier)) S.pickTier = st.notice === 'lite_retired' ? st.recommended : (st.tier || st.recommended);
   if (!S.pickEndpoint) S.pickEndpoint = st.endpoint;
   const cpu = st.sys.cpu ? escapeHTML(st.sys.cpu.replace(/\(R\)|\(TM\)|CPU|@.*$/g, '').trim()) : st.sys.os;
   $('sysline').innerHTML = t('setup.sys', { cpu, ram: Math.round(st.sys.ram_gb) });

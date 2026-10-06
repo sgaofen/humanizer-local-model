@@ -73,7 +73,7 @@ EOF
 B=http://127.0.0.1:47711
 cat > "$WORK/spec-b1.json" <<EOF
 [
- {"url": "$B/?lang=zh&theme=light", "out": "$S/setup-zh-light.png", "scale": 1.5, "wait": "!document.querySelector('[data-pane=choose]').hidden && document.querySelectorAll('.tier').length === 4", "settle_ms": 600}
+ {"url": "$B/?lang=zh&theme=light", "out": "$S/setup-zh-light.png", "scale": 1.5, "wait": "!document.querySelector('[data-pane=choose]').hidden && document.querySelectorAll('.tier').length === 5", "settle_ms": 600}
 ]
 EOF
 "$OUT/shot" -spec "$WORK/spec-b1.json"
