@@ -1,0 +1,24 @@
+group,label,file,main_repo_name,gb,bytes,kl_en,kl_en_se,kl_zh,kl_zh_se,top1_en,top1_zh,p999_en,p999_zh,chunks,gpu,reference,path
+mrad,IQ1_M,humanizer.i1-IQ1_M.gguf,,3.203,3202831008,2.17475,0.01210,4.16540,0.01519,48.07,28.24,12.208,13.891,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-IQ1_M.gguf
+mrad,IQ2_XS,humanizer.i1-IQ2_XS.gguf,,3.888,3887825568,0.46805,0.00373,0.90968,0.00607,74.75,64.42,6.195,7.623,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-IQ2_XS.gguf
+mrad,IQ2_M,humanizer.i1-IQ2_M.gguf,,4.372,4371788448,0.25157,0.00253,0.40651,0.00339,81.11,75.85,5.554,6.126,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-IQ2_M.gguf
+mrad,IQ3_XXS,humanizer.i1-IQ3_XXS.gguf,,4.849,4849177248,0.13599,0.00165,0.19007,0.00215,85.83,82.67,3.953,3.995,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-IQ3_XXS.gguf
+mrad,IQ3_M,humanizer.i1-IQ3_M.gguf,,5.734,5733974688,0.05708,0.00086,0.07162,0.00086,90.69,88.89,1.574,1.322,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-IQ3_M.gguf
+mrad,Q4_K_M,humanizer.i1-Q4_K_M.gguf,,7.381,7381365408,0.01979,0.00033,0.02351,0.00060,94.38,93.44,0.543,0.649,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-Q4_K_M.gguf
+mrad,Q6_K,humanizer.i1-Q6_K.gguf,,9.786,9786004128,0.00331,0.00008,0.00359,0.00005,97.84,97.44,0.135,0.072,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/mrad/humanizer.i1-Q6_K.gguf
+ours,2-bit,humanizer-12b-IQ2_XS-QAT.gguf,humanizer-12b-IQ2_XS-QAT.gguf,3.894,3893630464,0.10632,0.00151,0.10579,0.00142,87.72,87.07,3.626,2.989,30,NVIDIA A100 80GB PCIe,bf16 with the same pruned 130k vocabulary,/dfs7/adl/stephjy1/qad/pipeline/qpipe_q2_390/sd/sd.gguf
+ours,3-bit (Q3),humanizer-12b-IQ3_XXS-QAT.gguf,humanizer-12b-Q3-QAT.gguf,5.588,5587794816,0.02998,0.00062,0.03177,0.00067,93.63,92.64,1.342,1.054,30,NVIDIA A30,bf16 with the same pruned 130k vocabulary,/dfs7/adl/stephjy1/release_ct8/humanizer-12b-Q3-QAT.gguf
+ours,Q4_K_M,humanizer-12b-Q4_K_M.gguf,humanizer-12b-Q4_K_M.gguf,7.625,7625158368,0.01355,0.00026,0.01456,0.00027,95.62,94.77,0.408,0.533,30,NVIDIA A100 80GB PCIe,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/runs/qblk_sd_q4km/qblk_sd_q4km.gguf
+std,IQ1_M,IQ1_M.gguf,,3.203,3202830080,1.84590,0.01057,2.87884,0.01261,52.86,39.10,11.047,11.600,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ1_M.gguf
+std,IQ2_XXS,IQ2_XXS.gguf,,3.568,3568090880,0.82283,0.00591,2.26807,0.01205,67.89,45.84,8.063,11.380,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ2_XXS.gguf
+std,IQ2_XS,IQ2_XS.gguf,,3.888,3887824640,0.47091,0.00375,0.75962,0.00512,74.44,66.21,6.078,7.162,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ2_XS.gguf
+std,IQ2_M,IQ2_M.gguf,,4.372,4371787520,0.24527,0.00263,0.36702,0.00323,81.55,76.78,5.905,6.334,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ2_M.gguf
+std,Q2_K,Q2_K.gguf,,4.830,4830129920,0.22395,0.00244,0.30268,0.00315,82.03,78.84,5.944,8.561,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/Q2_K.gguf
+std,IQ3_XXS,IQ3_XXS.gguf,,4.849,4849176320,0.13571,0.00151,0.18514,0.00200,85.70,82.77,3.299,3.589,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ3_XXS.gguf
+std,IQ3_M,IQ3_M.gguf,,5.734,5733973760,0.05564,0.00095,0.06698,0.00098,90.94,89.19,1.702,1.613,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ3_M.gguf
+std,Q3_K_M,Q3_K_M.gguf,,6.087,6087069440,0.06306,0.00075,0.08002,0.00091,89.98,88.23,1.577,2.062,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/Q3_K_M.gguf
+std,IQ4_XS,IQ4_XS.gguf,,6.635,6635237120,0.02598,0.00052,0.02911,0.00043,93.79,92.58,1.132,0.827,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/IQ4_XS.gguf
+std,Q4_K_M,Q4_K_M.gguf,,7.381,7381364480,0.02056,0.00045,0.02338,0.00063,94.32,93.45,0.572,0.593,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/Q4_K_M.gguf
+std,Q5_K_M,Q5_K_M.gguf,,8.547,8547249920,0.01082,0.00026,0.01080,0.00015,95.98,95.62,0.424,0.330,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/Q5_K_M.gguf
+std,Q6_K,Q6_K.gguf,,9.786,9786003200,0.00327,0.00012,0.00354,0.00006,97.87,97.41,0.131,0.077,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/Q6_K.gguf
+std,Q8_0,Q8_0.gguf,,12.670,12669628160,0.00147,0.00004,0.00191,0.00008,98.50,98.24,0.060,0.066,30,NVIDIA A30,bf16 (full vocabulary),/dfs7/adl/stephjy1/qad/sweep/std/Q8_0.gguf
