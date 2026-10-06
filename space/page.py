@@ -222,7 +222,9 @@ def local_section() -> str:
         <tr><th>{L("Memory", "内存")}</th><th>{L("File", "文件")}</th><th>{L("Download", "下载")}</th></tr>
         <tr><td>{L("32 GB or more", "32 GB 及以上")}</td><td>Q8_0</td><td>12.7 GB</td></tr>
         <tr><td>16 GB</td><td>Q6_K</td><td>10.0 GB</td></tr>
-        <tr><td>{L("Less than 16 GB", "16 GB 以下")}</td><td>Q4_K_M</td><td>7.6 GB</td></tr>
+        <tr><td>14 GB</td><td>Q4_K_M</td><td>7.6 GB</td></tr>
+        <tr><td>12 GB</td><td>Q3</td><td>5.6 GB</td></tr>
+        <tr><td>8 GB</td><td>2-bit</td><td>3.9 GB</td></tr>
       </table>
       <div class="notice">{icon("warn")}<div>{P(
           f"<b>Not code-signed yet</b>, so the first launch is blocked once. macOS: System Settings → Privacy &amp; Security → <b>Open Anyway</b>. Windows: <b>More info</b> → <b>Run anyway</b>. Step by step: {A(INSTALL_EN, 'INSTALL.md')}.",
@@ -237,8 +239,8 @@ def local_section() -> str:
     <article class="card">
       <div class="card-head">{icon("chip")}<h3>{L("llama.cpp, one line", "llama.cpp 一行命令")}</h3><span class="badge soft">{L("any OS", "任何系统")}</span></div>
       {code_block(llama_cmd)}
-      {P("The first run downloads <code>humanizer-12b-Q8_0.gguf</code> (about 12.7 GB); on a 16 GB machine use <code>humanizer-12b-Q6_K.gguf</code> (about 10.0 GB), or <code>humanizer-12b-Q4_K_M.gguf</code> (about 7.6 GB) if disk is tight. This is a text-completion model, not a chat model: send the exact prompt from <code>prompt_format.json</code> to <code>/completion</code> with temperature 1.0, top_p 0.95, top_k 0, min_p 0.",
-         "第一次会下载 <code>humanizer-12b-Q8_0.gguf</code>（约 12.7 GB）；16 GB 内存的机器换成 <code>humanizer-12b-Q6_K.gguf</code>（约 10.0 GB），硬盘紧张就用 <code>humanizer-12b-Q4_K_M.gguf</code>（约 7.6 GB）。这是文本续写模型，不是聊天模型：按 <code>prompt_format.json</code> 逐字拼好提示词，发到 <code>/completion</code>，temperature 1.0、top_p 0.95、top_k 0、min_p 0。国内下载慢可以在命令前加 <code>HF_ENDPOINT=https://hf-mirror.com</code>。")}
+      {P("The first run downloads <code>humanizer-12b-Q8_0.gguf</code> (about 12.7 GB); on a 16 GB machine use <code>humanizer-12b-Q6_K.gguf</code> (about 10.0 GB), or <code>humanizer-12b-Q4_K_M.gguf</code> (about 7.6 GB) if disk is tight; with less memory, <code>humanizer-12b-Q3-QAT.gguf</code> (5.6 GB) or the 2-bit <code>humanizer-12b-IQ2_XS-QAT.gguf</code> (3.9 GB), which make a few more fact slips. This is a text-completion model, not a chat model: send the exact prompt from <code>prompt_format.json</code> to <code>/completion</code> with temperature 1.0, top_p 0.95, top_k 0, min_p 0.",
+         "第一次会下载 <code>humanizer-12b-Q8_0.gguf</code>（约 12.7 GB）；16 GB 内存的机器换成 <code>humanizer-12b-Q6_K.gguf</code>（约 10.0 GB），硬盘紧张就用 <code>humanizer-12b-Q4_K_M.gguf</code>（约 7.6 GB）；内存更少用 <code>humanizer-12b-Q3-QAT.gguf</code>（5.6 GB）或 2 bit 的 <code>humanizer-12b-IQ2_XS-QAT.gguf</code>（3.9 GB），事实小错会多一些。这是文本续写模型，不是聊天模型：按 <code>prompt_format.json</code> 逐字拼好提示词，发到 <code>/completion</code>，temperature 1.0、top_p 0.95、top_k 0、min_p 0。国内下载慢可以在命令前加 <code>HF_ENDPOINT=https://hf-mirror.com</code>。")}
     </article>
   </div>
   <div class="docs">
