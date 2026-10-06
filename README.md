@@ -171,22 +171,33 @@ The training code will be released later.
 |---|---|---|
 | `humanizer-12b-Q8_0.gguf` | about 12.7 GB | 32 GB of memory or more. Recommended. |
 | `humanizer-12b-Q6_K.gguf` | about 10.0 GB | 16 GB of memory. |
-| `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB | The smallest 12B file, when memory or disk is tight. |
+| `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB | When memory or disk is tight. Quantization-aware trained. |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | about 3.9 GB | The smallest. 2-bit; more fact mistakes than the larger files (see below). |
+| `humanizer-12b-bf16.gguf` | about 23.8 GB | Unquantised weights as one GGUF, for reference or for quantising yourself. |
 | `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
 | `prompt_format.json` | tiny | The instruction and separator, verbatim. |
 
-In all three GGUF files the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. How close each is to bf16: KL over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data), and the same fact judge as in [Results](#fact-fidelity) on all 420 English rewrites:
+### Quantized versions
 
-| File | Mean KL vs. bf16 | Top token same as bf16 | Perplexity | No factual problem (English) |
-|---|---|---|---|---|
-| bf16 (reference) | | | | 368 / 420 |
-| Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
-| Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
-| Q4_K_M (updated 2026-10-04, see below) | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
+| File | In short | Bits / type | Size | Peak memory (Mac) ¹ | KL to bf16, EN / ZH ² | Standard `llama-quantize` build, same size class: KL EN / ZH (top token same) ² | Top token same as bf16, EN / ZH ² | Fact check (GLM): rewrites flagged · spots listed ³ | Flagged as AI, same 60 drafts ⁵ |
+|---|---|---|---|---|---|---|---|---|---|
+| `humanizer-12b-bf16.gguf` | Reference (full precision) | 16-bit (bf16) | 23.8 GB | about 24.8 GB (est.) | 0 (reference) | | 100% (reference) | EN 52 · 160 spots <br> ZH 50 · 216 spots | 4 / 60 |
+| `humanizer-12b-Q8_0.gguf` | **Best quality** | 8-bit (Q8_0) | 12.7 GB | 13.7 GB | 0.0017 / 0.0017 | same file: Q8_0 is a standard build | 98.45% / 98.25% | EN 44 · 135 spots <br> ZH 54 · 236 spots | 7 / 60 |
+| `humanizer-12b-Q6_K.gguf` | No measurable loss | 6-bit (Q6_K) | 10.0 GB | about 11.0 GB (est.) | 0.0031 / 0.0035 | same file: Q6_K is a standard build | 97.95% / 97.48% | EN 56 · 153 spots <br> ZH 56 · 255 spots | not measured |
+| `humanizer-12b-Q4_K_M.gguf` | Near-lossless | 4-bit (Q4_K_M), quantization-aware trained | 7.6 GB | about 8.6 GB (est.) | **0.0136 / 0.0146** | Q4_K_M, 7.6 GB: 0.0203 / 0.0225 (94.46% / 93.46%) | 95.62% / 94.77% | EN 58 · 162 spots <br> ZH 51 · 194 spots <br> (standard Q4_K_M: EN 56 · 163, ZH 48 · 218) | not measured |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | Best AI-detector result; a few more fact slips (mostly single words or numbers): check numbers and names before sending | 2-bit (mostly IQ2_XS) ⁴, quantization-aware trained | 3.9 GB | 4.9 GB | **0.106 / 0.106** ⁴ | IQ2_XS, 3.8 GB: 0.474 / 0.769 (74.43% / 65.53%) <br> 3-bit IQ3_XXS, 4.7 GB, for reference: 0.138 / 0.190 (85.72% / 82.55%) | 87.72% / 87.07% | EN 70 · 265 spots <br> ZH 66 · 361 spots | 0 / 60 |
 
-Compared draft by draft with bf16, all three files are within noise on the fact judge.
+**What KL means:** how far a file's next-word probabilities drift from the full bf16 model, averaged over every word of real drafts and rewrites. Lower is better; 0 means identical. "Top token same" is how often the file and bf16 would pick the same most likely next word. "Standard" means a plain `llama-quantize` run of the same type with the same importance matrix our build started from, with no extra training.
 
-**Q4_K_M was refined on 2026-10-04 with quantization-aware training:** same size and format, about 1/3 lower KL to the full-precision model than a standard Q4_K_M. ¹ Measured on a larger KL set (30 blocks of English drafts and rewrites), where the standard Q4_K_M scores 0.0203 and 94.5% (Chinese: 0.0146 vs. 0.0225). On the fact judge, compared draft by draft with the standard Q4_K_M, it is within noise: 58 vs. 56 of 420 English rewrites flagged, 162 vs. 163 problems listed by the second pass, more than 9 in 10 of them a single word or phrase. sha256 checksums are in [USAGE.md](https://github.com/sgaofen/humanize-model/blob/main/docs/USAGE.md#2-pick-a-file).
+The Q4_K_M was refined with quantization-aware training on 2026-10-04: same size and format, about 1/3 lower KL than the standard Q4_K_M. The 2-bit build is closer to the full model than a standard 3-bit build that is 0.8 GB larger, and Chinese, which plain 2-bit quantization hurts most, comes out the same as English. It still makes more fact mistakes than the larger files (see ³), so use it only when memory is tight and check its output with extra care. A 3-bit build is coming.
+
+¹ Maximum resident memory of llama-server (llama.cpp, Metal) on an Apple M5 Max with the app's settings (8,192-token context, one request at a time) while rewriting a 470-token draft; about the file size plus 1 GB. Q8_0 and 2-bit measured; the others are estimated the same way (est.). A 32,768-token context adds about 0.4 GB. Leave room for the system and other apps.
+² llama.cpp `llama-perplexity --kl-divergence`, 30 chunks of 2,048 tokens per language (about 30,700 scored tokens each) of held-out drafts and rewrites from the evaluation set (no overlap with calibration or training data), reference = the bf16 GGUF, all on the same A100. Third-party quantizations were not measured. Q8_0, Q6_K and Q4_K_M keep the token embeddings and output layer at 8-bit; the IQ2_XS and IQ3_XXS comparison builds use 4-bit embeddings.
+³ The strict fact judge from [Results](#fact-fidelity) (GLM-5.3, one vote per rewrite) on all 420 English and 204 Chinese rewrites (two per draft; for bf16, 4 Chinese rewrites could not be judged). "Rewrites flagged" = rewrites it found a factual problem in; a second pass re-read each flagged rewrite against its draft and listed every problem ("spots"). Most spots are a single word, number or phrase: about 9 in 10 for every file (2-bit: 243 of 265 English, 330 of 361 Chinese). Compared draft by draft with Q8_0, Q6_K and Q4_K_M are within noise, and the quantization-aware Q4_K_M is within noise of the standard one. The 2-bit build is not: in English it was flagged on 70 rewrites against 44 for Q8_0 on the same drafts, a difference beyond noise; in Chinese 66 against 54, within noise. Against the Q4_K_M it is 70 vs. 58 and 66 vs. 51, within noise.
+⁴ The 2-bit build keeps about 130,000 of the 262,144 vocabulary tokens: the ones English and Chinese text actually uses, plus everything needed to spell any input. Any text still encodes and decodes exactly; rare symbols, emoji and other scripts just take a few more tokens. Pruning alone moves the model by KL 0.0013 (English) / 0.0002 (Chinese), and the 2-bit KL above is measured against a bf16 with the same pruned vocabulary. Bits are spread by sensitivity (mostly IQ2_XS, with 3- and 4-bit types where they matter), then each layer is tuned with quantization-aware training and the scales are distilled from the bf16 model on English and Chinese rewriting data. The file reports its type as IQ2_XS, but it is not a plain IQ2_XS.
+⁵ The 2-bit build had the best AI-detector result of all versions: 0/60 flagged (Q8_0 7/60, bf16 4/60; Originality.ai strictest setting). A likely reason: the small drift from quantization makes the wording a bit less predictable, which detectors read as less machine-like.
+
+sha256 checksums are in [USAGE.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md#2-pick-a-file).
 
 ### Prompt format
 
