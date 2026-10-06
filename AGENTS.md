@@ -6,7 +6,7 @@ Instructions for AI agents (Claude Code, Codex, Cursor, etc.) setting up **human
 
 - **What it does:** rewrites one AI-written draft (English or Chinese) so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote, and to add nothing. Output = the rewritten text only.
 - **Kind of model:** 12B **text-completion** model (fine-tuned from `google/gemma-4-12B`). **Not a chat model.** Call the completion endpoint with the exact prompt from step 6: no system prompt, no chat turns. (The GGUF files uploaded on or after 2026-10-04 also carry a chat template that builds the same prompt from the last user message, so chat front ends such as LM Studio should work; the authors have not tested them. In code, use the completion endpoint: it works with every download.)
-- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes, about 7.6 GB) when memory or disk is tight; below about 12 GB, `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes, about 5.6 GB) or the smallest, `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, about 3.9 GB), which make a few more fact slips. You also need `prompt_format.json` from the same repo.
+- **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes, about 7.6 GB) for about 14 GB or when disk is tight; `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes, about 5.6 GB) for 12 GB; the smallest, `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, about 3.9 GB, 2-bit), for 8 GB. Q3 and 2-bit make a few more fact slips. You also need `prompt_format.json` from the same repo.
 - **Runtime:** `llama-server` from llama.cpp (macOS, Windows, Linux). Alternatives in section 10.
 - **Sampling:** temperature 1.0, top_p 0.95, and nothing else: top_k 0, min_p 0, repeat_penalty 1.0. Stop on EOS only. No stop strings.
 - **License:** Apache 2.0.
@@ -29,8 +29,11 @@ powershell -c "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB"  
 | Memory | Use |
 |---|---|
 | 32 GB or more | `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes) |
-| 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes) if memory or disk is tight |
-| Less than 12 GB | `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes; plan for about 8 GB of free memory). Less still: `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, 2-bit; about 6 GB). Both make a few more fact slips than the larger files; tell the user to proofread numbers and names. |
+| 16 GB | `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes); `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes) if disk is tight |
+| About 14 GB | `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes) |
+| 12 GB | `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes). A few more fact slips in English; tell the user to proofread numbers and names. |
+| 8 GB | `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, 2-bit, the smallest). More fact slips; tell the user to proofread numbers and names. |
+| Less than 8 GB | Not enough for the 12B model; tell the user. |
 
 You also need free disk space for the file you pick. In the commands below, replace the Q8_0 file name if you picked another file.
 
@@ -218,7 +221,7 @@ All of them need the same prompt (step 6) and the same sampling (step 7). Comple
 | Output is cut off at `###` | A stop string was set | Remove all stop strings; rely on EOS |
 | Output is almost the same as the draft | Sampling bad luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling or repeated phrases | Wrong sampler settings | Set `top_k: 0, min_p: 0, repeat_penalty: 1.0` explicitly |
-| Out of memory while loading | Not enough RAM or VRAM for Q8_0 | Use Q6_K (16 GB), Q4_K_M (about 12 GB), Q3-QAT or IQ2_XS-QAT (smaller still); lower `-ngl` |
+| Out of memory while loading | Not enough RAM or VRAM for Q8_0 | Use Q6_K (16 GB), Q4_K_M (about 14 GB), Q3-QAT (12 GB) or IQ2_XS-QAT (8 GB); lower `-ngl` |
 | Very slow | Running on the CPU | Check `offloaded N/N layers` in the log; install the Metal, CUDA or Vulkan build |
 | 404 when downloading a file | Wrong file name | Use the file names in step 2 |
 

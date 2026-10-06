@@ -2,7 +2,7 @@
 
 > humanizer is a 12B text-completion model (fine-tuned from google/gemma-4-12B, Apache 2.0) that rewrites one AI-written draft, in English or Chinese, so it reads like a person wrote it. It is trained to keep every number, unit, date, name and quote and to add nothing. It is NOT a chat model: send a raw completion prompt. (The GGUF files uploaded on or after 2026-10-04 carry a chat template that builds the same prompt from the last user message, so chat front ends that use it should work; in code, use the completion endpoint.)
 
-Weights: https://huggingface.co/jialinyyzz/humanizer. Pick by memory: 32 GB or more → humanizer-12b-Q8_0.gguf (12,669,630,368 bytes); 16 GB → humanizer-12b-Q6_K.gguf (10,029,799,584 bytes), or humanizer-12b-Q4_K_M.gguf (7,625,160,864 bytes) if memory or disk is tight; under 12 GB → humanizer-12b-Q3-QAT.gguf (5,587,794,816 bytes) or, smallest, humanizer-12b-IQ2_XS-QAT.gguf (3,893,632,896 bytes, 2-bit); these two make a few more fact slips. Always also download prompt_format.json. bf16 model.safetensors (about 24 GB) is at the repo root for transformers, vLLM and MLX. Desktop app for macOS (Apple silicon) and Windows: https://github.com/sgaofen/humanizer-local-model/releases/latest
+Weights: https://huggingface.co/jialinyyzz/humanizer. Pick by memory: 32 GB or more → humanizer-12b-Q8_0.gguf (12,669,630,368 bytes); 16 GB → humanizer-12b-Q6_K.gguf (10,029,799,584 bytes), or humanizer-12b-Q4_K_M.gguf (7,625,160,864 bytes) for about 14 GB or if disk is tight; 12 GB → humanizer-12b-Q3-QAT.gguf (5,587,794,816 bytes); 8 GB → humanizer-12b-IQ2_XS-QAT.gguf (3,893,632,896 bytes, 2-bit, the smallest). Q3 and 2-bit make a few more fact slips; under 8 GB the 12B does not fit. Always also download prompt_format.json. bf16 model.safetensors (about 24 GB) is at the repo root for transformers, vLLM and MLX. Desktop app for macOS (Apple silicon) and Windows: https://github.com/sgaofen/humanizer-local-model/releases/latest
 
 Minimal recipe:
 
@@ -39,9 +39,9 @@ Rules: one draft per request; use the completion endpoint, not a chat endpoint o
 - [prompt_format.json](https://huggingface.co/jialinyyzz/humanizer/resolve/main/prompt_format.json): instruction and separator, verbatim
 - [humanizer-12b-Q8_0.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q8_0.gguf): recommended GGUF (32 GB or more)
 - [humanizer-12b-Q6_K.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q6_K.gguf): GGUF for 16 GB machines
-- [humanizer-12b-Q4_K_M.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q4_K_M.gguf): when memory or disk is tight (about 12 GB)
-- [humanizer-12b-Q3-QAT.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q3-QAT.gguf): 3-bit class, under 12 GB; a few more fact slips in English
-- [humanizer-12b-IQ2_XS-QAT.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-IQ2_XS-QAT.gguf): 2-bit, the smallest; more fact slips
+- [humanizer-12b-Q4_K_M.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q4_K_M.gguf): about 14 GB of memory, or when disk is tight
+- [humanizer-12b-Q3-QAT.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q3-QAT.gguf): 3-bit class, for 12 GB; a few more fact slips in English
+- [humanizer-12b-IQ2_XS-QAT.gguf](https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-IQ2_XS-QAT.gguf): 2-bit, the smallest, for 8 GB; more fact slips
 - [humanizer/promptfmt.py](https://github.com/sgaofen/humanizer-local-model/blob/main/humanizer/promptfmt.py): reference prompt builder
 
 ## Optional

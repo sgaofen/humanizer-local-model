@@ -75,9 +75,9 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 |---|---|---|
 | 32 GB 及以上 | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 字节（约 12.7 GB） |
 | 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,584 字节（约 10.0 GB） |
-| 16 GB，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，量化感知训练；大约需要 12 GB | 7,625,160,864 字节（约 7.6 GB） |
-| 不到 12 GB | `humanizer-12b-Q3-QAT.gguf`，3 bit 档；按约 8 GB 空闲内存准备。英文事实小错稍多，核对数字和名字 | 5,587,794,816 字节（约 5.6 GB） |
-| 更少 | `humanizer-12b-IQ2_XS-QAT.gguf`，2 bit，最小；按约 6 GB 准备。事实小错更多，核对数字和名字 | 3,893,632,896 字节（约 3.9 GB） |
+| 14 GB 左右，或硬盘紧张 | `humanizer-12b-Q4_K_M.gguf`，量化感知训练；峰值内存约 10 GB | 7,625,160,864 字节（约 7.6 GB） |
+| 12 GB | `humanizer-12b-Q3-QAT.gguf`，3 bit 档；峰值内存约 8 GB。英文事实小错稍多，核对数字和名字 | 5,587,794,816 字节（约 5.6 GB） |
+| 8 GB | `humanizer-12b-IQ2_XS-QAT.gguf`，2 bit，最小；峰值内存约 6.2 GB。事实小错更多，核对数字和名字 | 3,893,632,896 字节（约 3.9 GB） |
 
 仓库里还有：
 
@@ -586,7 +586,7 @@ if __name__ == "__main__":
 | 改写和草稿几乎一样 | 采样运气不好，或温度太低 | 确认 temperature 1.0，再采一次 |
 | 胡言乱语、用词古怪或反复重复 | 采样参数不对（llama.cpp 默认的 top-k 40 / min-p 0.05、`generation_config.json` 里的 top-k 64，或者开了重复惩罚） | 显式设 top-k 0、min-p 0、重复惩罚 1.0 |
 | 改写在句子中间断了 | 输出上限或上下文太小 | 调大 `n_predict` / `max_tokens`；llama-server 加 `-c 8192 -np 1`；长稿分段 |
-| 加载时内存不够 | 文件对你的内存或显存太大 | 16 GB 用 Q6_K，更少用 Q4_K_M（约需 12 GB），再少用 Q3-QAT 或 2 bit 的 IQ2_XS-QAT；调低 `-ngl` |
+| 加载时内存不够 | 文件对你的内存或显存太大 | 16 GB 用 Q6_K，14 GB 左右用 Q4_K_M，12 GB 用 Q3-QAT，8 GB 用 2 bit 的 IQ2_XS-QAT；调低 `-ngl` |
 | 很慢 | 在用 CPU 跑 | 看 llama.cpp 日志里有没有 `offloaded N/N layers`；装 Metal、CUDA 或 Vulkan 版 |
 | 下载时 404 | 文件名写错 | 用[第 2 节](#2-选哪个文件)里的文件名 |
 | 指纹自检不过 | 提示词拼法和训练时不一样 | 直接复制[第 1 节](#提示词)里的 `build_prompt` |

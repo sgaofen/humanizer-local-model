@@ -75,9 +75,9 @@ All files are in [`jialinyyzz/humanizer`](https://huggingface.co/jialinyyzz/huma
 |---|---|---|
 | 32 GB or more | `humanizer-12b-Q8_0.gguf` | 12,669,630,368 bytes (about 12.7 GB) |
 | 16 GB | `humanizer-12b-Q6_K.gguf` | 10,029,799,584 bytes (about 10.0 GB) |
-| 16 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, quantization-aware trained; needs about 12 GB | 7,625,160,864 bytes (about 7.6 GB) |
-| Less than 12 GB | `humanizer-12b-Q3-QAT.gguf`, 3-bit class; plan for about 8 GB of free memory. A few more fact slips in English: check numbers and names | 5,587,794,816 bytes (about 5.6 GB) |
-| Less still | `humanizer-12b-IQ2_XS-QAT.gguf`, 2-bit, the smallest; plan for about 6 GB. More fact slips: check numbers and names | 3,893,632,896 bytes (about 3.9 GB) |
+| About 14 GB, or short on disk | `humanizer-12b-Q4_K_M.gguf`, quantization-aware trained; peak memory about 10 GB | 7,625,160,864 bytes (about 7.6 GB) |
+| 12 GB | `humanizer-12b-Q3-QAT.gguf`, 3-bit class; peak memory about 8 GB. A few more fact slips in English: check numbers and names | 5,587,794,816 bytes (about 5.6 GB) |
+| 8 GB | `humanizer-12b-IQ2_XS-QAT.gguf`, 2-bit, the smallest; peak memory about 6.2 GB. More fact slips: check numbers and names | 3,893,632,896 bytes (about 3.9 GB) |
 
 Also in the repo:
 
@@ -586,7 +586,7 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 | Output is almost the same as the draft | Sampling luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling, odd word choices, or repeated phrases | Wrong samplers (llama.cpp's default top-k 40 / min-p 0.05, the top-k 64 from `generation_config.json`, or a repetition penalty) | Set top-k 0, min-p 0, repetition penalty 1.0 explicitly |
 | Rewrite cut off mid-sentence | Output limit or context too small | Raise `n_predict` / `max_tokens`; give llama-server `-c 8192 -np 1`; split long drafts |
-| Out of memory while loading | File too large for your RAM or VRAM | Use Q6_K (16 GB), Q4_K_M (about 12 GB), Q3-QAT or the 2-bit IQ2_XS-QAT; lower `-ngl` |
+| Out of memory while loading | File too large for your RAM or VRAM | Use Q6_K (16 GB), Q4_K_M (about 14 GB), Q3-QAT (12 GB) or the 2-bit IQ2_XS-QAT (8 GB); lower `-ngl` |
 | Very slow | Running on the CPU | Look for `offloaded N/N layers` in the llama.cpp log; install the Metal, CUDA or Vulkan build |
 | 404 when downloading | Wrong file name | Use the names in [section 2](#2-pick-a-file) |
 | Self-test fingerprint fails | The prompt builder differs from training | Copy `build_prompt` from [section 1](#the-prompt) |
