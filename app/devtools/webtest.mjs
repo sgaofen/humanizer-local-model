@@ -1,4 +1,5 @@
 // 网页纯逻辑的单测(不需要浏览器):node devtools/webtest.mjs 或 bun devtools/webtest.mjs
+import { activeFacts, protectFacts, restoreFacts } from '../web/js/facts.js';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { pyStrip, countText, numberCheck } from '../web/js/text.js';
@@ -107,6 +108,30 @@ for (const s of fx.samples) {
   let threw = false;
   try { await withLangGuard(EN, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { threw = e.name === 'AbortError'; }
   ok(threw, '用户停止(AbortError)直接抛出,不重采');
+}
+
+// Literal facts preserve overlaps, repetitions, Unicode, and reject invalid output.
+{
+  const draft = 'Nadia approved 42 files. Nadia approved 42 files. 你好世界';
+  const facts = ['Nadia approved', 'approved 42 files', '你好世界'];
+  const locked = protectFacts(draft, facts);
+  ok(locked.locks.length === 3, 'Overlapping facts merge; repeated occurrences get individual locks');
+  ok(restoreFacts(locked.text, locked) === draft, 'Locks round-trip Unicode and all occurrences');
+  const output = restoreFacts(locked.text.replace('. ', '! '), locked);
+  ok(facts.every((f) => output.includes(f)) && output !== draft, 'Prose changes while literal facts survive');
+  const collision = protectFacts('HZ_LOCK_ literal and 42', ['42']);
+  ok(collision.prefix !== 'HZ_LOCK_' && restoreFacts(collision.text, collision) === 'HZ_LOCK_ literal and 42', 'Token namespace avoids collisions');
+  ok(activeFacts(['42', '42', 'gone', '', null], '42 files').join() === '42', 'Deduplicate facts and remove stale or invalid entries');
+  ok(activeFacts({}, '42').length === 0, 'Invalid stored facts are ignored');
+  const many = Array.from({length:60}, (_,i)=>String(i));
+  ok(activeFacts(many, many.join(' ')).length === 50, 'Fact list bounded at 50');
+  for (const bad of [locked.text.replace(locked.locks[0].token, ''), locked.text + locked.locks[0].token, locked.text.replace(locked.locks[0].token, '[[HZ_LOCK_changed]]')]) {
+    let failed = false;
+    try { restoreFacts(bad, locked); } catch (e) { failed = e.message === 'factsLost'; }
+    ok(failed, 'Reject missing, duplicated, or mutated locks');
+  }
+  ok(restoreFacts('ordinary output', protectFacts('ordinary draft', [])) === 'ordinary output', 'No-fact rewrites keep existing behavior');
+  ok(buildPrompt(cfg, locked.text).startsWith(INSTR + '\n\n'), 'Canonical model instructions remain unchanged');
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }

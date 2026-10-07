@@ -7,6 +7,7 @@ import { tokenize, diffTokens, renderMarked, flagNumbers } from './diff.js';
 import { countText, isMostlyCJK, numberCheck, fmtBytes, fmtDuration, fmtNum, escapeHTML, pyStrip } from './text.js';
 import { loadHistory, addHistory, removeHistory, clearHistory, store } from './history.js';
 import { SAMPLES } from './samples.js';
+import { activeFacts, protectFacts, restoreFacts } from './facts.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -25,6 +26,7 @@ const S = {
   running: false,
   abort: null,
   out: '',
+  facts: [],
   result: null,
   showDiff: store.get('diff', '1') === '1',
   editing: true,
@@ -43,6 +45,7 @@ function init() {
   renderSamples();
   const ex = SAMPLES.find((s) => s.id === params.get('example'));
   $('draft').value = ex ? ex.draft : store.get('draft', '');
+  try { S.facts = ex ? [] : JSON.parse(store.get('facts', '[]')); } catch { S.facts = []; }
   onDraftInput(false);
   setDiffToggle(S.showDiff);
   bind();
@@ -356,7 +359,7 @@ function renderSamples() {
     b.type = 'button';
     b.className = 'sample-btn';
     b.textContent = s.label[getLang()] || s.label.en;
-    b.addEventListener('click', () => { $('draft').value = s.draft; onDraftInput(); $('draft').focus(); });
+    b.addEventListener('click', () => { $('draft').value = s.draft; S.facts = []; onDraftInput(); $('draft').focus(); });
     return b;
   }));
 }
@@ -364,6 +367,10 @@ function renderSamples() {
 let saveTimer = 0;
 function onDraftInput(save = true) {
   const v = $('draft').value;
+  S.facts = activeFacts(S.facts, v);
+  store.set('facts', JSON.stringify(S.facts));
+  renderFacts();
+  updateFactSelection();
   const c = countText(v);
   $('draft-count').innerHTML = v ? `${t('count.zh', { n: fmtNum(c.units, getLang()) })} · ${t('count.chars', { n: fmtNum(c.chars, getLang()) })}` : '';
   $('samples').hidden = v.trim() !== '';
@@ -386,6 +393,8 @@ function updateGo() {
   else if (S.status && S.status.phase !== 'ready') label = t('go.loading');
   $('go-label').textContent = label;
   go.setAttribute('aria-label', label);
+  updateFactSelection();
+  for (const button of $('facts-list').querySelectorAll('button')) button.disabled = S.running;
   $('btn-regen').disabled = S.running || !ready || !S.result;
   $('btn-copy').disabled = S.running || !S.result;
   $('out-empty-sub').innerHTML = t('out.emptySub', { key: KEY_LABEL });
@@ -404,6 +413,7 @@ function setEditing(on) {
   $('draft-view').hidden = on;
   $('btn-edit').hidden = on;
   $('legend-del').hidden = on;
+  updateFactSelection();
   if (on) requestAnimationFrame(() => $('draft').focus({ preventScroll: true }));
 }
 
@@ -442,6 +452,7 @@ async function run() {
   if (!S.promptOK || !S.cfg) { showNotice('err', t('out.promptMismatch')); return; }
   if (S.status?.phase !== 'ready') { toast(t('out.notReady')); return; }
 
+  const protectedDraft = protectFacts(draft, S.facts);
   togglePop(false);
   closeNumbers();
   setEditing(true);
@@ -466,11 +477,14 @@ async function run() {
     try { nTok = await countTokens(pyStrip(draft)); } catch { nTok = Math.ceil(countText(draft).chars / 3); }
     const nPred = nPredictFor(S.cfg, nTok);
     const r = S.cfg.n_predict;
-    if (nTok + 200 + nPred > S.cfg.ctx_size) throw Object.assign(new Error(t('out.tooLong', { n: fmtNum(nTok, getLang()) })), { notice: true });
+    let promptTokens;
+    const prompt = buildPrompt(S.cfg, protectedDraft.text);
+    try { promptTokens = await countTokens(prompt); } catch { promptTokens = Math.ceil(prompt.length / 3); }
+    if (promptTokens + nPred > S.cfg.ctx_size) throw Object.assign(new Error(t('out.tooLong', { n: fmtNum(nTok, getLang()) })), { notice: true });
     if (nTok * r.factor > r.max) showNotice('warn', t('out.longDraft', { n: fmtNum(nTok, getLang()) }));
     const body = {
       ...S.cfg.sampling,
-      prompt: buildPrompt(S.cfg, draft),
+      prompt,
       n_predict: nPred,
       stream: true,
       cache_prompt: true,
@@ -495,8 +509,8 @@ async function run() {
           }
           if (ev.content) {
             S.out += ev.content;
-            if (!isLast && langDrift(draft, S.out, false)) { drifted = true; ctl.abort(); break; }
-            scheduleStreamRender();
+            if (!isLast && langDrift(draft, restoreFacts(S.out, protectedDraft, false), false)) { drifted = true; ctl.abort(); break; }
+            if (!protectedDraft.locks.length) scheduleStreamRender();
           }
           if (ev.stop) { fin = ev; break; }
         }
@@ -509,10 +523,16 @@ async function run() {
         if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
         $('output').innerHTML = `<span class="reading">${t('out.reading', { p: 0 })}</span>`;
       }
-      return { text: S.out, final: fin, drifted };
+      return { text: restoreFacts(S.out, protectedDraft, false), final: fin, drifted };
     });
     final = res.final;
+    if (protectedDraft.locks.length && (!final || final.stop_type === 'limit')) throw new Error('factsLost');
+    S.out = restoreFacts(S.out, protectedDraft);
   } catch (e) {
+    if (protectedDraft.locks.length) {
+      S.out = '';
+      if (e.message === 'factsLost' || e.name === 'AbortError') e = Object.assign(new Error(t('facts.failed')), { notice: true });
+    }
     if (e.name === 'AbortError') aborted = true;
     else error = e;
   }
@@ -539,7 +559,7 @@ async function run() {
       if (final.stop_type === 'limit') showNotice('warn', t('out.truncated', { n: final.tokens_predicted }));
       addHistory({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        t: Date.now(), draft, out: text, tier: S.status?.tier, tierLabel: tierOf(S.status?.tier)?.label, tok, tps,
+        t: Date.now(), draft, facts: protectedDraft.facts, out: text, tier: S.status?.tier, tierLabel: tierOf(S.status?.tier)?.label, tok, tps,
         ratio: S.result.diff ? S.result.diff.ratio : null, stop: final.stop_type,
       });
     } else if (aborted) {
@@ -672,6 +692,7 @@ function renderHistory() {
 function restore(h) {
   if (S.running) return;
   $('draft').value = h.draft;
+  S.facts = activeFacts(h.facts, h.draft);
   onDraftInput();
   $('out-notice').hidden = true;
   $('out-stats').textContent = h.tok ? `${fmtNum(h.tok, getLang())} tokens` + (h.tps ? ` · ${h.tps.toFixed(1)} tok/s` : '') : '';
@@ -727,7 +748,56 @@ async function setup(tier, endpoint) {
   poll();
 }
 
+function selectedFact() {
+  const draft = $('draft');
+  return S.editing && !S.running ? draft.value.slice(draft.selectionStart, draft.selectionEnd).trim() : '';
+}
+
+function updateFactSelection() {
+  const selected = selectedFact();
+  $('btn-create-fact').hidden = !selected;
+  $('btn-create-fact').disabled = S.running || S.facts.includes(selected);
+}
+
+function renderFacts() {
+  $('facts-panel').hidden = !S.facts.length;
+  $('facts-list').replaceChildren(...S.facts.map((fact) => {
+    const li = document.createElement('li');
+    const text = document.createElement('span');
+    text.textContent = fact;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'tool';
+    remove.textContent = t('facts.remove');
+    remove.setAttribute('aria-label', t('facts.removeLabel', { fact }));
+    remove.disabled = S.running;
+    remove.addEventListener('click', () => {
+      S.facts = S.facts.filter((f) => f !== fact);
+      store.set('facts', JSON.stringify(S.facts));
+      renderFacts();
+      updateFactSelection();
+    });
+    li.append(text, remove);
+    return li;
+  }));
+}
+
 function bind() {
+  for (const event of ['select', 'keyup', 'mouseup']) $('draft').addEventListener(event, updateFactSelection);
+  document.addEventListener('selectionchange', updateFactSelection);
+  // Clicking the action must not collapse the textarea's selection first.
+  $('btn-create-fact').addEventListener('mousedown', (event) => event.preventDefault());
+  $('btn-create-fact').addEventListener('click', () => {
+    const fact = selectedFact();
+    if (!fact || S.facts.includes(fact)) return;
+    if (S.facts.length >= 50) { toast(t('facts.limit')); return; }
+    S.facts.push(fact);
+    store.set('draft', $('draft').value);
+    store.set('facts', JSON.stringify(S.facts));
+    renderFacts();
+    updateFactSelection();
+    toast(t('facts.created'));
+  });
   $('draft').addEventListener('input', () => onDraftInput());
   $('draft-view').addEventListener('click', () => setEditing(true));
   $('btn-edit').addEventListener('click', () => setEditing(true));
@@ -744,7 +814,7 @@ function bind() {
   $('btn-paste').addEventListener('click', async () => {
     try {
       const txt = await navigator.clipboard.readText();
-      if (txt) { $('draft').value = txt; setEditing(true); onDraftInput(); }
+      if (txt) { $('draft').value = txt; S.facts = []; setEditing(true); onDraftInput(); }
     } catch {
       setEditing(true);
       toast(IS_MAC ? '⌘ V' : 'Ctrl V');

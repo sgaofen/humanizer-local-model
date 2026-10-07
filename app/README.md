@@ -184,3 +184,9 @@ Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.p
 - 「数字核对」只比较阿拉伯数字:「60 分钟 → 一个小时」会被标成请核对,这是提示不是报错。
 - Markdown 标题保留模式(`--keep-markdown`)没做进 App。
 - Windows 版没有在真机上跑过(CI 里有冒烟测试,但 runner 没有 GPU,CUDA/Vulkan 路径只在假引擎上测了回退逻辑)。
+
+### Save literal facts from a draft
+
+Highlight text in the editable Draft, then left-click **Create fact** beside Paste. The **Saved facts** panel shows protected passages with a Remove action. Keyboard selection also works: select text, tab to Create fact, and activate it. Up to 50 facts are saved with the current draft in browser local storage and included in rewrite history. Facts are removed when their exact text no longer appears in the draft. Pasting a replacement draft, loading an example, or clearing the draft resets them. Restoring history restores that entry's facts.
+
+A fact is a passage to preserve, not a factual accuracy judgment. Leading/trailing selection whitespace is trimmed. Every occurrence is protected and overlapping selections are merged. The app replaces passages with collision-free placeholders for generation, keeps the canonical prompt and sampling parameters, and restores original passages before displaying, copying, or saving the completed result. Missing, mutated, or duplicated placeholders cause the result to be discarded; interrupted/incomplete fact-protected rewrites are also discarded. Protected rewrites display results after validation rather than streaming placeholders. Retry or remove a fact if the model does not retain its placeholder. Surrounding claims still need review. Full prompt token counts include placeholders for context-limit checks.
