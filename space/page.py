@@ -14,9 +14,9 @@ import diffmark
 
 GH = "https://github.com/sgaofen/humanizer-local-model"
 REL = GH + "/releases/latest"
-APP_DL = GH + "/releases/download/app-v0.3.1/"   # direct files; bump with each app release
-MAC_DMG = APP_DL + "Humanizer-0.3.1-macos-arm64.dmg"
-WIN_EXE = APP_DL + "Humanizer-0.3.1-windows-x64-setup.exe"
+APP_DL = GH + "/releases/download/app-v0.3.2/"   # direct files; bump with each app release
+MAC_DMG = APP_DL + "Humanizer-0.3.2-macos-arm64.dmg"
+WIN_EXE = APP_DL + "Humanizer-0.3.2-windows-x64-setup.exe"
 BLOB = GH + "/blob/main/"
 HF_MODEL = "https://huggingface.co/jialinyyzz/humanizer"
 INSTALL_EN = BLOB + "docs/INSTALL.md#first-launch-warnings"
@@ -216,8 +216,8 @@ def local_section() -> str:
         {A(MAC_DMG, icon("apple") + '<span>' + L("Mac", "Mac") + '<small>' + L("Apple silicon · .dmg", "Apple 芯片 · .dmg") + '</small></span>', "dl")}
         {A(WIN_EXE, icon("win") + '<span>' + L("Windows", "Windows") + '<small>' + L("x64 · setup .exe", "x64 · 安装包 .exe") + '</small></span>', "dl")}
       </div>
-      {P("Double-click it and the app opens in your browser. On first run it checks your memory, suggests a model size and downloads it once from Hugging Face. Paste a draft on the left; the rewrite streams in on the right with the new wording highlighted. Windows without installing, and checksums: <a href='" + REL + "' target='_blank' rel='noopener'>all release files</a>.",
-         "双击后 App 会在浏览器里打开。第一次运行时它会看你的内存、推荐一个档位，从 Hugging Face 下载一次模型。左边贴草稿，右边流式出改写，新写的部分用荧光笔标出。Windows 免安装版和校验值见<a href='" + REL + "' target='_blank' rel='noopener'>全部发布文件</a>。")}
+      {P("Double-click it and the app opens in your browser. On first run it checks your memory, suggests a model size and downloads it once from Hugging Face. Paste a draft on the left (or import a .docx or PDF); the rewrite streams in on the right with the new wording highlighted. Select any passage and click Create fact to keep it word for word. Windows without installing, and checksums: <a href='" + REL + "' target='_blank' rel='noopener'>all release files</a>.",
+         "双击后 App 会在浏览器里打开。第一次运行时它会看你的内存、推荐一个档位，从 Hugging Face 下载一次模型。左边贴草稿（也可以导入 .docx 或 PDF），右边流式出改写，新写的部分用荧光笔标出。选中一段文字点「原样保留」，改写时这段一字不改。Windows 免安装版和校验值见<a href='" + REL + "' target='_blank' rel='noopener'>全部发布文件</a>。")}
       <table class="tiers mono">
         <tr><th>{L("Memory", "内存")}</th><th>{L("File", "文件")}</th><th>{L("Download", "下载")}</th></tr>
         <tr><td>{L("32 GB or more", "32 GB 及以上")}</td><td>Q8_0</td><td>12.7 GB</td></tr>

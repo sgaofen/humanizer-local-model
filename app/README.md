@@ -162,16 +162,16 @@ cp humanizer-12b-Q8_0.gguf ~/Library/Application\ Support/Humanizer/models/   # 
 
 ## 出包
 
-CI:`.github-workflows/release-app.yml` 挪到仓库根 `.github/workflows/` 后,手动触发(填版本号)或推 `app-v0.3.1` 这样的标签。流程:测试(Go 单测 + 网页单测 + e2e)→ macOS(macos-14 arm64)出 dmg → Windows(windows-2022)出安装包和便携 zip → 推标签时建**草稿** Release。所有 Action 都钉在提交 SHA 上;llama.cpp 用 `packaging/llama-cpp.lock.json` 的版本和 sha256。
+CI:`.github-workflows/release-app.yml` 挪到仓库根 `.github/workflows/` 后,手动触发(填版本号)或推 `app-v0.3.2` 这样的标签。流程:测试(Go 单测 + 网页单测 + e2e)→ macOS(macos-14 arm64)出 dmg → Windows(windows-2022)出安装包和便携 zip → 推标签时建**草稿** Release。所有 Action 都钉在提交 SHA 上;llama.cpp 用 `packaging/llama-cpp.lock.json` 的版本和 sha256。
 
 本地出 macOS 包:
 
 ```bash
 python3 packaging/fetch_engine.py --target macos --out dist/engine
-bash packaging/macos/build_app.sh 0.3.1      # → dist/mac/Humanizer.app、dist/Humanizer-0.3.1-macos-arm64.dmg(约 15 MB)
+bash packaging/macos/build_app.sh 0.3.2      # → dist/mac/Humanizer.app、dist/Humanizer-0.3.2-macos-arm64.dmg(约 15 MB)
 ```
 
-Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.py --target windows --out dist/engine && bash packaging/windows/build_win.sh 0.3.1`(Git Bash)。
+Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.py --target windows --out dist/engine && bash packaging/windows/build_win.sh 0.3.2`(Git Bash)。
 
 体积参考:macOS dmg 约 15 MB(引擎解压后 28 MB)。Windows 安装包里 CUDA 12.4 版引擎(263 MB)和 CUDA 运行库(cuBLAS 等,391 MB)占大头,四个官方压缩包合计约 0.7 GB,安装包预计 0.6–0.7 GB;如果只带 CPU + Vulkan,50 MB 以内。
 

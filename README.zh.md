@@ -25,10 +25,12 @@
 
 | 你的电脑 | 下载 |
 |---|---|
-| **Mac**（Apple 芯片，M1 及以后） | [`Humanizer-0.3.1-macos-arm64.dmg`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-macos-arm64.dmg)，或到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下最新版 |
-| **Windows**（x64） | [`Humanizer-0.3.1-windows-x64-setup.exe`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-windows-x64-setup.exe)（或免安装的 [`.zip`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-windows-x64-portable.zip)），或到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下最新版 |
+| **Mac**（Apple 芯片，M1 及以后） | [`Humanizer-0.3.2-macos-arm64.dmg`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-macos-arm64.dmg)，或到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下最新版 |
+| **Windows**（x64） | [`Humanizer-0.3.2-windows-x64-setup.exe`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-windows-x64-setup.exe)（或免安装的 [`.zip`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-windows-x64-portable.zip)），或到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下最新版 |
 
 双击后 App 会在浏览器里打开。第一次运行时它会看你的内存、推荐一个档位，从 Hugging Face 下载一次模型；之后完全离线。左边贴草稿，右边流式出改写，新写的部分用荧光笔标出，被改掉的部分在原稿上划掉。在 M5 Max 上，一封百来词的英文邮件约 3.6 秒，一封 300 字左右的中文邮件约 8.5 秒。
+
+0.3.2 新增：可以导入 Word（`.docx`）或 PDF 文件里的文字；在草稿里选中一段文字点「原样保留」，改写时这段一字不改（两项都来自 [@meharrkapoorr](https://github.com/meharrkapoorr) 的贡献）。
 
 App 有五个档位：Q8_0（最好）、Q6_K（测不出损失）、Q4_K_M（略有损失）、Q3（小幅损失，英文的事实小错略多）和 2-bit（AI 检测表现最好，事实小错多一些）。它按内存推荐一档，8 GB 的机器也能用；随时可以在「…」菜单 →「更换模型档位」里换。详见[选哪一档](docs/INSTALL.zh.md#选哪一档)。
 

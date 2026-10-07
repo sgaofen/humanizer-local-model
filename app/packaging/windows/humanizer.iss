@@ -1,6 +1,6 @@
 ; Humanizer Windows 安装包(Inno Setup 6)。
 ; CI 里这样编译(在 app/ 目录下):
-;   iscc /DAppVersion=0.3.1 packaging\windows\humanizer.iss
+;   iscc /DAppVersion=0.3.2 packaging\windows\humanizer.iss
 ; 输入:dist\win\ 下已经放好 Humanizer.exe 和 engine\{cuda,vulkan,cpu}\
 ; 输出:dist\Humanizer-<版本>-windows-x64-setup.exe
 ;

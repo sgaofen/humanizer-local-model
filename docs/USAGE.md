@@ -557,6 +557,7 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 - Each piece is rewritten without seeing the others, so tone can shift a little between pieces and a fact can't move from one piece to another. Read the joined result once from top to bottom.
 - Headings, code blocks and bullet lists are often dropped or turned into prose. Rewrite only the prose and keep headings and code yourself; [`humanizer/markdown_guard.py`](https://github.com/sgaofen/humanizer-local-model/blob/main/humanizer/markdown_guard.py) does this block by block.
 - **[`hz`](#14-hz-command-line-tool) does all of this in one command**, for `.md`, `.txt` and `.docx`: it keeps headings, code, tables and links, splits the prose into pieces of about 350 words (600 Chinese characters) without crossing a heading, and checks every piece.
+- The app (0.3.2 and later) can import a `.docx` or PDF and shows a note on long drafts, but it rewrites the whole draft in one request; its **Create fact** keeps a selected passage word for word by sending a placeholder in its place and rewriting again if the placeholder doesn't come back intact. For long or structured documents, `hz` is still the better tool.
 
 ## 11. Chinese
 

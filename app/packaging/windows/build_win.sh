@@ -2,7 +2,7 @@
 # Windows 包:编译启动器 → 放引擎 → Inno Setup 安装包 + 便携 zip。
 # 在 GitHub windows runner 的 Git Bash 里跑(在 app/ 目录下):
 #   python packaging/fetch_engine.py --target windows --out dist/engine
-#   bash packaging/windows/build_win.sh 0.3.1
+#   bash packaging/windows/build_win.sh 0.3.2
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 VERSION="${1:-0.0.0-dev}"
