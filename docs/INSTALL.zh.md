@@ -65,6 +65,8 @@ App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。**之后想
 
 App 启动后不久自动查一次，之后每天最多一次；有新东西时顶栏会出现一个小提示（窗口很窄时是「…」按钮上的一个小点）。点「…」→「检查更新」会马上查。更新不会动你的模型、设置和历史记录。
 
+检查更新从 0.3.2 起支持；0.3.1 及更早的版本需要手动更新一次：到 [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest) 下载 0.3.2，直接装在旧版上面（Mac 拖进「应用程序」选替换，Windows 运行安装包）。模型、设置和历史记录都保留。
+
 - **App：**显示 GitHub 上最新的版本和改了什么。下载能续传，下完先核对 SHA-256 再动手。然后点「重启并完成更新」：macOS 上新的 Humanizer.app 原地换掉旧的；Windows 上在后台静默跑安装包（便携版是换掉整个文件夹）。App 自动重启，网页自己刷新。新版本起不来的话，会自动换回旧版本并重新打开。
   - App 没法替换自己的时候（macOS 上直接从 `.dmg` 里运行，或者所在文件夹不能写），会下载安装包并帮你打开，像第一次安装那样把 Humanizer 拖进「应用程序」即可。
 - **模型：**对你下载过的每个档位，拿本地文件和 Hugging Face 上的同名文件比 SHA-256。有新版就在旧文件旁边下载，期间照常改写；下完校验通过再换上。引擎正在用这个模型的话会重启几十秒，新文件装不上就换回旧的。下载期间需要再多一份模型大小的磁盘空间。用旧版 App 下载的模型，第一次检查时会把文件完整读一遍算出指纹，之后不再算。
@@ -175,4 +177,4 @@ print(json.load(urllib.request.urlopen(req))["content"].strip())
 
 **怎么卸载？**macOS：删掉 `Humanizer.app` 和 `~/Library/Application Support/Humanizer`。Windows：在「设置 → 应用」里卸载（便携版直接删文件夹），再删掉 `%LOCALAPPDATA%\Humanizer`。
 
-**怎么换成更新后的模型？**Hugging Face 上的模型文件在 2026-10-02 更新为 v2（见 [README](../README.zh.md#评测结果)）。App 不会替换已经下好的模型：先退出 App，删掉数据目录里 `models` 文件夹中的 `.gguf` 文件（macOS 是 `~/Library/Application Support/Humanizer/models`，Windows 是 `%LOCALAPPDATA%\Humanizer\models`），再打开 App，它会弹出选档页面并下载当前版本。用 `hf download` 的话，再执行一遍同样的命令就会拿到新版。
+**怎么换成更新后的模型？**Hugging Face 上的模型文件在 2026-10-02 更新为 v2（见 [README](../README.zh.md#评测结果)）。App 0.3.2 起，点「…」→「检查更新」就会找到新文件并替你换上。0.3.1 及更早的版本不会替换已经下好的模型：先退出 App，删掉数据目录里 `models` 文件夹中的 `.gguf` 文件（macOS 是 `~/Library/Application Support/Humanizer/models`，Windows 是 `%LOCALAPPDATA%\Humanizer\models`），再打开 App，它会弹出选档页面并下载当前版本。用 `hf download` 的话，再执行一遍同样的命令就会拿到新版。
