@@ -7,7 +7,7 @@ package launcher
 //     用 Type3 字体 + Differences 编码 + ToUnicode,结果整篇乱码。这里只要字体带 ToUnicode 就用它。
 //  2. 排版:库按文字对象输出,一行一个换行,英文段落被切成一行一行,模型会把每行当成独立的句子。
 //     这里按文字矩阵算出每个字的坐标,同一基线拼成一行;行距明显变大、字号变化、上一行是短句收尾才算新段落;
-//     段内英文行用空格接回(行尾连字符直接接上),中文行直接接上。
+//     没写满又不是句末的短行(签名、地址、列表项)保留换行;段内英文行用空格接回(行尾连字符直接接上),中文行直接接上。
 //
 // 另外修两类「看着一样、码位不同」的字:Chrome 把部分汉字映射成部首码位(⼀ U+2F00 → 一、⻋ U+2ECB → 车),
 // 连字 ﬁ → fi。最后数一下控制字符、替换符、私用区字符,太多就当读不出来,不把乱码塞进草稿。
@@ -631,12 +631,16 @@ func pageParagraphs(p pdf.Page) []string {
 	for i := 1; i < len(lines); i++ {
 		prev, l := lines[i-1], lines[i]
 		d := prev.y - l.y
-		short := prev.x1 < minX+0.8*(maxX-minX) && strings.ContainsRune(sentenceEnd, lastRune(prev.text))
-		newPara := d <= 0 || (lead > 0 && d > 1.35*lead) || math.Abs(l.size-prev.size) > 0.15*prev.size || short
-		if newPara {
+		// 没写满一行的短行:句末标点结尾 = 段落结束;否则是有意换行(签名、地址、列表项),保留单个换行
+		short := prev.x1 < minX+0.8*(maxX-minX)
+		ends := strings.ContainsRune(sentenceEnd, lastRune(prev.text))
+		switch {
+		case d <= 0 || (lead > 0 && d > 1.35*lead) || math.Abs(l.size-prev.size) > 0.15*prev.size || (short && ends):
 			paras = append(paras, cur)
 			cur = l.text
-		} else {
+		case short:
+			cur += "\n" + l.text
+		default:
 			cur = joinLine(cur, l.text)
 		}
 	}

@@ -52,11 +52,12 @@ func onePage(content string, fonts map[string]int, extra []string) []byte {
 const helv = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
 
 func TestPDFParagraphs(t *testing.T) {
-	// 三行同一段(行距 14),空一大段(28)后第二段;段内英文行用空格接回,行尾连字符直接接上。
-	content := "BT /F1 12 Tf 72 720 Td (We shipped 42 orders) Tj 0 -14 Td (to Denver in March and the follow-) Tj 0 -14 Td (up call is on Tuesday.) Tj " +
-		"0 -28 Td (Second paragraph starts here.) Tj ET"
+	// 三行同一段(行距 14,每行接近满宽),空一大段(28)后第二段;段内英文行用空格接回,行尾连字符直接接上;
+	// 信末署名这种没写满、又不是句末的短行保留换行。
+	content := "BT /F1 12 Tf 72 720 Td (We shipped 42 orders to Denver in March,) Tj 0 -14 Td (and the warehouse team booked the follow-) Tj 0 -14 Td (up call with Diane for Tuesday, March 14.) Tj " +
+		"0 -28 Td (Second paragraph starts here.) Tj 0 -14 Td (Best regards,) Tj 0 -14 Td (Jordan Lee) Tj ET"
 	got, err := pdfText(onePage(content, map[string]int{"F1": 4}, []string{helv}))
-	want := "We shipped 42 orders to Denver in March and the follow-up call is on Tuesday.\n\nSecond paragraph starts here."
+	want := "We shipped 42 orders to Denver in March, and the warehouse team booked the follow-up call with Diane for Tuesday, March 14.\n\nSecond paragraph starts here.\n\nBest regards,\nJordan Lee"
 	if err != nil || got != want {
 		t.Fatalf("got %q %v", got, err)
 	}
