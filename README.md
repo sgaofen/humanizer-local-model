@@ -32,6 +32,8 @@ Double-click it and the app opens in your browser. On first run it looks at your
 
 The app offers five sizes: Q8_0 (best), Q6_K (no measurable loss), Q4_K_M (slight loss), Q3 (small loss; a few more fact slips in English) and 2-bit (lowest AI-detector score; a few more fact slips). It suggests one for your memory, down to 8 GB machines; switch any time from the **…** menu → **Change model size**. Details: [which model size](docs/INSTALL.md#which-model-size).
 
+**Updates:** the app checks GitHub and Hugging Face once a day (you can turn that off) and shows a small hint in the top bar when a new version or a newer model file is out. **…** → **Check for updates** shows what changed and updates in one click; your model, settings and history stay. Details: [updates](docs/INSTALL.md#updates).
+
 The app is not code-signed yet, so macOS and Windows will warn you the first time. The one-time fix is in [docs/INSTALL.md](docs/INSTALL.md#first-launch-warnings).
 
 <img src="assets/app-en.png" alt="The humanizer app: draft on the left, rewrite on the right" width="100%">

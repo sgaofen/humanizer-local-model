@@ -6,6 +6,7 @@
 //
 // 每个文件名对应一段确定的伪随机内容(开头是 GGUF 魔数),大小 -size MiB。
 // 文件名里带 "missing" 的返回 404。-drop-at N 让第一次下载在第 N MiB 处断线。
+// -changed 列出的文件换一份内容(模拟 HF 上的模型更新了,用来测「检查更新」)。
 package main
 
 import (
@@ -37,6 +38,7 @@ var (
 	rate  = flag.Float64("rate", 8, "限速 MiB/s,0=不限")
 	drop  = flag.Int("drop-at", 0, "第一次 GET 传到这么多 MiB 时断线,0=不断")
 	addr  = flag.String("addr", "127.0.0.1:9180", "监听地址")
+	chg   = flag.String("changed", "", "逗号分隔的文件名:这些文件用另一份内容(模拟模型更新)")
 	drops atomic.Int32
 )
 
@@ -47,7 +49,13 @@ func get(file string) *blob {
 		return b
 	}
 	d := make([]byte, *size<<20)
-	rand.New(rand.NewSource(int64(crc32.ChecksumIEEE([]byte(file))))).Read(d)
+	seed := int64(crc32.ChecksumIEEE([]byte(file)))
+	for _, c := range strings.Split(*chg, ",") {
+		if strings.TrimSpace(c) == file {
+			seed += 7919
+		}
+	}
+	rand.New(rand.NewSource(seed)).Read(d)
 	copy(d, "GGUF")
 	s := sha256.Sum256(d)
 	b := &blob{d, hex.EncodeToString(s[:])}

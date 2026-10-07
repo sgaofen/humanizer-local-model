@@ -119,5 +119,11 @@
     "max": 2048
   },
   "idle_exit_minutes": 30,
-  "preferred_port": 47615
+  "preferred_port": 47615,
+  "update": {
+    "github_repo": "sgaofen/humanizer-local-model",
+    "github_api": "https://api.github.com",
+    "tag_prefix": "app-v",
+    "interval_hours": 24
+  }
 }

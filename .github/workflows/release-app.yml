@@ -63,6 +63,8 @@ jobs:
           go test ./...
       - name: 网页逻辑单测(提示词指纹、差异、数字核对)
         run: node devtools/webtest.mjs
+      - name: 更新面板逻辑单测
+        run: node devtools/webtest_update.mjs
       - name: 端到端(假引擎 + 假下载源)
         run: bash devtools/e2e.sh
 
@@ -95,6 +97,8 @@ jobs:
           security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$P12_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KC"
           security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+      - name: 检查更新端到端(假 .app + 真 dmg:替换、重启、回滚、模型更新)
+        run: bash devtools/update_e2e.sh
       - name: 拉引擎(钉死版本,校验 sha256)
         run: python3 packaging/fetch_engine.py --target macos --out dist/engine
       - name: 打 .app 和 .dmg

@@ -124,6 +124,13 @@ sha256 (`shasum -a 256 FILE` on macOS, `sha256sum FILE` on Linux, `certutil -has
 
 All GGUF files were replaced on 2026-10-04: their metadata now holds a chat template (for LM Studio and other chat front ends; see [section 3](#start-a-server)) and the recommended sampling defaults (temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0), so llama.cpp uses them when a request doesn't set its own. The weights inside are byte for byte the same; only the header changed. Copies downloaded before that have the earlier sizes and checksums, and still work through the completion endpoint with the sampling settings passed explicitly. `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB) was added the same day: the unquantised weights as one GGUF, for reference or for quantising yourself. `humanizer-12b-Q3-QAT.gguf` (added 2026-10-05) carries the same template and defaults.
 
+**Is my file the newest?** Files are sometimes re-uploaded under the same name. Compare your file's SHA-256 with the one Hugging Face reports, and download again if they differ (the app does this itself: **…** → **Check for updates**):
+
+```bash
+curl -sI https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q8_0.gguf | grep -i '^x-linked-etag'
+shasum -a 256 ./humanizer-model/humanizer-12b-Q8_0.gguf      # Linux: sha256sum
+```
+
 ## 3. llama.cpp (recommended)
 
 Works on macOS (Metal), Windows and Linux (CUDA, Vulkan or CPU). The app itself runs llama.cpp build `b11335`; that build or a newer one is fine.

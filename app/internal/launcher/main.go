@@ -54,6 +54,8 @@ func Main(o Options) int {
 	idle := fl.Int("idle-exit", atoiOr(os.Getenv("HUMANIZER_IDLE_EXIT"), -1), "网页关闭多少分钟后自动退出,0=不退出,-1=用配置")
 	serve := fl.Bool("serve", false, "前台运行服务(macOS .app 内部使用)")
 	showVer := fl.Bool("version", false, "打印版本")
+	updateAPI := fl.String("update-api", os.Getenv("HUMANIZER_UPDATE_API"), "检查 App 更新用的 GitHub API 地址(开发/测试时指向假服务器)")
+	applyPlanPath := fl.String("apply-update", "", "内部使用:按更新计划替换并重启(Windows 更新助手)")
 	fl.SetOutput(io.Discard)
 	var args []string
 	for _, a := range o.Args { // 老版本 Finder 会塞一个 -psn_0_xxx
@@ -69,6 +71,9 @@ func Main(o Options) int {
 	if *showVer {
 		fmt.Println("humanizer", o.Version)
 		return 0
+	}
+	if *applyPlanPath != "" {
+		return runApplyHelper(*applyPlanPath)
 	}
 	if abs, err := filepath.Abs(*dataDir); err == nil { // 引擎的工作目录不是这里,必须用绝对路径
 		*dataDir = abs
@@ -118,6 +123,9 @@ func Main(o Options) int {
 	if *baseURL != "" { // 开发/私有镜像:只用这一个下载源
 		cfg.Endpoints = []Endpoint{{ID: "custom", Label: strings.TrimPrefix(strings.TrimPrefix(*baseURL, "https://"), "http://"), Base: *baseURL}}
 	}
+	if *updateAPI != "" {
+		cfg.Update.GitHubAPI = *updateAPI
+	}
 
 	a := &App{opts: o, cfg: cfg, dataDir: *dataDir, logger: logger, apiKey: randomKey()}
 	a.settings = loadSettings(a.settingsPath())
@@ -150,6 +158,15 @@ func Main(o Options) int {
 		}
 	}
 
+	if from := os.Getenv("HUMANIZER_UPDATED_FROM"); from != "" {
+		// 刚从 from 更新过来:旧进程刚放开端口,等它一会儿,保证还用原来的端口(浏览器里的历史按端口存)
+		logger.Printf("从 %s 更新而来", from)
+		want := a.settings.Port
+		if *port > 0 {
+			want = *port
+		}
+		waitPortFree(want, 10*time.Second)
+	}
 	ln, err := listenPreferred(*port, a.settings.Port, cfg.PreferredPort)
 	if err != nil {
 		logger.Printf("无法监听端口:%v", err)
@@ -168,6 +185,17 @@ func Main(o Options) int {
 	a.touch()
 	a.writeInstance()
 
+	a.updates = newUpdater(a)
+	a.updates.rootCtx = ctx
+	a.updates.args = args
+	a.updates.requestRestart = func(plan *applyPlan) {
+		a.mu.Lock()
+		a.afterExit = func() { executePlan(plan, a.logf) }
+		a.mu.Unlock()
+		time.Sleep(400 * time.Millisecond) // 让网页先看到「正在重启」
+		a.shutdown()
+	}
+
 	srv := &http.Server{Handler: a.handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() {
 		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
@@ -185,6 +213,20 @@ func Main(o Options) int {
 		}
 	}
 	go a.idleLoop(ctx)
+	go a.updates.autoLoop(ctx, func() bool {
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		return a.updates.autoEnabled(a.settings)
+	}, func() bool {
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		return a.phase == phaseStarting || a.phase == phaseDownloading
+	})
+	go func() { // 上次更新留下的备份/旧安装包:等几分钟(负责重启的旧进程可能还在用)再清
+		if sleepCtx(ctx, 5*time.Minute) {
+			a.updates.cleanupStale()
+		}
+	}()
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
@@ -198,8 +240,30 @@ func Main(o Options) int {
 	sctx, scancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer scancel()
 	_ = srv.Shutdown(sctx)
+	a.mu.Lock()
+	after := a.afterExit
+	a.mu.Unlock()
+	if after != nil {
+		logger.Printf("服务已关闭,执行更新")
+		after()
+	}
 	logger.Printf("已退出")
 	return 0
+}
+
+// waitPortFree:等某个端口能监听(旧进程刚关,最多等 timeout)。
+func waitPortFree(port int, timeout time.Duration) {
+	if port <= 0 {
+		return
+	}
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port)); err == nil {
+			l.Close()
+			return
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 }
 
 // randomKey:llama-server 默认允许任意网站跨域访问,只靠随机端口不够,

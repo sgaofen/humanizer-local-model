@@ -35,6 +35,12 @@ type Download struct {
 	Logf         func(format string, args ...any)
 	StallTimeout time.Duration
 	MaxRetries   int
+	UserAgent    string                  // 空 = Go 默认;检查更新/下载更新用 "humanizer-app/<版本>"
+	ExpectSize   int64                   // >0 时远端和下完的文件都必须正好这么大(GitHub Release 会给)
+	Verify       func(path string) error // 下完后的内容检查;nil = 查 GGUF 魔数
+
+	// SHA 是下完后实际校验通过的 sha256(没校验就是空),用来记下本地模型的指纹。
+	SHA string
 
 	Received   atomic.Int64
 	Total      atomic.Int64
@@ -158,6 +164,12 @@ func (d *Download) Run(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
+	if d.ExpectSize > 0 {
+		if meta.Size > 0 && meta.Size != d.ExpectSize {
+			return &PermanentError{Code: "size_mismatch", Msg: fmt.Sprintf("下载源上的文件大小不对(%d 字节,应为 %d)", meta.Size, d.ExpectSize)}
+		}
+		meta.Size = d.ExpectSize
+	}
 	d.Total.Store(meta.Size)
 	expect := strings.ToLower(strings.TrimSpace(d.SHA256))
 	if expect == "" {
@@ -211,7 +223,18 @@ func (d *Download) Run(ctx context.Context) error {
 		}
 	}
 
-	if err := checkGGUFMagic(part); err != nil {
+	if d.ExpectSize > 0 {
+		if st, err := os.Stat(part); err != nil || st.Size() != d.ExpectSize {
+			_ = os.Remove(part)
+			_ = os.Remove(side)
+			return &PermanentError{Code: "size_mismatch", Msg: "下完的文件大小不对,已删除,请重新下载"}
+		}
+	}
+	check := d.Verify
+	if check == nil {
+		check = checkGGUFMagic
+	}
+	if err := check(part); err != nil {
 		_ = os.Remove(part)
 		_ = os.Remove(side)
 		return err
@@ -228,6 +251,7 @@ func (d *Download) Run(ctx context.Context) error {
 			return &PermanentError{Code: "checksum", Msg: fmt.Sprintf("文件校验失败(sha256 %s… ≠ 期望 %s…),已删除,请重新下载", got[:12], expect[:12])}
 		}
 		d.logf("sha256 校验通过 %s", got)
+		d.SHA = got
 	} else {
 		d.logf("远端没给 sha256,跳过校验")
 	}
@@ -246,6 +270,7 @@ func (d *Download) probe(ctx context.Context) (remoteMeta, error) {
 	if err != nil {
 		return meta, &PermanentError{Code: "bad_url", Msg: err.Error()}
 	}
+	d.setUA(req)
 	resp, err := noRedirect.Do(req)
 	if err != nil {
 		return meta, err
@@ -270,6 +295,7 @@ func (d *Download) probe(ctx context.Context) (remoteMeta, error) {
 			loc, err := resp.Location()
 			if err == nil {
 				if r2, err := http.NewRequestWithContext(ctx, http.MethodHead, loc.String(), nil); err == nil {
+					d.setUA(r2)
 					if resp2, err := d.Client.Do(r2); err == nil {
 						resp2.Body.Close()
 						if resp2.StatusCode == 200 && resp2.ContentLength > 0 {
@@ -287,6 +313,12 @@ func (d *Download) probe(ctx context.Context) (remoteMeta, error) {
 		return meta, fmt.Errorf("HEAD %s: HTTP %d", d.URL, resp.StatusCode)
 	}
 	return meta, nil
+}
+
+func (d *Download) setUA(r *http.Request) {
+	if d.UserAgent != "" {
+		r.Header.Set("User-Agent", d.UserAgent)
+	}
 }
 
 func statusError(code int, u string) *PermanentError {
@@ -339,6 +371,7 @@ func (d *Download) fetchOnce(parent context.Context, part string, size int64) er
 	if off > 0 {
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", off))
 	}
+	d.setUA(req)
 	resp, err := d.Client.Do(req)
 	if err != nil {
 		return err

@@ -9,8 +9,10 @@
 <link rel="preload" href="fonts/InstrumentSans-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/BricolageGrotesque-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/update.css">
 <script src="js/boot.js"></script>
 <script type="module" src="js/app.js"></script>
+<script type="module" src="js/update.js"></script>
 </head>
 <body>
 
@@ -34,6 +36,7 @@
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4.2l2 2H19a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5v-10Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
     <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 4 8.5 4.5L12 13 3.5 8.5 12 4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m3.5 12.5 8.5 4.5 8.5-4.5M3.5 16.5 12 21l8.5-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
     <symbol id="i-hash" viewBox="0 0 24 24"><path d="M9.5 4 8 20M16 4l-1.5 16M4.5 9h15M4 15h15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-update" viewBox="0 0 24 24"><path d="M12 4v10.5M7.6 10.2 12 14.6l4.4-4.4M5 15.5v2A1.5 1.5 0 0 0 6.5 19h11a1.5 1.5 0 0 0 1.5-1.5v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V5.2c0-.4.3-.7.7-.7h3.6c.4 0 .7.3.7.7V7M7 7l.8 11.3c.1.8.7 1.2 1.5 1.2h5.4c.8 0 1.4-.4 1.5-1.2L17 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
@@ -45,6 +48,9 @@
     <span class="brand-tag" id="brand-tag"></span>
   </a>
   <div class="bar-right">
+    <button class="upd-chip" id="upd-chip" type="button" aria-haspopup="dialog" hidden>
+      <span class="upd-chip-dot" aria-hidden="true"></span><span class="upd-chip-text" id="upd-chip-text"></span>
+    </button>
     <button class="status" id="status" type="button" aria-haspopup="dialog" aria-expanded="false">
       <span class="dot" aria-hidden="true"></span><span id="status-text">…</span>
     </button>
@@ -65,11 +71,13 @@
     <dt data-i18n="menu.device">设备</dt><dd id="pi-device">—</dd>
     <dt data-i18n="menu.memory">内存</dt><dd id="pi-ram">—</dd>
     <dt data-i18n="menu.context">上下文</dt><dd id="pi-ctx">—</dd>
+    <dt data-i18n="upd.versionLabel">版本</dt><dd id="pi-version">—</dd>
   </dl>
   <div class="pop-actions">
     <button class="row-btn" id="pa-tier" type="button"><svg><use href="#i-layers"/></svg><span data-i18n="menu.changeTier">更换模型档位</span></button>
     <button class="row-btn" id="pa-reveal" type="button"><svg><use href="#i-folder"/></svg><span data-i18n="menu.reveal">打开模型文件夹</span></button>
     <button class="row-btn" id="pa-restart" type="button"><svg><use href="#i-redo"/></svg><span data-i18n="menu.restart">重启引擎</span></button>
+    <button class="row-btn" id="pa-update" type="button"><svg><use href="#i-update"/></svg><span data-i18n="upd.menu">检查更新</span><span class="row-badge" id="pa-update-badge" hidden></span></button>
     <button class="row-btn danger" id="pa-quit" type="button"><svg><use href="#i-power"/></svg><span data-i18n="menu.quit">退出 Humanizer</span></button>
   </div>
   <p class="pop-foot" id="pi-idle"></p>
@@ -220,6 +228,40 @@
 
 <div class="numbers-pop" id="numbers-pop" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 检查更新(js/update.js 渲染) -->
+<div class="upd-scrim" id="upd-scrim" hidden></div>
+<section class="upd" id="upd" role="dialog" aria-modal="true" aria-labelledby="upd-title" hidden>
+  <header class="upd-head">
+    <div class="upd-head-text">
+      <p class="eyebrow"><span data-i18n="upd.eyebrow">更新</span><span class="upd-last" id="upd-last"></span></p>
+      <h2 class="upd-title" id="upd-title" data-i18n="upd.title">App 与模型</h2>
+    </div>
+    <button class="icon-btn" id="upd-close" type="button" data-i18n-attr="aria-label:common.close;title:common.close"><svg><use href="#i-close"/></svg></button>
+  </header>
+  <div class="upd-body" id="upd-body">
+    <div class="upd-notice" id="upd-notice" role="status" hidden></div>
+    <section class="upd-sec" id="upd-app"></section>
+    <section class="upd-sec" id="upd-models"></section>
+  </div>
+  <footer class="upd-foot">
+    <label class="switch">
+      <input type="checkbox" id="upd-auto">
+      <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      <span class="switch-label"><span data-i18n="upd.auto">每天自动检查一次</span><small data-i18n="upd.autoHint">只访问 GitHub 和 Hugging Face 的公开接口，不发送任何个人信息。</small></span>
+    </label>
+    <button class="btn" id="upd-check" type="button"><svg aria-hidden="true"><use href="#i-redo"/></svg><span id="upd-check-text" data-i18n="upd.checkNow">立即检查</span></button>
+  </footer>
+</section>
+
+<div class="upd-overlay" id="upd-overlay" hidden>
+  <div class="overlay-card">
+    <svg class="empty-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+    <h2 id="upd-ov-title"></h2>
+    <p id="upd-ov-msg"></p>
+    <div class="upd-ov-bar" id="upd-ov-bar" aria-hidden="true"><i></i></div>
+  </div>
+</div>
 
 <div class="overlay" id="overlay" hidden>
   <div class="overlay-card">
