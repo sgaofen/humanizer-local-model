@@ -28,6 +28,7 @@ func (a *App) handler() http.Handler {
 	mux.HandleFunc("GET /app/status", a.handleStatus)
 	mux.HandleFunc("GET /app/config", a.handleConfig)
 	mux.HandleFunc("POST /app/setup", a.handleSetup)
+	mux.HandleFunc("POST /app/document", a.handleDocument)
 	mux.HandleFunc("POST /app/download/pause", a.handlePause)
 	mux.HandleFunc("POST /app/engine/restart", a.handleRestart)
 	mux.HandleFunc("POST /app/reveal", a.handleReveal)

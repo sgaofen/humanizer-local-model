@@ -55,7 +55,7 @@
 ```
 app/
 ├── main.go                    入口:把 web/ 和 config/default.json 编进二进制
-├── go.mod                     只用标准库,没有第三方依赖
+├── go.mod                     PDF 提取使用 github.com/ledongthuc/pdf；其余使用标准库
 ├── config/default.json        仓库名、档位文件名/大小、按内存选档规则、采样参数、端口、空闲退出
 ├── internal/launcher/
 │   ├── main.go                命令行参数、单实例、macOS 后台化、端口、信号
@@ -184,3 +184,11 @@ Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.p
 - 「数字核对」只比较阿拉伯数字:「60 分钟 → 一个小时」会被标成请核对,这是提示不是报错。
 - Markdown 标题保留模式(`--keep-markdown`)没做进 App。
 - Windows 版没有在真机上跑过(CI 里有冒烟测试,但 runner 没有 GPU,CUDA/Vulkan 路径只在假引擎上测了回退逻辑)。
+
+### Import Word and PDF drafts
+
+Click **Upload file** beside Paste to import a `.docx` or `.pdf` (up to 20 MB). Text is extracted locally and loaded into the editable draft. Confirm before replacing an existing draft, and review the imported text before rewriting. Imported drafts use the same browser-local autosave as pasted text; the launcher does not save uploaded files.
+
+Formatting is not preserved. DOCX imports include main-body paragraphs and tables, excluding headers, footers, comments, and images. PDF reading order depends on the document; scanned PDFs need OCR first. Encrypted, malformed, or overly complex files are rejected. Extraction is limited to 500 PDF pages and 2 MB of text (DOCX document XML also has a 2 MB limit). The existing rewrite context limit still applies; import does not add chunking or document export.
+
+PDF extraction uses the pinned `github.com/ledongthuc/pdf` dependency; DOCX extraction uses Go's standard library.
