@@ -165,8 +165,14 @@
         </div>
       </div>
       <p class="draft-note" id="draft-long" role="note" hidden><svg aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="draft.long">长文档改写可能出现事实偏差，建议检查结果，或让 AI 把改错的地方纠正一下。</span></p>
+      <div class="facts-panel" id="facts-panel" hidden>
+        <h3 data-i18n="facts.title">保留的事实</h3>
+        <p data-i18n="facts.help">这些文字会原样保留。选中文本后点击「创建事实」。</p>
+        <ul id="facts-list"></ul>
+      </div>
       <footer class="sheet-foot">
         <input id="document-file" type="file" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        <button class="tool" id="btn-create-fact" type="button" hidden><span data-i18n="facts.create">创建事实</span></button>
         <button class="tool" id="btn-paste" type="button"><svg><use href="#i-paste"/></svg><span data-i18n="draft.paste">粘贴</span></button>
         <button class="tool" id="btn-upload" type="button" data-i18n-attr="title:draft.uploadHelp"><svg><use href="#i-import"/></svg><span data-i18n="draft.upload">导入</span></button>
         <button class="tool" id="btn-clear" type="button"><svg><use href="#i-eraser"/></svg><span data-i18n="draft.clear">清空</span></button>
