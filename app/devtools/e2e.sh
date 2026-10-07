@@ -100,12 +100,14 @@ ATT=$(st 47721 | field '",".join(a["backend"]+":"+a["layers"]+":"+a["result"] fo
 echo "    尝试顺序 $ATT"
 check "最终用的是 CPU" '[ "$(st 47721 | field "d[\"engine\"][\"backend\"]")" = cpu ]'
 check "回退顺序:cuda(all→auto)→ vulkan(0 层,跳过 auto)→ cpu" '[ "$ATT" = "cuda:all:failed,cuda:auto:failed,vulkan:all:no_gpu,cpu:0:ok" ]'
-quit 47721; sleep 1
+quit 47721
+# 第 6 段沿用 d2:必须等 L2 真退出,否则新实例会把还在关的 L2 当成「已在运行」直接退出(CI 上出现过)
+for _ in $(seq 1 50); do alive $L2 || break; sleep 0.2; done
 
 echo "6. 启动器被强杀后,下次启动清理残留引擎"
 "$OUT/humanizer" --data-dir "$W/d2" --engine "metal=$FAKE" --no-browser --port 47722 --idle-exit 0 > "$W/l3.log" 2>&1 &
 L3=$!
-wait_phase 47722 ready 20 || true
+wait_phase 47722 ready 20 || { echo "    L3 未就绪,日志:"; tail -20 "$W/l3.log"; }
 EPID=$(python3 -c "import json; print(json.load(open('$W/d2/instance.json'))['engine_pid'])")
 kill -9 $L3; sleep 0.5
 check "强杀启动器后引擎成了孤儿" 'alive $EPID'
