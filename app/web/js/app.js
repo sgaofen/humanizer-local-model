@@ -7,7 +7,7 @@ import { tokenize, diffTokens, renderMarked, flagNumbers } from './diff.js';
 import { countText, isMostlyCJK, isLongDraft, numberCheck, fmtBytes, fmtDuration, fmtNum, escapeHTML, pyStrip } from './text.js';
 import { loadHistory, addHistory, removeHistory, clearHistory, store } from './history.js';
 import { SAMPLES } from './samples.js';
-import { activeFacts, protectFacts, restoreFacts } from './facts.js';
+import { activeFacts, protectFacts, restoreFacts, streamView, withFactGuard, FACT_TRIES } from './facts.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -16,6 +16,8 @@ const KEY_LABEL = IS_MAC ? '⌘ ↵' : 'Ctrl ↵';
 const BACKEND = { metal: 'Metal', cuda: 'CUDA', vulkan: 'Vulkan', cpu: 'CPU', custom: 'custom' };
 
 const S = {
+  protect: null, // 本次改写的占位符信息(Create fact),流式显示时用来换回原文
+  retryable: false, // 上一次因为保留的文字没带过来而作废:允许直接点「重新生成」
   status: null,
   cfg: null,
   promptOK: false,
@@ -398,7 +400,7 @@ function updateGo() {
   if (!importing) $('btn-upload').disabled = S.running;
   updateFactSelection();
   for (const button of $('facts-list').querySelectorAll('button')) button.disabled = S.running;
-  $('btn-regen').disabled = S.running || !ready || !S.result;
+  $('btn-regen').disabled = S.running || !ready || !(S.result || S.retryable);
   $('btn-copy').disabled = S.running || !S.result;
   $('out-empty-sub').innerHTML = t('out.emptySub', { key: KEY_LABEL });
 }
@@ -439,11 +441,12 @@ function scheduleStreamRender() {
     const nearBottom = out.scrollHeight - out.scrollTop - out.clientHeight < 80;
     const caret = document.createElement('span');
     caret.className = 'caret';
-    out.replaceChildren(S.out.replace(/^\s+/, ''), caret);
-    out.classList.toggle('cjk', isMostlyCJK(S.out));
+    const shown = S.protect ? streamView(S.out, S.protect) : S.out;
+    out.replaceChildren(shown.replace(/^\s+/, ''), caret);
+    out.classList.toggle('cjk', isMostlyCJK(shown));
     $('out-empty').hidden = true;
     if (nearBottom) out.scrollTop = out.scrollHeight;
-    const c = countText(S.out);
+    const c = countText(shown);
     $('out-count').innerHTML = t('count.zh', { n: fmtNum(c.units, getLang()) });
   });
 }
@@ -474,7 +477,7 @@ async function run() {
   renderStatus();
 
   const t0 = performance.now();
-  let final = null, error = null, aborted = false;
+  let final = null, error = null, aborted = false, factsLost = false, factTries = 0;
   try {
     let nTok;
     try { nTok = await countTokens(pyStrip(draft)); } catch { nTok = Math.ceil(countText(draft).chars / 3); }
@@ -494,26 +497,30 @@ async function run() {
       return_progress: true,
     };
     // 语言保险(guard.js):英文草稿写着写着成了中文,当场掐掉、同样参数静默重采,最多 3 次;最后一次照常交出。
+    // Create fact(facts.js):写完核对占位符,丢了/改了/重复了就整篇重写,最多 FACT_TRIES 次;都不行就作废。
     const runSignal = S.abort.signal;
-    const res = await withLangGuard(draft, async (i, isLast) => {
+    const locked = protectedDraft.locks.length > 0;
+    S.protect = locked ? protectedDraft : null;
+    let note = '';
+    const reading = (p) => { $('output').innerHTML = `<span class="reading">${note ? escapeHTML(note) : t('out.reading', { p })}</span>`; };
+    const attempt = async (i, isLast) => {
       if (runSignal.aborted) throw new DOMException('stopped', 'AbortError');
       const ctl = new AbortController();
       const onStop = () => ctl.abort();
       runSignal.addEventListener('abort', onStop);
       let fin = null, drifted = false;
       S.out = '';
-      if (i > 0) $('output').innerHTML = `<span class="reading">${t('out.reading', { p: 0 })}</span>`;
+      if (i > 0) reading(0);
       try {
         for await (const ev of streamCompletion(body, ctl.signal)) {
           if (ev.prompt_progress && !S.out) {
             const pp = ev.prompt_progress;
-            const pr = pp.total ? Math.round((100 * pp.processed) / pp.total) : 0;
-            $('output').innerHTML = `<span class="reading">${t('out.reading', { p: pr })}</span>`;
+            reading(pp.total ? Math.round((100 * pp.processed) / pp.total) : 0);
           }
           if (ev.content) {
             S.out += ev.content;
-            if (!isLast && langDrift(draft, restoreFacts(S.out, protectedDraft, false), false)) { drifted = true; ctl.abort(); break; }
-            if (!protectedDraft.locks.length) scheduleStreamRender();
+            if (!isLast && langDrift(draft, locked ? restoreFacts(S.out, protectedDraft, false) : S.out, false)) { drifted = true; ctl.abort(); break; }
+            scheduleStreamRender();
           }
           if (ev.stop) { fin = ev; break; }
         }
@@ -524,23 +531,31 @@ async function run() {
       }
       if (drifted) {
         if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
-        $('output').innerHTML = `<span class="reading">${t('out.reading', { p: 0 })}</span>`;
+        reading(0);
       }
-      return { text: restoreFacts(S.out, protectedDraft, false), final: fin, drifted };
+      return { text: locked ? restoreFacts(S.out, protectedDraft, false) : S.out, final: fin, drifted };
+    };
+    const fg = await withFactGuard(protectedDraft, async () => {
+      const res = await withLangGuard(draft, attempt);
+      return { raw: S.out, final: res.final };
+    }, FACT_TRIES, (n, m) => {
+      if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
+      note = t('facts.retrying', { n, m });
+      reading(0);
     });
-    final = res.final;
-    if (protectedDraft.locks.length && (!final || final.stop_type === 'limit')) throw new Error('factsLost');
-    S.out = restoreFacts(S.out, protectedDraft);
-  } catch (e) {
-    if (protectedDraft.locks.length) {
-      S.out = '';
-      if (e.message === 'factsLost' || e.name === 'AbortError') e = Object.assign(new Error(t('facts.failed')), { notice: true });
+    final = fg.final;
+    if (locked) {
+      if (fg.ok) { S.out = fg.text; factTries = fg.tries; } else { factsLost = true; S.out = ''; }
     }
+  } catch (e) {
     if (e.name === 'AbortError') aborted = true;
     else error = e;
+    if (S.protect) S.out = ''; // 有保护段时,没核对过的半截结果不显示(可能缺原文)
   }
   S.running = false;
   S.abort = null;
+  S.protect = null;
+  S.retryable = factsLost;
   if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
   const secs = (performance.now() - t0) / 1000;
   const text = S.out.trim();
@@ -552,7 +567,9 @@ async function run() {
   } else if (!text) {
     $('output').replaceChildren();
     $('out-empty').hidden = false;
+    $('out-count').textContent = '';
     if (aborted) showNotice('', t('out.stopped'));
+    else if (factsLost) showNotice('warn', t('facts.failed', { n: FACT_TRIES }));
   } else {
     S.result = makeResult(draft, text);
     if (final) {
@@ -560,6 +577,7 @@ async function run() {
       const tps = final.timings?.predicted_per_second;
       $('out-stats').textContent = t('out.stats', { tok: fmtNum(tok, getLang()), tps: tps ? tps.toFixed(1) : '—', sec: secs.toFixed(1) });
       if (final.stop_type === 'limit') showNotice('warn', t('out.truncated', { n: final.tokens_predicted }));
+      else if (factTries > 1) showNotice('', t('facts.retried', { n: factTries }));
       addHistory({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         t: Date.now(), draft, facts: protectedDraft.facts, out: text, tier: S.status?.tier, tierLabel: tierOf(S.status?.tier)?.label, tok, tps,
@@ -785,6 +803,7 @@ async function importDocument(file) {
     // 提取期间用户改了草稿,或者开始改写了:不覆盖
     if (S.running || $('draft').value !== original) { toast(t('draft.uploadChanged'), 'err'); return; }
     $('draft').value = result.text;
+    S.facts = [];
     setEditing(true);
     onDraftInput();
     store.set('draft', result.text);
@@ -828,28 +847,73 @@ function bindDrop() {
   window.addEventListener('dragend', hide);
 }
 
+// ───────────────────────── Create fact:选中的文字改写时一字不改 ─────────────────────────
 function selectedFact() {
   const draft = $('draft');
   return S.editing && !S.running ? draft.value.slice(draft.selectionStart, draft.selectionEnd).trim() : '';
 }
 
-function updateFactSelection() {
-  const selected = selectedFact();
-  $('btn-create-fact').hidden = !selected;
-  $('btn-create-fact').disabled = S.running || S.facts.includes(selected);
+// 选区在草稿框里的坐标:用一个同样排版的隐藏镜像算(textarea 不给选区坐标)
+const MIRROR = ['boxSizing', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle',
+  'fontVariationSettings', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'textIndent', 'tabSize'];
+function caretXY(ta, pos) {
+  const cs = getComputedStyle(ta);
+  const m = document.createElement('div');
+  for (const p of MIRROR) m.style[p] = cs[p];
+  Object.assign(m.style, { position: 'absolute', visibility: 'hidden', top: '0', left: '-9999px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', width: ta.clientWidth + 'px', border: '0' });
+  m.textContent = ta.value.slice(0, pos);
+  const mark = document.createElement('span');
+  mark.textContent = '\u200b';
+  m.append(mark);
+  document.body.append(m);
+  const r = { x: mark.offsetLeft, y: mark.offsetTop - ta.scrollTop, h: parseFloat(cs.lineHeight) || 26 };
+  m.remove();
+  return r;
 }
 
-function renderFacts() {
+function placeFactPop() {
+  const ta = $('draft'), pop = $('btn-create-fact');
+  const w = pop.offsetWidth, h = pop.offsetHeight, W = ta.clientWidth, H = ta.clientHeight;
+  let x = W - w - 16, y = H - h - 12; // 草稿特别长时不算坐标,放右下角
+  if (ta.value.length < 60000) {
+    const a = caretXY(ta, ta.selectionStart), b = caretXY(ta, ta.selectionEnd);
+    x = (a.y === b.y ? (a.x + b.x) / 2 : a.x + 60) - w / 2;
+    y = a.y - h - 6; // 选区第一行上方;太靠上就放到最后一行下方
+    if (y < 6) y = b.y + b.h + 4;
+  }
+  pop.style.left = Math.round(Math.min(Math.max(x, 10), W - w - 10)) + 'px';
+  pop.style.top = Math.round(Math.min(Math.max(y, 6), H - h - 6)) + 'px';
+}
+
+function updateFactSelection() {
+  const pop = $('btn-create-fact');
+  const selected = selectedFact();
+  const focused = document.activeElement === $('draft') || document.activeElement === pop;
+  const show = !!selected && focused;
+  pop.hidden = !show;
+  if (!show) return;
+  const kept = S.facts.includes(selected);
+  pop.disabled = S.running || kept;
+  pop.querySelector('span').textContent = t(kept ? 'facts.already' : 'facts.create');
+  placeFactPop();
+}
+
+function renderFacts(fresh = '') {
   $('facts-panel').hidden = !S.facts.length;
+  $('facts-count').textContent = S.facts.length > 1 ? String(S.facts.length) : '';
   $('facts-list').replaceChildren(...S.facts.map((fact) => {
     const li = document.createElement('li');
+    li.className = 'fact-chip' + (fact === fresh ? ' new' : '');
+    li.title = fact;
     const text = document.createElement('span');
-    text.textContent = fact;
+    text.className = 'fact-text';
+    text.textContent = fact.replace(/\s+/g, ' ');
     const remove = document.createElement('button');
     remove.type = 'button';
-    remove.className = 'tool';
-    remove.textContent = t('facts.remove');
+    remove.className = 'fact-x';
+    remove.innerHTML = '<svg aria-hidden="true"><use href="#i-close"/></svg>';
     remove.setAttribute('aria-label', t('facts.removeLabel', { fact }));
+    remove.title = t('facts.remove');
     remove.disabled = S.running;
     remove.addEventListener('click', () => {
       S.facts = S.facts.filter((f) => f !== fact);
@@ -870,20 +934,26 @@ function bind() {
     if (file) importDocument(file);
   });
   bindDrop();
-  for (const event of ['select', 'keyup', 'mouseup']) $('draft').addEventListener(event, updateFactSelection);
+  for (const event of ['select', 'keyup', 'mouseup', 'focus']) $('draft').addEventListener(event, updateFactSelection);
   document.addEventListener('selectionchange', updateFactSelection);
-  // Clicking the action must not collapse the textarea's selection first.
+  $('draft').addEventListener('scroll', () => { if (!$('btn-create-fact').hidden) placeFactPop(); });
+  $('draft').addEventListener('blur', (e) => { if (e.relatedTarget !== $('btn-create-fact')) $('btn-create-fact').hidden = true; });
+  window.addEventListener('resize', () => { if (!$('btn-create-fact').hidden) placeFactPop(); });
+  // 点按钮时别让草稿框先丢掉选区
   $('btn-create-fact').addEventListener('mousedown', (event) => event.preventDefault());
   $('btn-create-fact').addEventListener('click', () => {
     const fact = selectedFact();
     if (!fact || S.facts.includes(fact)) return;
-    if (S.facts.length >= 50) { toast(t('facts.limit')); return; }
+    if (S.facts.length >= 50) { toast(t('facts.limit'), 'err'); return; }
     S.facts.push(fact);
     store.set('draft', $('draft').value);
     store.set('facts', JSON.stringify(S.facts));
-    renderFacts();
+    renderFacts(fact);
+    const ta = $('draft');
+    ta.focus({ preventScroll: true });
+    ta.setSelectionRange(ta.selectionEnd, ta.selectionEnd);
     updateFactSelection();
-    toast(t('facts.created'));
+    toast(t('facts.created'), 'ok');
   });
   $('draft').addEventListener('input', () => onDraftInput());
   $('draft-view').addEventListener('click', () => setEditing(true));

@@ -8,6 +8,7 @@
 //
 // 输出:草稿命中 FAKE_FIXTURES(devtools/fixtures/samples.json)时吐模型真实输出,
 // 否则吐一个简单变换后的文本。
+// FAKE_LOCKS(测 Create fact):drop = 每次都删掉 [[…_LOCK_n]] 占位符;flaky = 第 1、3、5… 次删,其余照常。
 //
 // 二进制名里带 "fail" → 启动即崩;带 "nogpu" → 报告 0 层上 GPU(测试后端回退)。
 package main
@@ -20,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -35,6 +37,8 @@ var (
 	fixtures       = map[string]string{}
 	loaded         atomic.Bool
 	tokenDelay     = 14 * time.Millisecond
+	lockRe         = regexp.MustCompile(`\[\[_*HZ_LOCK_\d+\]\]`)
+	lockCalls      atomic.Int64
 )
 
 func main() {
@@ -194,6 +198,12 @@ func completion(w http.ResponseWriter, r *http.Request) {
 	out, ok := fixtures[strings.TrimSpace(draft)]
 	if !ok {
 		out = synth(draft)
+	}
+	if lockRe.MatchString(draft) {
+		n := lockCalls.Add(1)
+		if m := os.Getenv("FAKE_LOCKS"); m == "drop" || (m == "flaky" && n%2 == 1) {
+			out = lockRe.ReplaceAllString(out, "")
+		}
 	}
 	nPredict := 2048
 	if v, ok := req["n_predict"].(float64); ok && v > 0 {

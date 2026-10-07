@@ -37,6 +37,7 @@
     <symbol id="i-import" viewBox="0 0 24 24"><path d="M13.5 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8.5l-5-5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13.5 3.5v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".22"/><path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
     <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.8" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15.2" r="1.3" fill="currentColor"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V5.2c0-.4.3-.7.7-.7h3.6c.4 0 .7.3.7.7V7M7 7l.8 11.3c.1.8.7 1.2 1.5 1.2h5.4c.8 0 1.4-.4 1.5-1.2L17 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
@@ -158,6 +159,7 @@
           <span data-i18n="draft.try">没有草稿？试试示例</span>
           <span id="sample-btns"></span>
         </div>
+        <button class="fact-pop" id="btn-create-fact" type="button" hidden data-i18n-attr="title:facts.createHelp"><svg aria-hidden="true"><use href="#i-lock"/></svg><span data-i18n="facts.create">原样保留</span></button>
         <div class="dropzone" id="dropzone" hidden>
           <span class="dz-icon"><svg><use href="#i-import"/></svg></span>
           <span class="dz-title" data-i18n="draft.drop">松开即可导入</span>
@@ -165,14 +167,12 @@
         </div>
       </div>
       <p class="draft-note" id="draft-long" role="note" hidden><svg aria-hidden="true"><use href="#i-info"/></svg><span data-i18n="draft.long">长文档改写可能出现事实偏差，建议检查结果，或让 AI 把改错的地方纠正一下。</span></p>
-      <div class="facts-panel" id="facts-panel" hidden>
-        <h3 data-i18n="facts.title">保留的事实</h3>
-        <p data-i18n="facts.help">这些文字会原样保留。选中文本后点击「创建事实」。</p>
-        <ul id="facts-list"></ul>
+      <div class="factbar" id="facts-panel" hidden>
+        <span class="factbar-label" data-i18n-attr="title:facts.help"><svg aria-hidden="true"><use href="#i-lock"/></svg><span data-i18n="facts.title">原样保留</span><span class="factbar-count mono" id="facts-count"></span></span>
+        <ul class="factbar-list" id="facts-list" data-i18n-attr="aria-label:facts.title"></ul>
       </div>
       <footer class="sheet-foot">
         <input id="document-file" type="file" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
-        <button class="tool" id="btn-create-fact" type="button" hidden><span data-i18n="facts.create">创建事实</span></button>
         <button class="tool" id="btn-paste" type="button"><svg><use href="#i-paste"/></svg><span data-i18n="draft.paste">粘贴</span></button>
         <button class="tool" id="btn-upload" type="button" data-i18n-attr="title:draft.uploadHelp"><svg><use href="#i-import"/></svg><span data-i18n="draft.upload">导入</span></button>
         <button class="tool" id="btn-clear" type="button"><svg><use href="#i-eraser"/></svg><span data-i18n="draft.clear">清空</span></button>

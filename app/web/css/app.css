@@ -276,6 +276,39 @@ textarea#draft::placeholder { color: var(--ink-4); }
 }
 .draft-note svg { width: 15px; height: 15px; margin-top: 2px; color: var(--warn); }
 
+/* Create fact:选中文字后浮出的小按钮;已保留的文字排成一条标签带(在草稿框和底栏之间) */
+.fact-pop {
+  position: absolute; z-index: 5; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 10px;
+  border-radius: 999px; background: var(--ink); color: var(--sheet); font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  box-shadow: var(--shadow-pop); animation: pop-in .14s var(--ease);
+}
+.fact-pop svg { width: 15px; height: 15px; }
+.fact-pop:hover:not(:disabled) { box-shadow: var(--shadow-pop), 0 0 0 4px var(--hl-ring); }
+.fact-pop:disabled { background: var(--sunk); color: var(--ink-3); border: 1px solid var(--line); box-shadow: none; cursor: default; }
+.fact-pop:disabled svg { color: var(--ink-3); }
+@keyframes pop-in { from { opacity: 0; transform: translateY(3px) scale(.96); } }
+.factbar {
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 14px 8px 20px; border-top: 1px solid var(--line-2);
+  max-height: 92px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.factbar-label {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; height: 26px; font-size: 12px; font-weight: 600; color: var(--ink-2); cursor: help;
+}
+.factbar-label svg { width: 15px; height: 15px; color: var(--ink-3); }
+.factbar-count { color: var(--ink-3); font-weight: 400; font-size: 11px; }
+.factbar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.fact-chip {
+  display: inline-flex; align-items: center; gap: 2px; max-width: 260px; height: 26px; padding: 0 3px 0 10px; border-radius: 999px;
+  background: var(--sunk); border: 1px solid var(--line); font-size: 12.5px; color: var(--ink);
+}
+.fact-chip.new { animation: chip-in .5s var(--ease); }
+@keyframes chip-in { from { background: var(--hl-solid); color: #101216; } }
+.fact-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.fact-x { width: 20px; height: 20px; flex: none; border-radius: 50%; display: grid; place-items: center; color: var(--ink-3); }
+.fact-x svg { width: 13px; height: 13px; }
+.fact-x:hover:not(:disabled) { background: var(--line); color: var(--err); }
+.fact-x:disabled { opacity: .35; }
+
 /* 中间的改写按钮 */
 .rail { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .go {
@@ -527,6 +560,9 @@ textarea#draft::placeholder { color: var(--ink-4); }
 }
 @media (max-width: 370px) { .brand-word { font-size: 17px; } .brand-mark { width: 26px; } }
 @media (max-width: 560px) {
+  .factbar { max-height: none; padding-right: 0; align-items: center; }
+  .factbar-list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 14px; }
+  .fact-chip { flex: none; max-width: 200px; }
   .status #status-text { display: none; }
   .status { padding: 0 11px; }
   .sheet-sub { display: none; }
@@ -538,13 +574,3 @@ textarea#draft::placeholder { color: var(--ink-4); }
 }
 
 .back { width: 100%; margin-top: 8px; }
-
-/* Literal facts saved from a draft selection. */
-.facts-panel { border-top: 1px solid var(--line); padding: 12px 20px; }
-.facts-panel h3 { margin: 0 0 6px; font-size: 14px; }
-.facts-panel p { margin: 0 0 8px; font-size: 12px; color: var(--ink-3); }
-.facts-panel ul { list-style: none; margin: 0; padding: 0; max-height: 160px; overflow-y: auto; }
-.facts-panel li { display: flex; align-items: start; gap: 8px; padding: 5px 0; font-size: 13px; }
-.facts-panel li span { flex: 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.facts-panel li .tool { flex-shrink: 0; }
-#btn-create-fact { color: var(--ink); background: var(--sunk); }

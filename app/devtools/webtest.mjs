@@ -1,5 +1,5 @@
 // 网页纯逻辑的单测(不需要浏览器):node devtools/webtest.mjs 或 bun devtools/webtest.mjs
-import { activeFacts, protectFacts, restoreFacts } from '../web/js/facts.js';
+import { activeFacts, protectFacts, restoreFacts, streamView, withFactGuard, FACT_TRIES } from '../web/js/facts.js';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { pyStrip, countText, numberCheck, estimateTokens, isLongDraft } from '../web/js/text.js';
@@ -140,6 +140,32 @@ for (const s of fx.samples) {
   }
   ok(restoreFacts('ordinary output', protectFacts('ordinary draft', [])) === 'ordinary output', 'No-fact rewrites keep existing behavior');
   ok(buildPrompt(cfg, locked.text).startsWith(INSTR + '\n\n'), 'Canonical model instructions remain unchanged');
+}
+
+// 10. Create fact:真模型的写法(括号层数变了)也认;流式显示;自动重试和作废
+{
+  const p = protectFacts('Charlotte grows from 10,000 to 20,000 sq ft. Call Nadia.', ['20,000 sq ft', 'Nadia']);
+  ok(restoreFacts('Charlotte: [HZ_LOCK_0] SF. Ping HZ_LOCK_1 today.', p) === 'Charlotte: 20,000 sq ft SF. Ping Nadia today.', '括号少一层、没有括号也换回原文,不吃掉前面的空格');
+  let threw = false;
+  try { restoreFacts('[HZ_LOCK_0] and [[HZ_LOCK_0]], [[HZ_LOCK_1]]', p); } catch (e) { threw = e.message === 'factsLost'; }
+  ok(threw, '同一个占位符出现两次(写法不同也算)判失败');
+  ok(streamView('to [[HZ_LOCK_0]] and [[HZ_LO', p) === 'to 20,000 sq ft and ' && streamView('ping HZ_', p) === 'ping ', '流式途中:写完的占位符换回原文,写到一半的先不显示');
+  const good = { raw: 'Grows to [[HZ_LOCK_0]]. Call [[HZ_LOCK_1]].', final: { stop_type: 'eos' } };
+  const lost = { raw: 'Grows a lot. Call [[HZ_LOCK_1]].', final: { stop_type: 'eos' } };
+  const r1 = await withFactGuard(p, async () => good);
+  ok(r1.ok && r1.tries === 1 && r1.text === 'Grows to 20,000 sq ft. Call Nadia.', '首发通过:只跑 1 次');
+  const seen = [];
+  const r2 = await withFactGuard(p, async (k) => (k === 1 ? lost : good), FACT_TRIES, (n) => seen.push(n));
+  ok(r2.ok && r2.tries === 2 && seen.join() === '2', '第 1 次丢了占位符 → 自动重写,第 2 次通过');
+  const r3 = await withFactGuard(p, async () => lost);
+  ok(!r3.ok && r3.tries === FACT_TRIES && r3.text === '', `${FACT_TRIES} 次都丢 → 作废,不交出丢了原文的结果`);
+  const r4 = await withFactGuard(p, async (k) => (k === 1 ? { ...good, final: { stop_type: 'limit' } } : good));
+  ok(r4.ok && r4.tries === 2, '被截断(stop_type=limit)也算没保住,重写');
+  const r5 = await withFactGuard(protectFacts('no facts here', []), async () => ({ raw: 'anything', final: null }));
+  ok(r5.ok && r5.tries === 1 && r5.text === 'anything', '没有保护段:原样返回');
+  let stopped = false;
+  try { await withFactGuard(p, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { stopped = e.name === 'AbortError'; }
+  ok(stopped, '用户停止直接抛出,不重试');
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }
