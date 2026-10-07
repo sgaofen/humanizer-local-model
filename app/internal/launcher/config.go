@@ -47,6 +47,14 @@ type NPredictRule struct {
 	Max    int     `json:"max"`
 }
 
+// UpdateConfig:App 安装包从 GitHub Releases 拿,模型从上面 repo/revision 的同名文件比。
+type UpdateConfig struct {
+	GitHubRepo    string `json:"github_repo"`    // owner/name
+	GitHubAPI     string `json:"github_api"`     // 测试时换成本地假服务器
+	TagPrefix     string `json:"tag_prefix"`     // 只认这个前缀的标签(app-v0.3.2)
+	IntervalHours int    `json:"interval_hours"` // 自动检查的最小间隔
+}
+
 type Config struct {
 	Schema          int            `json:"schema"`
 	Repo            string         `json:"repo"`
@@ -60,6 +68,7 @@ type Config struct {
 	NPredict        NPredictRule   `json:"n_predict"`
 	IdleExitMinutes int            `json:"idle_exit_minutes"`
 	PreferredPort   int            `json:"preferred_port"`
+	Update          UpdateConfig   `json:"update"`
 }
 
 // loadConfig 读内置默认配置,再用数据目录里的 config.json(若存在)覆盖。
@@ -126,6 +135,15 @@ func (c *Config) validate() error {
 	if c.NPredict.Max <= 0 {
 		c.NPredict = NPredictRule{Factor: 2.5, Min: 256, Max: 2048}
 	}
+	if c.Update.GitHubAPI == "" {
+		c.Update.GitHubAPI = "https://api.github.com"
+	}
+	if c.Update.TagPrefix == "" {
+		c.Update.TagPrefix = "app-v"
+	}
+	if c.Update.IntervalHours <= 0 {
+		c.Update.IntervalHours = 24
+	}
 	return nil
 }
 
@@ -175,6 +193,8 @@ type Settings struct {
 	Tier     string `json:"tier,omitempty"`
 	Endpoint string `json:"endpoint,omitempty"`
 	Port     int    `json:"port,omitempty"`
+	// AutoUpdateCheck:启动后每天最多静默检查一次更新。nil = 没设置过 = 开。
+	AutoUpdateCheck *bool `json:"auto_update_check,omitempty"`
 }
 
 func loadSettings(path string) Settings {

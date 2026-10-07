@@ -61,6 +61,16 @@ Good to know:
 - Quit from the **…** menu in the page, as on macOS.
 - The Windows build has not been run on real Windows hardware yet (only CI smoke tests). If something breaks, please [open an issue](https://github.com/sgaofen/humanizer-local-model/issues).
 
+## Updates
+
+The app checks once a day, shortly after it starts, and shows a small hint in the top bar when something is new (in a narrow window, a dot on the **…** button). **…** → **Check for updates** checks right away. Your model, settings and history are kept.
+
+- **App:** shows the newest release on GitHub and what changed. The download resumes if interrupted and is checked against its SHA-256 before anything is touched. Then **Restart to update**: on macOS the new Humanizer.app replaces the old one; on Windows the installer runs silently (the portable version swaps its folder). The app restarts and the page reloads by itself. If the new version doesn't start, the old one is put back and started again.
+  - If the app can't replace itself (macOS: run straight from the `.dmg`, or its folder isn't writable), it downloads the installer and opens it; drag Humanizer to Applications as the first time.
+- **Models:** for each size you've downloaded, the app compares your file with the one on Hugging Face (SHA-256). A newer file downloads next to the old one while you keep rewriting, is checked, then swapped in; if the engine is using it, the engine restarts for a few dozen seconds, and if the new file won't load, the old one comes back. It needs free disk space for one extra copy while downloading. The first check reads each model file you downloaded with an older app once, to fingerprint it.
+
+**Privacy:** the check calls only GitHub's public Releases API and Hugging Face (or the mirror you picked), with the user agent `humanizer-app/<version>` and nothing else: no account, e-mail or device details. Offline, it fails quietly. Turn the daily check off with the switch at the bottom of the **Check for updates** panel.
+
 ## First-launch warnings
 
 The app is not code-signed yet, so both systems warn you the first time. This is expected.

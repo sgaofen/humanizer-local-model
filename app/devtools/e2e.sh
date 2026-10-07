@@ -6,6 +6,8 @@ cd "$(dirname "$0")/.."
 APP="$PWD"
 [ -x .tools/go/bin/go ] && export PATH="$APP/.tools/go/bin:$PATH" GOPATH="$APP/.tools/gopath" GOCACHE="$APP/.tools/gocache"
 export GOFLAGS=-p=2
+# 检查更新别连真的 GitHub(要看更新界面用 devtools/update_shots.sh)
+export HUMANIZER_UPDATE_API=http://127.0.0.1:9 HUMANIZER_UPDATE_DELAY_SEC=3600
 
 OUT=dist/dev
 W=.cache/e2e

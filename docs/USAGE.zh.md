@@ -124,6 +124,13 @@ sha256 校验值（macOS 用 `shasum -a 256 文件名`，Linux 用 `sha256sum �
 
 所有 GGUF 文件在 2026-10-04 换过一次：元数据里加了对话模板（给 LM Studio 等聊天软件用，见[第 3 节](#起服务)），并写入推荐的采样默认值（temperature 1.0、top-p 0.95、top-k 关、min-p 关、重复惩罚 1.0），请求里没设采样参数时 llama.cpp 就用它们。里面的权重逐字节没变，只改了文件头。在那之前下载的文件大小和校验值都是旧的，用续写接口、显式传采样参数照样能用。同一天还加了 `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的完整权重，单个 GGUF，给需要参照或想自己量化的人。`humanizer-12b-Q3-QAT.gguf`（2026-10-05 加入）带同样的模板和默认值。
 
+**手上的文件是不是最新的？**文件偶尔会用同一个名字重新上传。拿本地文件的 SHA-256 和 Hugging Face 报的比一下，不一样就重新下载（App 会自己做这件事：「…」→「检查更新」）：
+
+```bash
+curl -sI https://huggingface.co/jialinyyzz/humanizer/resolve/main/humanizer-12b-Q8_0.gguf | grep -i '^x-linked-etag'
+shasum -a 256 ./humanizer-model/humanizer-12b-Q8_0.gguf      # Linux 用 sha256sum
+```
+
 ## 3. llama.cpp（推荐）
 
 macOS（Metal）、Windows、Linux（CUDA、Vulkan 或 CPU）都能用。App 自己用的是 llama.cpp `b11335`，这个版本或更新的都可以。

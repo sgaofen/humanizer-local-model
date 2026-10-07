@@ -33,7 +33,8 @@ func (a *App) handler() http.Handler {
 	mux.HandleFunc("POST /app/engine/restart", a.handleRestart)
 	mux.HandleFunc("POST /app/reveal", a.handleReveal)
 	mux.HandleFunc("POST /app/quit", a.handleQuit)
-	mux.Handle("/api/", a.apiProxy())
+	a.registerUpdateRoutes(mux)
+	mux.Handle("/api/", a.countInflight(a.apiProxy()))
 	mux.Handle("/", a.static())
 	return a.guard(mux)
 }

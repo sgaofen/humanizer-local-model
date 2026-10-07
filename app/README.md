@@ -68,6 +68,7 @@ app/
 │   ├── server.go              HTTP:静态网页、/app/* 接口、/api/* 反代、安全检查
 │   ├── document.go            导入 .docx / .pdf:上传接口、DOCX 正文/表格提取
 │   ├── document_pdf.go        PDF:ToUnicode 解码、按坐标拼行分段、部首码位归一、乱码拦截(testdata/ 里是 Chrome 打印的真实 PDF)
+│   ├── update*.go semver.go   检查更新:GitHub Releases / HF 比对、下载、原地替换、重启计划与回滚(见下文「检查更新」)
 │   ├── prompt.go              提示词(唯一事实源)
 │   ├── config.go paths.go     配置合并、选档、数据目录、引擎发现
 │   ├── sysinfo_*.go           内存 / GPU 探测(darwin / windows / 其他)
@@ -83,12 +84,16 @@ app/
 │   └── img/mark.svg
 ├── devtools/
 │   ├── fakellama/             假 llama-server(校验提示词格式、SSE 流式、可模拟崩溃/0 层上 GPU、校验 API key)
-│   ├── fakehf/                假 Hugging Face(302 + X-Linked-Size/Etag、Range、限速、模拟断线)
+│   ├── fakehf/                假 Hugging Face(302 + X-Linked-Size/Etag、Range、限速、模拟断线;-changed 模拟模型更新)
+│   ├── fakegh/                假 GitHub Releases(发布列表 + 302 下载,目录里放安装包就等于发了新版)
 │   ├── shot/                  无头 Chrome 截图(DevTools 协议,标准库手写 WebSocket)
 │   ├── fixtures/samples.json  两条真实草稿 + 模型真实输出
 │   ├── dev.sh                 本地开发(假引擎 + 网页读磁盘)
 │   ├── e2e.sh                 启动器端到端测试(37 项)
 │   ├── shots.sh               用假引擎重出界面截图到 docs/screenshots/(只供开发对照,不进 README)
+│   ├── update_e2e.sh          检查更新端到端(macOS:假 .app + 真 dmg,替换、重启、回滚、模型更新,35 项)
+│   ├── update_shots.sh        检查更新界面截图(中英文、深浅色、手机宽度)
+│   ├── webtest_update.mjs     更新面板纯逻辑单测(取更新说明、迷你 Markdown、相对时间)
 │   └── webtest.mjs            网页纯逻辑单测(node / bun)
 ├── packaging/
 │   ├── llama-cpp.lock.json    llama.cpp 钉死版本(b11335)+ 每个压缩包的 sha256
@@ -122,6 +127,9 @@ go test ./...                   # Go 单测
 node devtools/webtest.mjs       # 网页逻辑(提示词指纹、strip、n_predict、差异、数字核对)
 bash devtools/e2e.sh            # 端到端:下载断线续传/暂停/退出后续传/校验、反代与流式、单实例、退出收尾、后端回退、残留清理
 bash devtools/shots.sh          # 用假引擎重截 docs/screenshots/(开发对照用;README 用的是 docs/screenshots-real/)
+node devtools/webtest_update.mjs   # 更新面板逻辑
+bash devtools/update_e2e.sh        # 检查更新端到端(只在 macOS 上跑:要 hdiutil / codesign)
+bash devtools/update_shots.sh      # 检查更新界面截图 → .cache/update-shots/
 ```
 
 全部测试只用假引擎和假下载源,不加载任何真模型。
@@ -147,6 +155,7 @@ cp humanizer-12b-Q8_0.gguf ~/Library/Application\ Support/Humanizer/models/   # 
 | `--idle-exit N` | 网页关闭 N 分钟后退出,0 = 不退出 |
 | `--web-dir` | 网页从磁盘读(开发用) |
 | `--no-browser` | 不自动开浏览器 |
+| `--update-api` | 检查 App 更新用的 GitHub API 地址(也认 `HUMANIZER_UPDATE_API`,测试时指向 `devtools/fakegh`) |
 
 ### 改配置(不用重新编译)
 
@@ -181,6 +190,29 @@ Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.p
 |---|---|---|
 | macOS | ad-hoc 签名(`codesign -s -`),能跑但首次打开被 Gatekeeper 拦 | Apple Developer Program(99 美元/年)的 Developer ID Application 证书 + 公证。CI 已留好:配 `MACOS_CERT_P12_BASE64`、`MACOS_CERT_PASSWORD`、`MACOS_SIGN_IDENTITY`、`APPLE_ID`、`APPLE_TEAM_ID`、`APPLE_APP_PASSWORD` 这几个 secret 就会自动签名 + hardened runtime + 公证 + staple |
 | Windows | 不签名,SmartScreen 警告 | 代码签名证书(OV/EV)或 Azure Trusted Signing,在 `build_win.sh` 之后加一步 signtool 签 exe 和安装包 |
+
+## 检查更新
+
+**入口**:右上角「…」菜单 →「检查更新」(从菜单打开会立刻查一次);有更新时顶栏出现一个小提示(窄屏收进「…」按钮上的小点)。启动 20 秒后、等模型装载完再后台静默查一次,成功检查后 24 小时内不再查(失败 3 小时后重试),面板底部可以关掉;开关存在 `settings.json` 的 `auto_update_check`。
+
+**隐私**:只请求 `config/default.json` 里 `update.github_repo`(`sgaofen/humanizer-local-model`)的公开 Releases 接口和当前下载源(HF 或镜像)的模型文件 HEAD,UA 固定 `humanizer-app/<版本>`,不带任何账号、Cookie、设备或用户信息。GitHub 请求带 `If-None-Match`,没变化时回 304 不占匿名配额。网络不通安静失败,只在用户手动检查时提示。
+
+**版本号**:运行时唯一来源是 `main.version`(打包时 `-ldflags -X main.version=…`,见 `packaging/macos/build_app.sh`、`packaging/windows/build_win.sh`);同一个号还要出现在 `Info.plist`(打包时替换 `__VERSION__`)、Inno Setup 的 `AppVersion`、CI 的 `app-v*` 标签、README / INSTALL / `space/page.py` / `hf/README.md` 的下载链接里。检查更新只认 `app-v` 开头、非草稿、非预发布、能按语义版本解析的标签,取最大的那个;开发版(`dev`)不比较。
+
+**App 更新**:按平台挑安装包(`-macos-arm64.dmg` / `-windows-x64-setup.exe` / `-windows-x64-portable.zip`),下载到 `<数据目录>/updates/`,复用 `Download`(续传、卡死重连),核对 Release 资产的 `digest`(没有就读 `SHA256SUMS.txt`)、大小和文件头。点「重启并完成更新」后:
+
+| 安装方式 | 怎么判断 | 做法 |
+|---|---|---|
+| macOS .app | 在 `*.app/Contents/MacOS/` 里、所在目录可写 | 挂载 dmg → 核对包标识、版本、`codesign --verify --deep --strict`、团队号(当前是 Developer ID 签的就必须同团队)、新程序 `--version` → `ditto` 到旁边的 `.Humanizer.app.update` → 旧的改名 `.Humanizer.app.backup`、新的放到原位(都在服务还活着时做,失败就撤回)→ 关服务和引擎 → 启动新版本 → 按 `instance.json` 的端口 ping 到新版本号才算成功 → 删备份。90 秒没起来就杀掉、换回备份、重启旧版本 |
+| Windows 安装版 | 目录里有 `unins000.exe` | 运行中的 exe 换不了:把自己复制成 `<数据目录>/updates/humanizer-updater-<pid>.exe`,带着计划(`apply-plan.json`)跑 `--apply-update`,本进程退出;助手等旧进程退出 → 安装目录改名备份 → `setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS` → 启动 → 确认,失败就换回备份 |
+| Windows 便携版 | 目录里有 `engine\` | 先解压到旁边并试跑新程序 `--version`(防 zip 穿越),再由助手换目录,同样确认/回滚 |
+| 其他(dmg 里直接运行、App Translocation、目录不可写、开发版) | — | 下好后打开安装包(macOS 挂载 dmg),面板里说明怎么手动替换;系统不让改 `/Applications`(App 管理保护)时也退到这条路 |
+
+新进程带 `HUMANIZER_UPDATED_FROM`、`HUMANIZER_NO_BROWSER=1` 启动:等旧端口放开、沿用同一端口(浏览器历史按端口存),不开新标签页;旧页面盯着 `/app/ping`,版本变了就刷新。结局写在 `<数据目录>/update-result.json`,新(或回滚后的旧)版本的页面读到后提示一次。备份和旧安装包在启动 5 分钟后清理。
+
+**模型更新**:对已下载的档位 HEAD `…/resolve/<revision>/<文件>`,拿 302 上的 `X-Linked-Etag`(=sha256)和 `X-Linked-Size`。本地指纹存在 `model-hashes.json`(sha256 + 大小 + 修改时间):新下载的在校验时就记下;0.3.x 下载的老文件第一次检查时算一遍(只在远端大小和本地一样时才需要)。有新版就下载到 `<模型>.update`(续传、`.update.part`),期间旧模型照常可用;下完核对 sha256 和大小 → 等手上的改写结束 → 引擎在用就先停 → 旧文件改名 `.bak`、新文件放到原位 → 起引擎等就绪 → 删 `.bak`;起不来就换回旧文件再起。
+
+**测试钩子**:`HUMANIZER_UPDATE_API`(假 GitHub)、`HUMANIZER_UPDATE_DELAY_SEC`(后台首次检查的延迟)、`HUMANIZER_UPDATE_READY_SEC`(等新版本起来的时限,默认 90 秒)。`dev.sh`、`e2e.sh`、`shots.sh` 默认把 GitHub 指到一个不通的本地端口,不会连真网络。
 
 ## 已知限制
 

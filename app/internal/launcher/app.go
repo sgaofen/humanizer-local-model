@@ -79,6 +79,10 @@ type App struct {
 
 	lastSeen atomic.Int64
 	idleExit time.Duration
+
+	updates   *updater     // 检查更新(update*.go)
+	inflight  atomic.Int32 // 正在进行的改写请求
+	afterExit func()       // 退出收尾后要做的事(App 更新:启动新版本并确认)
 }
 
 func (a *App) logf(format string, args ...any) {
@@ -199,10 +203,11 @@ func (a *App) stopEngine() {
 func (a *App) startDownload(t Tier, ep Endpoint) {
 	ctx, cancel := context.WithCancel(a.rootCtx)
 	d := &Download{
-		URL:    a.cfg.fileURL(ep.Base, t.File),
-		Dest:   a.modelPath(t),
-		SHA256: t.SHA256,
-		Logf:   a.logf,
+		URL:       a.cfg.fileURL(ep.Base, t.File),
+		Dest:      a.modelPath(t),
+		SHA256:    t.SHA256,
+		Logf:      a.logf,
+		UserAgent: "humanizer-app/" + a.opts.Version,
 	}
 	_ = os.MkdirAll(filepath.Dir(d.Dest), 0o755)
 	a.mu.Lock()
@@ -229,6 +234,9 @@ func (a *App) startDownload(t Tier, ep Endpoint) {
 			a.dl = nil
 			a.mu.Unlock()
 			a.logf("下载完成 %s", d.Dest)
+			if a.updates != nil { // 记下指纹,以后检查模型更新不用再算
+				a.updates.recordFP(t.File, d.Dest, d.SHA)
+			}
 			a.startEngine(t)
 			return
 		case errors.Is(err, context.Canceled):
@@ -302,6 +310,9 @@ func (a *App) idleLoop(ctx context.Context) {
 			a.mu.Lock()
 			busy := a.phase == phaseDownloading
 			a.mu.Unlock()
+			if a.updates != nil && a.updates.busy() { // 更新在下载/安装:别中途退出
+				busy = true
+			}
 			if busy {
 				a.touch()
 				continue
