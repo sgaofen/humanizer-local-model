@@ -19,6 +19,18 @@ export function countText(s) {
   return { units: cjk + latin, cjk, latin, chars: [...s].length };
 }
 
+// 长文档提示的门槛:约 1,000 token ≈ 700 个英文词 ≈ 1,100 个汉字。
+// 依据:评测集最长的草稿约 450 词;草稿过了约 820 token,输出就会顶到 2,048 的上限。再长,事实走样明显变多。
+export const LONG_DRAFT_TOKENS = 1000;
+
+/** 粗估 token 数(Gemma 词表实测:英文约 1.5 token/词,中文约 0.95 token/字)。只决定要不要显示提示,不参与改写。 */
+export function estimateTokens(s) {
+  const c = countText(s);
+  return Math.round(c.latin * 1.5 + c.cjk * 0.95);
+}
+
+export const isLongDraft = (s) => estimateTokens(s) >= LONG_DRAFT_TOKENS;
+
 /** 主要是中文的文本,换中文字体和行高。 */
 export function isMostlyCJK(s) {
   const c = countText(s.slice(0, 2000));

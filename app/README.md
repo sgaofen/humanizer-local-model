@@ -43,6 +43,8 @@
 - **提示词**:`INSTR + "\n\n" + draft.strip() + "\n\n### Rewritten:\n\n"`,字符串只在 `internal/launcher/prompt.go` 一处;Go 单测把它钉在 `humanizer/promptfmt.py` 的指纹 `cc51d66b4c593fbe` 上。网页从 `/app/config` 拿到字符串后自己拼,并用启动器给的 `probe`(=拼 `"X"` 的结果)逐字自检,对不上就拒绝改写。`draft.strip()` 在 JS 里按 Python 的空白定义复刻(比 JS `trim` 多 `\x1c-\x1f`、`\x85`,少 `﻿`)。
 - **采样**:`temperature 1.0, top_p 0.95`,另外显式关掉 llama-server 默认开着的 `top_k=40 / min_p=0.05 / repeat_penalty`(设成 0/0/1.0),和评测时的 vLLM 行为一致。只靠 EOS 停,不传 `stop`。`n_predict = min(2048, max(256, ceil(草稿 token × 2.5)))`,草稿 token 数用 `/tokenize`(不加 BOS)算。流式 `stream: true`,`return_progress` 用来显示「读稿中 xx%」。
 - **语言保险**(0.3.1):英文草稿偶尔会被整篇写成中文(夹技术术语的口语短稿上偶发,和档位无关)。`web/js/guard.js` 只数汉字:草稿汉字 ≤2 而输出汉字 >15,流式途中当场掐掉、同样参数静默重采,最多 3 次,第 4 次照常交出;反方向(中文草稿写成英文)只在写完后判。阈值和 `humanizer/hz_text.py` 的 `language_drift` 一致。
+- **导入 .docx / .pdf**(0.3.2,外部贡献 PR #2):草稿底栏「导入」或把文件拖到草稿上。网页把文件 POST 到 `/app/document`(同样要带 `X-Humanizer` 头),启动器在内存里提取文字、不落盘,最大 20 MB、500 页、2 MB 文字。DOCX 只取正文段落和表格(页眉页脚、批注、图片不要),段落之间空一行,和模型训练时草稿的分段一致;表格一行一行、单元格用 Tab 隔开。PDF 由 `github.com/ledongthuc/pdf` 解析文件结构,解码和排版在 `document_pdf.go` 自己做:库只在 Identity-H 时才用 ToUnicode,Chrome / Skia 打印的中文 PDF(Type3 字体 + Differences + ToUnicode)会整篇乱码;库按文字对象一行一换行,英文段落会被切碎。这里只要有 ToUnicode 就用,按文字矩阵算坐标拼行,行距明显变大、字号变化、上一行是短句收尾才分段,段内英文行用空格接回、中文行直接接上;再把 Chrome 写成部首码位的字(⼀ U+2F00、⻋ U+2ECB 等,对照表来自 Unicode EquivalentUnifiedIdeograph.txt)和连字 ﬁ 归一。控制字符/替换符/私用区字符超过 5% 就报「编码认不出来」,不把乱码塞进草稿。扫描版 PDF 没有文字层,提示先 OCR。提取期间草稿被改过就不覆盖。
+- **长文档提示**(0.3.2):草稿估算超过约 1,000 token(≈ 700 个英文词 / 1,100 个汉字,`text.js` 的 `LONG_DRAFT_TOKENS`)时,草稿框底部显示一条提示:长文档改写可能出现事实偏差,建议检查结果,或让 AI 把改错的地方纠正一下。门槛的依据:评测集最长的草稿约 450 词;草稿过了约 820 token,输出就顶到 n_predict 上限 2,048。
 - **选档**(0.3.0 起五档):内存 ≥32G → Q8_0;≥16G → Q6_K;≥14G → Q4_K_M;≥12G → Q3;更少 → 2-bit(内存不到 8 GB 时选档页会提示可能装不下)。有 1 GB 容差(32 GB 的 Windows 机器常报 31.x GB,16 GB 带集显的常报 13–15 GB)。门槛 = 改写时 llama-server 峰值内存(M5 Max 实测:Q8_0 约 14 GB、Q4_K_M 10.0、Q3 8.0、2-bit 6.2;Q6_K 估 11)再给系统和浏览器留约 4 GB;8 GB 机器只剩 2-bit 装得下。以前选过 lite 档(已下线)的机器,选档页会提示并预选推荐档,旧文件不删。
 - **Q3 / 2-bit**:这两个文件把词表从 262,144 裁到约 130,000(BOS/EOS 编号不变,任何文本照样能编码),内嵌同一份聊天模板;App 走 `/completion` 拼原始提示词、显式传采样参数,所以和其他档完全一样。随包的 llama-server(b11335)实测两档都能加载,靠 EOS 停。
 - **引擎回退**:Windows 有 NVIDIA 驱动(`nvcuda.dll`)先试 CUDA,有 `vulkan-1.dll` 再试 Vulkan,最后 CPU;每个 GPU 后端先 `-ngl all`,起不来再 `-ngl auto`(让 llama.cpp 按显存自动分层)。GPU 后端起来了但日志显示 `offloaded 0/N layers` 也算失败,换下一个。macOS:Metal(all → auto)→ 同一个二进制 `--device none` 跑 CPU。
@@ -55,7 +57,7 @@
 ```
 app/
 ├── main.go                    入口:把 web/ 和 config/default.json 编进二进制
-├── go.mod                     PDF 提取使用 github.com/ledongthuc/pdf；其余使用标准库
+├── go.mod                     只有 PDF 解析用了 github.com/ledongthuc/pdf(MIT),其余只用标准库
 ├── config/default.json        仓库名、档位文件名/大小、按内存选档规则、采样参数、端口、空闲退出
 ├── internal/launcher/
 │   ├── main.go                命令行参数、单实例、macOS 后台化、端口、信号
@@ -63,11 +65,13 @@ app/
 │   ├── download.go            断点续传下载 + sha256 + GGUF 魔数检查
 │   ├── engine.go              拉起 llama-server、后端回退、日志解析、崩溃重启
 │   ├── server.go              HTTP:静态网页、/app/* 接口、/api/* 反代、安全检查
+│   ├── document.go            导入 .docx / .pdf:上传接口、DOCX 正文/表格提取
+│   ├── document_pdf.go        PDF:ToUnicode 解码、按坐标拼行分段、部首码位归一、乱码拦截(testdata/ 里是 Chrome 打印的真实 PDF)
 │   ├── prompt.go              提示词(唯一事实源)
 │   ├── config.go paths.go     配置合并、选档、数据目录、引擎发现
 │   ├── sysinfo_*.go           内存 / GPU 探测(darwin / windows / 其他)
 │   ├── proc_unix.go proc_windows.go   进程组 / Job 对象、磁盘空间、打开浏览器
-│   └── *_test.go              提示词指纹、选档、配置覆盖、下载(断线续传/不支持 Range/校验失败/非 GGUF/404/暂停)
+│   └── *_test.go              提示词指纹、选档、配置覆盖、下载(断线续传/不支持 Range/校验失败/非 GGUF/404/暂停)、文档导入
 ├── web/                       纯静态网页(离线可用)
 │   ├── index.html  css/app.css
 │   ├── js/app.js              主控:轮询状态、视图、改写流式、历史、菜单
@@ -82,7 +86,7 @@ app/
 │   ├── shot/                  无头 Chrome 截图(DevTools 协议,标准库手写 WebSocket)
 │   ├── fixtures/samples.json  两条真实草稿 + 模型真实输出
 │   ├── dev.sh                 本地开发(假引擎 + 网页读磁盘)
-│   ├── e2e.sh                 启动器端到端测试(34 项)
+│   ├── e2e.sh                 启动器端到端测试(37 项)
 │   ├── shots.sh               用假引擎重出界面截图到 docs/screenshots/(只供开发对照,不进 README)
 │   └── webtest.mjs            网页纯逻辑单测(node / bun)
 ├── packaging/
@@ -183,12 +187,5 @@ Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.p
 - 没有实现 Python 版里的「照抄超过 35% 就带惩罚重采样」(llama-server 做不了这个 logits 处理器)。改写结果太像原稿时点「重新生成」。界面上的「改动 xx%」可以当参考。
 - 「数字核对」只比较阿拉伯数字:「60 分钟 → 一个小时」会被标成请核对,这是提示不是报错。
 - Markdown 标题保留模式(`--keep-markdown`)没做进 App。
+- 导入不保留格式,也不会自动分段改写;长文档整篇送进一次改写,超出上下文时照旧提示分段。要保留结构、按段改写,用命令行 `hz`。PDF 的阅读顺序取决于文件本身(多栏排版可能串行),竖排文字和表单 XObject 里的文字不提取。
 - Windows 版没有在真机上跑过(CI 里有冒烟测试,但 runner 没有 GPU,CUDA/Vulkan 路径只在假引擎上测了回退逻辑)。
-
-### Import Word and PDF drafts
-
-Click **Upload file** beside Paste to import a `.docx` or `.pdf` (up to 20 MB). Text is extracted locally and loaded into the editable draft. Confirm before replacing an existing draft, and review the imported text before rewriting. Imported drafts use the same browser-local autosave as pasted text; the launcher does not save uploaded files.
-
-Formatting is not preserved. DOCX imports include main-body paragraphs and tables, excluding headers, footers, comments, and images. PDF reading order depends on the document; scanned PDFs need OCR first. Encrypted, malformed, or overly complex files are rejected. Extraction is limited to 500 PDF pages and 2 MB of text (DOCX document XML also has a 2 MB limit). The existing rewrite context limit still applies; import does not add chunking or document export.
-
-PDF extraction uses the pinned `github.com/ledongthuc/pdf` dependency; DOCX extraction uses Go's standard library.

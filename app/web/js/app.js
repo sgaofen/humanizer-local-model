@@ -4,7 +4,7 @@ import { getJSON, postJSON, countTokens, streamCompletion } from './api.js';
 import { buildPrompt, selfCheck, nPredictFor } from './prompt.js';
 import { withLangGuard, langDrift } from './guard.js';
 import { tokenize, diffTokens, renderMarked, flagNumbers } from './diff.js';
-import { countText, isMostlyCJK, numberCheck, fmtBytes, fmtDuration, fmtNum, escapeHTML, pyStrip } from './text.js';
+import { countText, isMostlyCJK, isLongDraft, numberCheck, fmtBytes, fmtDuration, fmtNum, escapeHTML, pyStrip } from './text.js';
 import { loadHistory, addHistory, removeHistory, clearHistory, store } from './history.js';
 import { SAMPLES } from './samples.js';
 
@@ -368,6 +368,7 @@ function onDraftInput(save = true) {
   const c = countText(v);
   $('draft-count').innerHTML = v ? `${t('count.zh', { n: fmtNum(c.units, getLang()) })} · ${t('count.chars', { n: fmtNum(c.chars, getLang()) })}` : '';
   $('samples').hidden = v.trim() !== '';
+  $('draft-long').hidden = !isLongDraft(v);
   $('draft').classList.toggle('cjk', isMostlyCJK(v));
   updateGo();
   if (save) {
@@ -693,12 +694,15 @@ function openDrawer(open) {
 
 // ───────────────────────── 杂项 ─────────────────────────
 let toastTimer = 0;
-function toast(msg) {
+/** kind:'' 普通(1.8 秒)、'ok' 成功(3 秒)、'err' 出错(带红点,5 秒,长句也读得完) */
+function toast(msg, kind = '') {
   const el = $('toast');
   el.textContent = msg;
+  el.dataset.kind = kind;
+  el.setAttribute('role', kind === 'err' ? 'alert' : 'status');
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  toastTimer = setTimeout(() => el.classList.remove('show'), kind === 'err' ? 5000 : kind === 'ok' ? 3000 : 1800);
 }
 
 function showOverlay(title, msg, kind) {
@@ -729,36 +733,88 @@ async function setup(tier, endpoint) {
   poll();
 }
 
+// ───────────────────────── 导入 .docx / .pdf ─────────────────────────
+// 文件交给启动器(/app/document)在本机提取文字,不存盘;提取完草稿若已被改动就不覆盖。
+const IMPORT_ERRORS = ['uploadInvalid', 'uploadLarge', 'uploadEmpty', 'uploadUnreadable', 'uploadGarbled'];
+
+function setImporting(on) {
+  importing = on;
+  const b = $('btn-upload');
+  b.disabled = on || S.running;
+  b.classList.toggle('busy', on);
+  b.setAttribute('aria-busy', String(on));
+  b.querySelector('use').setAttribute('href', on ? '#i-spin' : '#i-import');
+  b.querySelector('span').textContent = t(on ? 'draft.uploadLoading' : 'draft.upload');
+}
+
+async function importDocument(file) {
+  if (importing || S.running) return;
+  if (!/\.(docx|pdf)$/i.test(file.name)) { toast(t('draft.uploadInvalid'), 'err'); return; }
+  if (file.size > 20 * 1024 * 1024) { toast(t('draft.uploadLarge'), 'err'); return; }
+  if ($('draft').value.trim() && !confirm(t('draft.uploadReplace', { name: file.name }))) return;
+  const original = $('draft').value;
+  setImporting(true);
+  try {
+    const body = new FormData();
+    body.append('file', file);
+    const response = await fetch('/app/document', { method: 'POST', headers: { 'X-Humanizer': '1' }, body });
+    let result = {};
+    try { result = await response.json(); } catch { /* 不是 JSON */ }
+    if (!response.ok) throw new Error(result.error || 'uploadUnreadable');
+    // 提取期间用户改了草稿,或者开始改写了:不覆盖
+    if (S.running || $('draft').value !== original) { toast(t('draft.uploadChanged'), 'err'); return; }
+    $('draft').value = result.text;
+    setEditing(true);
+    onDraftInput();
+    store.set('draft', result.text);
+    $('draft').scrollTop = 0;
+    $('draft').setSelectionRange(0, 0);
+    toast(t('draft.uploadDone', { name: file.name, n: fmtNum(countText(result.text).units, getLang()) }), 'ok');
+  } catch (error) {
+    toast(t('draft.' + (IMPORT_ERRORS.includes(error.message) ? error.message : 'uploadUnreadable')), 'err');
+  } finally {
+    setImporting(false);
+  }
+}
+
+// 把文件拖到草稿上导入;拖到页面别处松手也不能让浏览器直接打开文件(那会离开 App)。
+function bindDrop() {
+  const sheet = $('sheet-draft'), zone = $('dropzone');
+  const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+  let depth = 0;
+  const hide = () => { depth = 0; zone.hidden = true; };
+  sheet.addEventListener('dragenter', (e) => {
+    if (!hasFiles(e) || S.running || importing) return;
+    e.preventDefault();
+    depth++;
+    zone.hidden = false;
+  });
+  sheet.addEventListener('dragover', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = S.running || importing ? 'none' : 'copy';
+  });
+  sheet.addEventListener('dragleave', (e) => { if (hasFiles(e) && --depth <= 0) hide(); });
+  sheet.addEventListener('drop', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    hide();
+    const file = e.dataTransfer.files[0];
+    if (file) importDocument(file);
+  });
+  window.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('drop', (e) => { if (hasFiles(e)) { e.preventDefault(); hide(); } });
+  window.addEventListener('dragend', hide);
+}
+
 function bind() {
-  $('btn-upload').addEventListener('click', () => { if (!S.running) $('document-file').click(); });
-  $('document-file').addEventListener('change', async () => {
+  $('btn-upload').addEventListener('click', () => { if (!S.running && !importing) $('document-file').click(); });
+  $('document-file').addEventListener('change', () => {
     const file = $('document-file').files[0];
     $('document-file').value = '';
-    if (!file || S.running) return;
-    if (!/\.(docx|pdf)$/i.test(file.name)) { toast(t('draft.uploadInvalid')); return; }
-    if (file.size > 20 * 1024 * 1024) { toast(t('draft.uploadLarge')); return; }
-    if ($('draft').value.trim() && !confirm(t('draft.uploadReplace'))) return;
-    const original = $('draft').value;
-    importing = true;
-    $('btn-upload').disabled = true;
-    toast(t('draft.uploadLoading'));
-    try {
-      const body = new FormData();
-      body.append('file', file);
-      const response = await fetch('/app/document', { method: 'POST', headers: { 'X-Humanizer': '1' }, body });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'uploadUnreadable');
-      // An import must not replace edits made while extraction was running.
-      if (S.running || $('draft').value !== original) { toast(t('draft.uploadChanged')); return; }
-      $('draft').value = result.text;
-      setEditing(true);
-      onDraftInput();
-      toast(t('draft.uploadDone'));
-    } catch (error) {
-      const keys = ['uploadInvalid', 'uploadLarge', 'uploadEmpty', 'uploadUnreadable'];
-      toast(t('draft.' + (keys.includes(error.message) ? error.message : 'uploadUnreadable')));
-    } finally { importing = false; $('btn-upload').disabled = S.running; }
+    if (file) importDocument(file);
   });
+  bindDrop();
   $('draft').addEventListener('input', () => onDraftInput());
   $('draft-view').addEventListener('click', () => setEditing(true));
   $('btn-edit').addEventListener('click', () => setEditing(true));

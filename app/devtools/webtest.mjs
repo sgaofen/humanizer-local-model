@@ -1,7 +1,7 @@
 // 网页纯逻辑的单测(不需要浏览器):node devtools/webtest.mjs 或 bun devtools/webtest.mjs
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { pyStrip, countText, numberCheck } from '../web/js/text.js';
+import { pyStrip, countText, numberCheck, estimateTokens, isLongDraft } from '../web/js/text.js';
 import { buildPrompt, nPredictFor, selfCheck } from '../web/js/prompt.js';
 import { tokenize, diffTokens } from '../web/js/diff.js';
 import { hanCount, wentChinese, wentEnglish, langDrift, withLangGuard, LANG_RETRIES } from '../web/js/guard.js';
@@ -107,6 +107,14 @@ for (const s of fx.samples) {
   let threw = false;
   try { await withLangGuard(EN, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { threw = e.name === 'AbortError'; }
   ok(threw, '用户停止(AbortError)直接抛出,不重采');
+}
+
+// 9. 长文档提示:约 1,000 token(≈ 700 个英文词 / 1,100 个汉字)起显示
+{
+  const words = (n) => Array.from({ length: n }, () => 'word').join(' ');
+  ok(isLongDraft(words(700)) && !isLongDraft(words(400)), `长文档提示:英文 700 词显示、400 词不显示(估 ${estimateTokens(words(700))} token)`);
+  ok(isLongDraft('汉'.repeat(1100)) && !isLongDraft('汉'.repeat(900)), '长文档提示:1,100 个汉字显示、900 个不显示');
+  ok(!isLongDraft(''), '空草稿不显示');
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }

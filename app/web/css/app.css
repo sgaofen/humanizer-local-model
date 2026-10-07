@@ -253,6 +253,29 @@ textarea#draft::placeholder { color: var(--ink-4); }
 }
 .sample-btn:hover { border-style: solid; border-color: var(--ink); background: var(--sunk); color: var(--ink); }
 
+/* 导入 .docx / .pdf:读取中图标转圈;拖文件进来时盖一层;草稿太长时底部一条提示 */
+.tool.busy, .tool.busy:disabled { color: var(--ink-2); opacity: 1; }
+.tool.busy svg { animation: spin .8s linear infinite; }
+.dropzone {
+  position: absolute; inset: 12px; z-index: 6; border-radius: 14px; border: 1.5px dashed var(--ink-3);
+  background: color-mix(in srgb, var(--sheet) 88%, transparent); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px; text-align: center;
+  pointer-events: none; animation: fade .15s;
+}
+.dz-icon {
+  width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 10px;
+  background: var(--hl-solid); color: #101216; box-shadow: 0 0 0 7px var(--hl-ring);
+}
+.dz-icon svg { width: 25px; height: 25px; }
+.dz-title { font-family: var(--f-display); font-size: 18px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.dz-sub { color: var(--ink-3); }
+.draft-note {
+  display: flex; align-items: flex-start; gap: 9px; margin: 0; padding: 9px 18px 10px 20px;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-2); border-top: 1px solid var(--line-2);
+  background: color-mix(in srgb, var(--warn) 7%, var(--sheet));
+}
+.draft-note svg { width: 15px; height: 15px; margin-top: 2px; color: var(--warn); }
+
 /* 中间的改写按钮 */
 .rail { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .go {
@@ -463,6 +486,13 @@ textarea#draft::placeholder { color: var(--ink-4); }
   transition: opacity .2s, transform .25s var(--ease); box-shadow: var(--shadow-pop);
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast { max-width: min(560px, calc(100vw - 32px)); width: max-content; }
+.toast[data-kind="ok"], .toast[data-kind="err"] { border-radius: 14px; line-height: 1.45; padding: 10px 16px 10px 14px; }
+.toast[data-kind="ok"]::before, .toast[data-kind="err"]::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 9px; vertical-align: 1px;
+  background: var(--hl-solid);
+}
+.toast[data-kind="err"]::before { background: var(--err); }
 
 .overlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: var(--bg); padding: 24px; }
 .overlay-card { text-align: center; max-width: 420px; }
@@ -484,6 +514,18 @@ textarea#draft::placeholder { color: var(--ink-4); }
   .brand-tag { display: none; }
   .pop { right: 12px; left: 12px; width: auto; }
 }
+@media (max-width: 480px) { /* 手机宽度:顶栏收紧,保证右上角「…」菜单(退出、换档)不被挤出屏幕 */
+  .bar { padding: 0 12px; }
+  .brand { gap: 8px; }
+  .brand-mark { width: 30px; }
+  .brand-word { font-size: 19px; }
+  .bar-right { gap: 2px; }
+  .icon-btn { width: 32px; }
+  .status { margin-right: 2px; }
+  .seg { margin: 0 2px; }
+  .seg button { min-width: 30px; padding: 0 7px; }
+}
+@media (max-width: 370px) { .brand-word { font-size: 17px; } .brand-mark { width: 26px; } }
 @media (max-width: 560px) {
   .status #status-text { display: none; }
   .status { padding: 0 11px; }

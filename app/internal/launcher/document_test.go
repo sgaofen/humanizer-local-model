@@ -44,7 +44,7 @@ func pdfFixture(content string) []byte {
 func TestDocumentText(t *testing.T) {
 	doc := docxFixture(t, `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:r><w:t>Hello &amp; 你好</w:t><w:tab/><w:t>42</w:t><w:br/><w:t>Next</w:t></w:r></w:p></w:document>`)
 	got, err := documentText(doc, ".docx")
-	if err != nil || got != "Hello & 你好\t42\nNext\n" {
+	if err != nil || got != "Hello & 你好\t42\nNext\n\n" {
 		t.Fatalf("%q %v", got, err)
 	}
 	got, err = documentText(pdfFixture("BT /F1 12 Tf 72 720 Td (Hello PDF 42) Tj ET"), ".pdf")

@@ -68,6 +68,14 @@ check "采样参数:T=1.0 top_p=0.95 top_k=0 min_p=0,无 stop 词" 'tail -1 <(gr
 EP=$(grep -o -- '--port [0-9]*' "$W/d1/logs/llama-server.log" | tail -1 | awk '{print $2}')
 check "绕过启动器直连引擎(无钥匙)被拒 401" '[ "$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:$EP/completion -d "{}")" = 401 ]'
 check "白名单外的 /api 路径 404" '[ "$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:47720/api/slots)" = 404 ]'
+python3 - "$W/e2e.docx" <<'PY'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1], "w") as z:
+    z.writestr("word/document.xml", '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Imported 42 files.</w:t></w:r></w:p></w:body></w:document>')
+PY
+check "导入 .docx:/app/document 在本机提取出文字" 'curl -s -m 5 -X POST -H "X-Humanizer: 1" -F "file=@$W/e2e.docx" http://127.0.0.1:47720/app/document | grep -q "Imported 42 files."'
+check "导入接口同样要带 X-Humanizer 头" '[ "$(curl -s -o /dev/null -w "%{http_code}" -X POST -F "file=@$W/e2e.docx" http://127.0.0.1:47720/app/document)" = 403 ]'
+check "导入的文件不落盘(数据目录里没有 .docx)" '[ -z "$(find "$W/d1" -iname "*.docx" -print -quit)" ]'
 
 echo "3. 单实例:再启动一次只会指向已在跑的那个"
 OUT2=$("$OUT/humanizer" --data-dir "$W/d1" --no-browser 2>&1 || true)

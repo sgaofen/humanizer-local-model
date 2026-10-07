@@ -8,13 +8,12 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
-
-	"github.com/ledongthuc/pdf"
 )
 
 const maxDocumentBytes = 20 << 20
-const maxDocumentText = 2 << 20
+const maxDocumentText = 2 << 20 // 提取出的文字上限(PDF 另有 500 页上限)
 
 // Documents stay in memory and are never saved to the application's data directory.
 func (a *App) handleDocument(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +39,10 @@ func (a *App) handleDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text, err := documentText(data, strings.ToLower(filepath.Ext(header.Filename)))
+	if errors.Is(err, errGarbled) {
+		writeJSON(w, 422, map[string]any{"error": "uploadGarbled"})
+		return
+	}
 	if err != nil {
 		writeJSON(w, 422, map[string]any{"error": "uploadUnreadable"})
 		return
@@ -84,6 +87,7 @@ func documentText(data []byte, ext string) (text string, err error) {
 			d := xml.NewDecoder(bytes.NewReader(raw))
 			var b strings.Builder
 			inText := false
+			cells := 0 // 在几层表格单元格里:单元格里的段落用空格接,一行表格一行文字
 			const wordNS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 			for {
 				tok, e := d.Token()
@@ -105,6 +109,10 @@ func documentText(data []byte, ext string) (text string, err error) {
 						b.WriteByte('\t')
 					case "br", "cr":
 						b.WriteByte('\n')
+					case "noBreakHyphen":
+						b.WriteByte('-')
+					case "tc":
+						cells++
 					}
 				case xml.CharData:
 					if inText {
@@ -117,39 +125,42 @@ func documentText(data []byte, ext string) (text string, err error) {
 					switch t.Name.Local {
 					case "t":
 						inText = false
-					case "p":
-						b.WriteByte('\n')
+					case "p": // 段落之间空一行,和模型训练时草稿的分段一致
+						if cells > 0 {
+							b.WriteByte(' ')
+						} else {
+							b.WriteString("\n\n")
+						}
 					case "tc":
+						cells--
 						b.WriteByte('\t')
+					case "tr":
+						b.WriteByte('\n')
+					case "tbl":
+						b.WriteString("\n")
 					}
 				}
 			}
-			return b.String(), nil
+			return tidyText(b.String()), nil
 		}
 		return "", errors.New("missing document.xml")
 	case ".pdf":
-		r, e := pdf.NewReader(bytes.NewReader(data), int64(len(data)))
-		if e != nil {
-			return "", e
-		}
-		if r.NumPage() > 500 {
-			return "", errors.New("too many pages")
-		}
-		var b strings.Builder
-		for i := 1; i <= r.NumPage(); i++ {
-			p := r.Page(i)
-			s, e := p.GetPlainText(nil)
-			if e != nil {
-				return "", e
-			}
-			if b.Len()+len(s)+2 > maxDocumentText {
-				return "", errors.New("document too large")
-			}
-			b.WriteString(s)
-			b.WriteString("\n\n")
-		}
-		return b.String(), nil
+		return pdfText(data)
 	default:
 		return "", errors.New("unsupported document")
 	}
+}
+
+var (
+	reTrailWS   = regexp.MustCompile(`[ \t]+\n`)
+	reSpaceTab  = regexp.MustCompile(` +\t`)
+	reManyBlank = regexp.MustCompile(`\n{3,}`)
+)
+
+// tidyText:去掉行尾空白(表格单元格留下的 Tab / 空格),连续空行压成一个。
+func tidyText(s string) string {
+	s = reTrailWS.ReplaceAllString(s, "\n")
+	s = reSpaceTab.ReplaceAllString(s, "\t")
+	s = reManyBlank.ReplaceAllString(s, "\n\n")
+	return normalizeRunes(s)
 }
