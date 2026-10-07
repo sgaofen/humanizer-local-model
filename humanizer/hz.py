@@ -426,6 +426,8 @@ def _describe(issues: List[str], copy: float, missing_numbers: List[str], missin
         parts.append("rewrite is much shorter than the draft")
     if "too_long" in issues:
         parts.append("rewrite is much longer than the draft (added text?)")
+    if "language" in issues:
+        parts.append("rewrite is in a different language from the draft")
     if "repeated" in issues:
         parts.append("rewrite says the same thing twice")
     if "markup" in issues:
@@ -456,9 +458,17 @@ def rewrite_units(units: List[T.Unit], backend: Backend, sizer: T.Sizer, out: Ou
             t0 = time.time()
             text, cut = backend.complete(prompt, n_pred)
             text = text.strip()
+            # language guard: an English draft occasionally comes back in Chinese (or the other way
+            # round). Sample again with the same settings, up to T.LANG_RETRIES times.
+            lang = 0
+            while lang < T.LANG_RETRIES and text and T.language_drift(u.text, text):
+                lang += 1
+                out.info(f"[{k}/{total}] rewrite came back in the wrong language; sampling again ({lang}/{T.LANG_RETRIES})")
+                text, cut = backend.complete(prompt, n_pred)
+                text = text.strip()
             secs = time.time() - t0
             c = T.check(u.text, text, cut, max_copy, sizer)
-            tries.append((text, c, secs))
+            tries.append((text, c, secs, lang))
             head = f"{where(u)}, {T.size_label(u.text)}" if a == 0 else f"try {a + 1}"
             out.info(f"[{k}/{total}] {head}: {secs:.1f} s, copy {c.copy:.2f}"
                      + (f"  ({_describe(c.issues, c.copy, c.missing_numbers, c.missing_urls, c.added_numbers)})"
@@ -466,7 +476,7 @@ def rewrite_units(units: List[T.Unit], backend: Backend, sizer: T.Sizer, out: Ou
             if not c.retry:
                 break
         best = min(range(len(tries)), key=lambda i: tries[i][1].score())
-        text, c, _ = tries[best]
+        text, c = tries[best][0], tries[best][1]
         if len(tries) > 1:
             out.info(f"[{k}/{total}] kept try {best + 1}")
         results[u.id] = text
@@ -477,9 +487,10 @@ def rewrite_units(units: List[T.Unit], backend: Backend, sizer: T.Sizer, out: Ou
             "added_numbers": c.added_numbers,
             "truncated": c.truncated, "retried": len(tries) > 1, "chosen": best + 1,
             "seconds": round(sum(t[2] for t in tries), 1),
+            "language_resampled": sum(t[3] for t in tries),
             "flagged": bool(c.issues), "issues": c.issues,
             "attempts": [{"copy_rate": t[1].copy, "missing_numbers": t[1].missing_numbers, "issues": t[1].issues,
-                          "seconds": round(t[2], 1)} for t in tries],
+                          "seconds": round(t[2], 1), "language_resampled": t[3]} for t in tries],
             "draft_start": u.text[:60],
         })
     return results, stats

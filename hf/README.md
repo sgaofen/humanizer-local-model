@@ -36,7 +36,7 @@ tags:
 
 ## Quick start
 
-**App:** download the `.dmg` (Mac with Apple silicon) or the Windows installer from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest). On first run it suggests one of five sizes for your memory (Q8_0, Q6_K, Q4_K_M, Q3 or 2-bit, down to 8 GB machines; app 0.3.0) and downloads it once; after that it works offline. Sizes and quality notes: [Quantized versions](#quantized-versions).
+**App:** download the `.dmg` (Mac with Apple silicon) or the Windows installer from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest) (current: [app 0.3.1](https://github.com/sgaofen/humanizer-local-model/releases/tag/app-v0.3.1)). On first run it suggests one of five sizes for your memory (Q8_0, Q6_K, Q4_K_M, Q3 or 2-bit, down to 8 GB machines; app 0.3.0 and later) and downloads it once; after that it works offline. Sizes and quality notes: [Quantized versions](#quantized-versions).
 
 **Command line, for long documents and agents:** `pipx install git+https://github.com/sgaofen/humanizer-local-model`, then `hz paper.md -o paper.out.md` (also `.txt` and `.docx`). It uses the app or a llama-server, keeps headings, code, tables and links, rewrites the prose piece by piece and flags any piece where a number went missing. See [USAGE.md, section 14](USAGE.md#14-hz-command-line-tool).
 
@@ -336,6 +336,7 @@ Measured on an M5 Max. llama.cpp Q8_0 with Metal (what the app uses): about 36â€
 - Chinese is still catching up with English (no factual problem in 149 of 204 Chinese rewrites; about 9 in 10 fixes are a single word or phrase).
 - Templated genres are still the hardest for detectors: emoji/hashtag social posts (3 / 16 flagged) and policy memos (2 / 13).
 - Formatting can change: 28 of 420 outputs dropped a format element; paragraph breaks, lists and headings sometimes merge or disappear.
+- Occasionally answers in the wrong language: on short, informal English drafts with technical jargon, it occasionally writes the whole rewrite in Chinese. The app (0.3.1 and later) and `hz` check the language and sample again automatically. If you call the model yourself through llama.cpp or another runtime: when an English draft comes back with more than a few Chinese characters, sample once more with the same settings.
 - In casual genres it sometimes adds slang or profanity that wasn't in the draft.
 - Detector results change over time. Nothing here guarantees any detector outcome.
 - It is a writing tool for your own drafts. Where a school, employer or publication has rules about AI assistance, follow them.

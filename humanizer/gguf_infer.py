@@ -14,6 +14,7 @@ import numpy as np
 from llama_cpp import Llama, LogitsProcessorList
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from copy_rate import copy_rate
+from hz_text import language_drift, LANG_RETRIES
 
 
 class NoCopy:
@@ -44,6 +45,10 @@ def humanize(llm, pf, draft, thr=0.35, penalty=2.0, temperature=1.0):
     kw = dict(max_tokens=max(700, int(len(draft.split()) * 2.2) + 200), temperature=temperature, top_p=0.95,
               top_k=0, min_p=0.0, repeat_penalty=1.0, stop=['\n\n\n\n'])   # 12B: T 1.0 / top-p 0.95, other samplers off
     txt = llm(prompt, **kw)['choices'][0]['text'].strip()
+    for _ in range(LANG_RETRIES):   # wrong language (English draft written in Chinese, or the reverse): sample again
+        if not language_drift(draft, txt):
+            break
+        txt = llm(prompt, **kw)['choices'][0]['text'].strip()
     c = copy_rate(draft, txt)['copy_5gram']; retried = False
     if c > thr:
         txt = llm(prompt, logits_processor=LogitsProcessorList([NoCopy(llm, draft, 5, penalty)]), **kw)['choices'][0]['text'].strip()

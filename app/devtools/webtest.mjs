@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { pyStrip, countText, numberCheck } from '../web/js/text.js';
 import { buildPrompt, nPredictFor, selfCheck } from '../web/js/prompt.js';
 import { tokenize, diffTokens } from '../web/js/diff.js';
+import { hanCount, wentChinese, wentEnglish, langDrift, withLangGuard, LANG_RETRIES } from '../web/js/guard.js';
 
 let fails = 0;
 const ok = (cond, msg) => { if (!cond) { fails++; console.error('✗', msg); } else console.log('✓', msg); };
@@ -71,6 +72,41 @@ for (const s of fx.samples) {
   const d = diffTokens(tokenize(s.draft), tokenize(s.output));
   const r = numberCheck(s.draft, s.output);
   ok(d && d.ratio > 0.2 && d.ratio < 0.95, `${s.id} 改动比例 ${(d.ratio * 100).toFixed(0)}%,数字缺 ${JSON.stringify(r.missing)}`);
+}
+
+// 8. 语言保险:英文草稿写成中文 → 重采,最多 3 次;反方向只在写完后判
+{
+  const EN = 'The current humanizer still carries some AI style (you can probably still feel it), and it can\'t get past the most accurate AI detector, Pangram. In my internal research, though, a brand-new method can actually teach a model to write like a human, not just rewrite, and it already passes Pangram v4 as a side proof.';
+  const ZH_OUT = '现在的 humanizer 还是带点 AI 味（你大概还能感觉出来），也过不了目前最准的检测器 Pangram。不过我内部研究里有个全新的方法，能真正教模型像人一样写。';
+  const EN_OUT = 'Honestly, the humanizer still reads a bit like AI, and Pangram, the sharpest detector out there, still catches it. But a new method I have been testing teaches the model to write, not just rewrite.';
+  const ZH = '我们在2024年第3季度完成了1,250个工单的迁移，团队一共用了6周时间，比原计划提前了两周，客户满意度也有明显提升。';
+  ok(hanCount(ZH_OUT) > 15 && hanCount(EN) === 0, `汉字计数 ${hanCount(ZH_OUT)}`);
+  ok(wentChinese(EN, ZH_OUT) && !wentChinese(EN, EN_OUT), '英文草稿:中文输出算跑偏,英文输出不算');
+  ok(!wentChinese(EN + ' 中文字', '这是一句带了二十多个汉字的中文输出，用来确认草稿里有三个汉字时不触发。') , '草稿 ≤2 个汉字才启用(3 个汉字不启用)');
+  ok(!wentChinese(EN, EN_OUT + ' 这里夹了几个汉字'), '英文输出夹几个汉字(≤15)不算跑偏');
+  ok(!wentChinese(ZH, ZH_OUT), '中文草稿写中文不算跑偏');
+  ok(wentEnglish(ZH, EN_OUT) && !wentEnglish(ZH, '我们2024年Q3迁移了1,250个工单，6周干完，提前两周。') && !wentEnglish(EN, EN_OUT), '中文草稿写成英文才算');
+  ok(!langDrift(ZH, 'Q3 migration of 1,250 tickets finished in six weeks, two weeks early, and customers were noticeably happier', false)
+     && langDrift(ZH, 'Q3 migration of 1,250 tickets finished in six weeks, two weeks early, and customers were noticeably happier', true), '中→英只在写完后判,流式途中不判');
+
+  const run = async (draft, outs) => {
+    const calls = [];
+    const r = await withLangGuard(draft, async (i, isLast) => { calls.push(isLast); return { text: outs[Math.min(i, outs.length - 1)] }; });
+    return { r, calls };
+  };
+  let x = await run(EN, [ZH_OUT, ZH_OUT, EN_OUT]);
+  ok(x.r.text === EN_OUT && x.r.tries === 3 && x.calls.join() === 'false,false,false', `跑偏两次后第 3 次英文 → 交英文(共 ${x.r.tries} 次)`);
+  x = await run(EN, [ZH_OUT]);
+  ok(LANG_RETRIES === 3 && x.r.tries === 4 && x.calls.join() === 'false,false,false,true' && x.r.text === ZH_OUT, '一直跑偏:重采 3 次后交最后一次,最后一次标 isLast');
+  x = await run(EN, [EN_OUT]);
+  ok(x.r.tries === 1, '正常输出只跑 1 次');
+  x = await run(ZH, [ZH_OUT]);
+  ok(x.r.tries === 1, '中文草稿中文输出只跑 1 次');
+  const r2 = await withLangGuard(EN, async (i) => ({ text: i === 0 ? '半截' : EN_OUT, drifted: i === 0 }));
+  ok(r2.tries === 2 && r2.text === EN_OUT, '流式途中掐掉的那次(drifted)也会重采');
+  let threw = false;
+  try { await withLangGuard(EN, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { threw = e.name === 'AbortError'; }
+  ok(threw, '用户停止(AbortError)直接抛出,不重采');
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }

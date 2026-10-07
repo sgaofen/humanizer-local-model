@@ -9,6 +9,7 @@ Instructions for AI agents (Claude Code, Codex, Cursor, etc.) setting up **human
 - **Weights:** Hugging Face repo `jialinyyzz/humanizer`. Recommended file: `humanizer-12b-Q8_0.gguf` (12,669,630,368 bytes, about 12.7 GB); `humanizer-12b-Q6_K.gguf` (10,029,799,584 bytes, about 10.0 GB) for 16 GB machines; `humanizer-12b-Q4_K_M.gguf` (7,625,160,864 bytes, about 7.6 GB) for about 14 GB or when disk is tight; `humanizer-12b-Q3-QAT.gguf` (5,587,794,816 bytes, about 5.6 GB) for 12 GB; the smallest, `humanizer-12b-IQ2_XS-QAT.gguf` (3,893,632,896 bytes, about 3.9 GB, 2-bit), for 8 GB. Q3 and 2-bit make a few more fact slips. You also need `prompt_format.json` from the same repo.
 - **Runtime:** `llama-server` from llama.cpp (macOS, Windows, Linux). Alternatives in section 10.
 - **Sampling:** temperature 1.0, top_p 0.95, and nothing else: top_k 0, min_p 0, repeat_penalty 1.0. Stop on EOS only. No stop strings.
+- **Language check:** occasionally, on short informal English drafts with technical jargon, the model writes the whole rewrite in Chinese. If the draft is English and the rewrite has more than a few Chinese characters, sample again with the same settings (up to 3 times). The app (0.3.1 and later) and `hz` do this themselves.
 - **License:** Apache 2.0.
 
 ## 1. Pick the route

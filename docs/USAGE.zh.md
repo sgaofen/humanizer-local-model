@@ -583,6 +583,7 @@ if __name__ == "__main__":
 | 输出以“好的”“Sure”“Here is…”开头、复述指令，或者停不下来 | 套上了通用的聊天模板：GGUF 是 2026-10-04 以前下载的（没有自带模板）、软件设置里改过模板、Ollama 没用[第 7 节](#7-ollama)的 Modelfile，或者对 safetensors 权重用了聊天接口 | 重新下载 GGUF，或者用续写接口（`/completion`、`/v1/completions`、Ollama 的 `raw: true`），发[第 1 节](#1-这个模型哪里特殊)里逐字的提示词 |
 | 输出里有 `<start_of_turn>`、`<end_of_turn>` 之类的标记 | 同上：聊天格式 | 同上 |
 | 输出在 `###` 处或很早就停了 | 设了停止符 | 删掉所有停止符，只靠 EOS |
+| 英文草稿被写成了中文（偶尔发生，多见于夹技术术语的英文口语短稿） | 采样运气 | 英文草稿的输出里出现大段中文，就用同样的参数再采一次。App（0.3.1 及以后）和 `hz` 会自动做，最多 3 次 |
 | 改写和草稿几乎一样 | 采样运气不好，或温度太低 | 确认 temperature 1.0，再采一次 |
 | 胡言乱语、用词古怪或反复重复 | 采样参数不对（llama.cpp 默认的 top-k 40 / min-p 0.05、`generation_config.json` 里的 top-k 64，或者开了重复惩罚） | 显式设 top-k 0、min-p 0、重复惩罚 1.0 |
 | 改写在句子中间断了 | 输出上限或上下文太小 | 调大 `n_predict` / `max_tokens`；llama-server 加 `-c 8192 -np 1`；长稿分段 |
@@ -661,6 +662,8 @@ hz paper.md --server http://127.0.0.1:8080   # 指定某个 llama-server
 
 `added_numbers`（改写里有、草稿里没有的数字）**只报告、不重写**：模型有时是做了正确的算术（"成本从 $480k 降到 $305k"被写成"省了 $175k"），有时是编出来的数字。不管哪种，都要看一眼。
 
+**语言不对。**在这些检查之前，写成了另一种语言的改写（英文草稿写成中文，或中文草稿写成英文；只数字符）会用同样的参数重新生成，最多 3 次。`pieces[].language_resampled` 记重采了几次；3 次都不对的话，这块会标上 `language`。
+
 重写之后仍有问题的块会在 stderr 列出行号（`.docx` 为段落序号）；用 `--json` 时标为 `"flagged": true`。这种情况退出码仍是 0。
 
 ### `--json` 输出
@@ -697,6 +700,7 @@ hz paper.md --server http://127.0.0.1:8080   # 指定某个 llama-server
 | `pieces[].missing_numbers` / `missing_urls` / `added_numbers` | 见上表；缺失的按草稿里的写法，新增的按改写里的写法 |
 | `pieces[].retried` / `chosen` / `attempts` | 是否重写过、留的是第几版、每一版的检查结果 |
 | `pieces[].seconds` | 这块所有版本加起来的模型耗时 |
+| `pieces[].language_resampled` | 因为语言不对多采了几次（通常是 0） |
 | `pieces[].flagged` / `issues` | 留下的那版是否仍有问题，以及是哪些问题 |
 | `text` | 完整结果，只在没给 `-o`、输入又不是 `.docx` 时才有 |
 

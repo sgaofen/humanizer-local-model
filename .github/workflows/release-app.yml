@@ -1,7 +1,7 @@
 # Humanizer 桌面 App 打包。
 #
 # 10-01 已挪到仓库根目录 .github/workflows/。
-# 触发:手动(Actions 页面 → release-app → Run workflow,填版本号),或推 app-v* 标签(如 app-v0.3.0)。
+# 触发:手动(Actions 页面 → release-app → Run workflow,填版本号),或推 app-v* 标签(如 app-v0.3.1)。
 # 推标签时会额外建一个 *草稿* Release 挂上安装包,需要人去 GitHub 上点发布。
 #
 # 产物:
@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "版本号,如 0.3.0"
+        description: "版本号,如 0.3.1"
         required: true
-        default: "0.3.0"
+        default: "0.3.1"
   push:
     tags: ["app-v*"]
 

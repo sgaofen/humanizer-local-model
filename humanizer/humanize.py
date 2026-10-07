@@ -17,6 +17,7 @@ Usage:
 import argparse, json, os, sys, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from copy_rate import copy_rate
+from hz_text import language_drift, LANG_RETRIES
 from markdown_guard import rewrite_keeping_markdown
 
 
@@ -43,6 +44,10 @@ def humanize(draft, model_dir, port, thr=0.35, penalty=2.0, copy_n=5, temperatur
         return txt, {'copy_5gram': round(c, 3), 'resampled_with_penalty': None, 'keep_markdown': True, 'words_in': len(draft.split()), 'words_out': len(txt.split())}
     build = load_format(model_dir); prompt = build(draft)
     txt = complete(port, prompt, draft, temperature)
+    for _ in range(LANG_RETRIES):   # wrong language (English draft written in Chinese, or the reverse): sample again
+        if not language_drift(draft, txt):
+            break
+        txt = complete(port, prompt, draft, temperature)
     c = copy_rate(draft, txt)['copy_5gram']; retried = False
     if c > thr:
         txt = complete(port, prompt, draft, temperature, penalty=penalty, copy_n=copy_n)

@@ -583,6 +583,7 @@ The copy ratio here is a rough measure (share of the rewrite's 5-word or 5-chara
 | Output starts with "Sure", "Here is…", repeats the instruction, or doesn't stop | A generic chat template is in use: a GGUF downloaded before 2026-10-04 (no built-in template), a template changed in the app's settings, Ollama without the Modelfile from [section 7](#7-ollama), or a chat endpoint on the safetensors weights | Download the GGUF again, or use a completion endpoint (`/completion`, `/v1/completions`, Ollama `raw: true`) with the exact prompt from [section 1](#1-what-makes-this-model-different) |
 | Output contains `<start_of_turn>`, `<end_of_turn>` or similar markers | Same: chat formatting | Same fix |
 | Output stops at `###` or very early | A stop string is set | Remove all stop strings; rely on EOS |
+| An English draft comes back in Chinese (occasionally, on short informal English drafts with technical jargon) | Sampling luck | Sample again with the same settings when the rewrite of an English draft has more than a few Chinese characters. The app (0.3.1 and later) and `hz` do this automatically, up to 3 times |
 | Output is almost the same as the draft | Sampling luck, or temperature too low | Check temperature 1.0 and sample again |
 | Rambling, odd word choices, or repeated phrases | Wrong samplers (llama.cpp's default top-k 40 / min-p 0.05, the top-k 64 from `generation_config.json`, or a repetition penalty) | Set top-k 0, min-p 0, repetition penalty 1.0 explicitly |
 | Rewrite cut off mid-sentence | Output limit or context too small | Raise `n_predict` / `max_tokens`; give llama-server `-c 8192 -np 1`; split long drafts |
@@ -661,6 +662,8 @@ Each rewritten piece is checked. If it has one of these problems, the piece is r
 
 `added_numbers`, numbers in the rewrite that are not in the draft, are **reported but never retried**: the model sometimes does correct arithmetic ("cut costs from $480k to $305k" became "saved $175k"), and sometimes invents a figure. Either way, look at them.
 
+**Wrong language.** Before these checks, a rewrite in the wrong language (an English draft written in Chinese, or a Chinese draft written in English; it only counts characters) is sampled again with the same settings, up to 3 times. `pieces[].language_resampled` counts those extra samples; if every sample is in the wrong language, the piece is flagged with `language`.
+
 Pieces that still have a problem after the retry are listed on stderr with their line number (`.docx`: paragraph number) and, with `--json`, marked `"flagged": true`. The exit code is still 0.
 
 ### `--json` output
@@ -697,6 +700,7 @@ From a real run on a 1,200-word English Markdown article through the app (one of
 | `pieces[].missing_numbers` / `missing_urls` / `added_numbers` | As in the table above, spelled as in the draft (missing) or the rewrite (added) |
 | `pieces[].retried` / `chosen` / `attempts` | Whether it was rewritten twice, which try was kept, and each try's checks |
 | `pieces[].seconds` | Model time for this piece, all tries together |
+| `pieces[].language_resampled` | Extra samples taken because a rewrite came back in the wrong language (usually 0) |
 | `pieces[].flagged` / `issues` | Whether the kept version still has a problem, and which |
 | `text` | The whole result, only when there is no `-o` and the input is not `.docx` |
 

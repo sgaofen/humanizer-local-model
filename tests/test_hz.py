@@ -444,6 +444,54 @@ class TestRetry(ServerCase):
         self.assertTrue(json.loads(out)['pieces'][0]['flagged'])
 
 
+POST = ("The current humanizer still carries some AI style (you can probably still feel it), and it can't get past "
+        "the most accurate AI detector, Pangram. In my internal research, though, a brand-new method can actually teach "
+        "a model to write like a human, not just rewrite, and it already passes Pangram v4 as a side proof.")
+POST_ZH = "现在的 humanizer 还是带点 AI 味（你大概还能感觉出来），也过不了最准的 AI 检测器 Pangram。不过在我内部的研究里，有个全新的方法能真正教模型像人一样写。"
+ZH_DRAFT = "我们在2024年第3季度完成了1,250个工单的迁移，团队一共用了6周时间，比原计划提前了两周，客户满意度也有明显提升。"
+
+
+class TestLanguageGuard(ServerCase):
+    def test_drift_rule(self):
+        self.assertTrue(T.language_drift(POST, POST_ZH))
+        self.assertFalse(T.language_drift(POST, reverse_words(POST)))
+        self.assertFalse(T.language_drift(POST, reverse_words(POST) + " 夹了几个汉字"))      # a few Chinese characters are fine
+        self.assertFalse(T.language_drift(POST + " 中文字", POST_ZH))                        # draft with 3+ Chinese characters: off
+        self.assertFalse(T.language_drift(ZH_DRAFT, POST_ZH))
+        self.assertTrue(T.language_drift(ZH_DRAFT, reverse_words(POST)))                    # Chinese draft written in English
+        self.assertFalse(T.language_drift(ZH_DRAFT, "2024年Q3迁移了1,250个工单，6周干完，提前两周。"))
+        self.assertEqual(T.LANG_RETRIES, 3)
+
+    def test_wrong_language_is_resampled(self):
+        f = self.fake('server', lambda d, n: POST_ZH if n < 2 else reverse_words(d))
+        code, out, err = run_hz('--server', f.url, '--json', '--quiet', stdin=(POST + '\n').encode())
+        self.assertEqual(code, 0, err)
+        j = json.loads(out)
+        piece = j['pieces'][0]
+        self.assertEqual(len(f.completions()), 3)
+        self.assertEqual(piece['language_resampled'], 2)
+        self.assertFalse(piece['flagged'])
+        self.assertFalse(piece['retried'])
+        self.assertEqual(j['text'].strip(), reverse_words(POST))
+        for _, _, body in f.completions():                                                   # same settings every time
+            self.assertEqual((body['temperature'], body['top_p'], body['top_k']), (1.0, 0.95, 0))
+
+    def test_gives_up_after_three_and_flags(self):
+        f = self.fake('server', lambda d, n: POST_ZH)
+        code, out, err = run_hz('--server', f.url, '--retries', '0', stdin=(POST + '\n').encode())
+        self.assertEqual(code, 0)
+        self.assertEqual(len(f.completions()), 4)                                            # 1 + 3 resamples, then the last one
+        self.assertEqual(out.strip(), POST_ZH)
+        self.assertIn('different language', err)
+
+    def test_chinese_draft_not_touched(self):
+        f = self.fake('server')
+        code, out, err = run_hz('--server', f.url, '--json', '--quiet', stdin=(ZH_DRAFT + '\n').encode())
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(f.completions()), 1)
+        self.assertEqual(json.loads(out)['pieces'][0]['language_resampled'], 0)
+
+
 class TestDiscovery(ServerCase):
     def test_app_found_through_instance_json(self):
         f = self.fake('app')

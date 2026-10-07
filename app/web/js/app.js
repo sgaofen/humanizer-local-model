@@ -2,6 +2,7 @@
 import { t, apply, setLang, getLang } from './i18n.js';
 import { getJSON, postJSON, countTokens, streamCompletion } from './api.js';
 import { buildPrompt, selfCheck, nPredictFor } from './prompt.js';
+import { withLangGuard, langDrift } from './guard.js';
 import { tokenize, diffTokens, renderMarked, flagNumbers } from './diff.js';
 import { countText, isMostlyCJK, numberCheck, fmtBytes, fmtDuration, fmtNum, escapeHTML, pyStrip } from './text.js';
 import { loadHistory, addHistory, removeHistory, clearHistory, store } from './history.js';
@@ -475,18 +476,42 @@ async function run() {
       cache_prompt: true,
       return_progress: true,
     };
-    for await (const ev of streamCompletion(body, S.abort.signal)) {
-      if (ev.prompt_progress && !S.out) {
-        const pp = ev.prompt_progress;
-        const pr = pp.total ? Math.round((100 * pp.processed) / pp.total) : 0;
-        $('output').innerHTML = `<span class="reading">${t('out.reading', { p: pr })}</span>`;
+    // 语言保险(guard.js):英文草稿写着写着成了中文,当场掐掉、同样参数静默重采,最多 3 次;最后一次照常交出。
+    const runSignal = S.abort.signal;
+    const res = await withLangGuard(draft, async (i, isLast) => {
+      if (runSignal.aborted) throw new DOMException('stopped', 'AbortError');
+      const ctl = new AbortController();
+      const onStop = () => ctl.abort();
+      runSignal.addEventListener('abort', onStop);
+      let fin = null, drifted = false;
+      S.out = '';
+      if (i > 0) $('output').innerHTML = `<span class="reading">${t('out.reading', { p: 0 })}</span>`;
+      try {
+        for await (const ev of streamCompletion(body, ctl.signal)) {
+          if (ev.prompt_progress && !S.out) {
+            const pp = ev.prompt_progress;
+            const pr = pp.total ? Math.round((100 * pp.processed) / pp.total) : 0;
+            $('output').innerHTML = `<span class="reading">${t('out.reading', { p: pr })}</span>`;
+          }
+          if (ev.content) {
+            S.out += ev.content;
+            if (!isLast && langDrift(draft, S.out, false)) { drifted = true; ctl.abort(); break; }
+            scheduleStreamRender();
+          }
+          if (ev.stop) { fin = ev; break; }
+        }
+      } catch (e) {
+        if (!(drifted && e.name === 'AbortError' && !runSignal.aborted)) throw e;
+      } finally {
+        runSignal.removeEventListener('abort', onStop);
       }
-      if (ev.content) {
-        S.out += ev.content;
-        scheduleStreamRender();
+      if (drifted) {
+        if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
+        $('output').innerHTML = `<span class="reading">${t('out.reading', { p: 0 })}</span>`;
       }
-      if (ev.stop) { final = ev; break; }
-    }
+      return { text: S.out, final: fin, drifted };
+    });
+    final = res.final;
   } catch (e) {
     if (e.name === 'AbortError') aborted = true;
     else error = e;

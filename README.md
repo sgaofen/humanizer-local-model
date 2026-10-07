@@ -25,8 +25,8 @@
 
 | Your computer | Download |
 |---|---|
-| **Mac** with Apple silicon (M1 or newer) | `Humanizer-<version>-macos-arm64.dmg` from **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** |
-| **Windows** (x64) | `Humanizer-<version>-windows-x64-setup.exe` (or the portable `.zip`) from **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** |
+| **Mac** with Apple silicon (M1 or newer) | [`Humanizer-0.3.1-macos-arm64.dmg`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-macos-arm64.dmg), or the newest from **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** |
+| **Windows** (x64) | [`Humanizer-0.3.1-windows-x64-setup.exe`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-windows-x64-setup.exe) (or the portable [`.zip`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-windows-x64-portable.zip)), or the newest from **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** |
 
 Double-click it and the app opens in your browser. On first run it looks at your memory, suggests a model size and downloads it once from Hugging Face. After that it works offline. Paste a draft on the left; the rewrite streams in on the right, with new wording highlighted and replaced wording struck through. On an M5 Max a hundred-word email takes about 3.6 seconds.
 
@@ -346,6 +346,7 @@ Measured on an M5 Max:
 - **Chinese is still catching up with English:** no factual problem in 149 of 204 Chinese rewrites; where there was one, about 9 in 10 fixes are a single word or phrase.
 - **Templated genres are still the hardest for detectors:** social posts with emoji, hashtags or numbered threads (3/16 flagged) and formal policy memos (2/13).
 - **Formatting is not always kept.** 28 of 420 outputs dropped a format element. Paragraph breaks and list or heading markup sometimes change.
+- **Occasionally answers in the wrong language.** On short, informal English drafts with technical jargon, the model occasionally writes the whole rewrite in Chinese. The app (0.3.1 and later) and `hz` check the language and sample again automatically (a Chinese draft that comes back in English is caught too). If you call the model yourself through llama.cpp or another runtime: when an English draft comes back with more than a few Chinese characters, sample once more with the same settings.
 - **Register can drift in casual genres.** In Reddit-style posts it sometimes adds slang or profanity that wasn't in the draft.
 - **Detectors change.** The detection numbers above are one measurement on one date. Nothing here guarantees a result on any detector.
 - **The app** doesn't resample when a rewrite copies too much of the draft; press *Regenerate*. It is not code-signed yet, and the Windows build has not been run on real Windows hardware yet (CI smoke tests only).

@@ -25,8 +25,8 @@
 
 | 你的电脑 | 下载 |
 |---|---|
-| **Mac**（Apple 芯片，M1 及以后） | 到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下载 `Humanizer-<版本>-macos-arm64.dmg` |
-| **Windows**（x64） | 到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下载 `Humanizer-<版本>-windows-x64-setup.exe`（或免安装的 `.zip`） |
+| **Mac**（Apple 芯片，M1 及以后） | [`Humanizer-0.3.1-macos-arm64.dmg`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-macos-arm64.dmg)，或到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下最新版 |
+| **Windows**（x64） | [`Humanizer-0.3.1-windows-x64-setup.exe`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-windows-x64-setup.exe)（或免安装的 [`.zip`](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.1/Humanizer-0.3.1-windows-x64-portable.zip)），或到 **[Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest)** 下最新版 |
 
 双击后 App 会在浏览器里打开。第一次运行时它会看你的内存、推荐一个档位，从 Hugging Face 下载一次模型；之后完全离线。左边贴草稿，右边流式出改写，新写的部分用荧光笔标出，被改掉的部分在原稿上划掉。在 M5 Max 上，一封百来词的英文邮件约 3.6 秒，一封 300 字左右的中文邮件约 8.5 秒。
 
@@ -348,6 +348,7 @@ ollama create humanizer -f Modelfile
 - **中文还在追赶英文：**中文 204 篇改写里 149 篇判官没挑出事实问题；有问题的，约 9 成改一个词或短语就好。
 - **模板化体裁仍然最难过检测器：**带 emoji、井号或编号连载的社交帖（3/16 被判 AI），正式政策备忘（2/13）。
 - **格式不一定保得住。**420 发里有 28 发丢了格式要素；分段、列表和标题标记有时会变。
+- **偶尔会换语言。**夹着技术术语的英文口语短稿，模型偶尔会把整篇写成中文。App（0.3.1 及以后）和 `hz` 会自动检测语言并重新生成（中文草稿写成英文也会被拦下）。自己用 llama.cpp 等直接调用的话：英文草稿的输出里出现大段中文，就用同样的参数再采一次。
 - **随意体裁里语气会跑。**Reddit 一类的帖子里，它有时会加上原文没有的俚语或粗口。
 - **检测器会变。**上面的检测数字是某一天的一次测量，不保证在任何检测器上的结果。
 - **App：**改写照抄太多时不会自动重采，请点“重新生成”。App 还没有代码签名；Windows 版还没在真机上跑过（只有 CI 冒烟测试）。
