@@ -362,6 +362,7 @@ function renderSamples() {
 }
 
 let saveTimer = 0;
+let importing = false;
 function onDraftInput(save = true) {
   const v = $('draft').value;
   const c = countText(v);
@@ -386,6 +387,7 @@ function updateGo() {
   else if (S.status && S.status.phase !== 'ready') label = t('go.loading');
   $('go-label').textContent = label;
   go.setAttribute('aria-label', label);
+  if (!importing) $('btn-upload').disabled = S.running;
   $('btn-regen').disabled = S.running || !ready || !S.result;
   $('btn-copy').disabled = S.running || !S.result;
   $('out-empty-sub').innerHTML = t('out.emptySub', { key: KEY_LABEL });
@@ -728,6 +730,35 @@ async function setup(tier, endpoint) {
 }
 
 function bind() {
+  $('btn-upload').addEventListener('click', () => { if (!S.running) $('document-file').click(); });
+  $('document-file').addEventListener('change', async () => {
+    const file = $('document-file').files[0];
+    $('document-file').value = '';
+    if (!file || S.running) return;
+    if (!/\.(docx|pdf)$/i.test(file.name)) { toast(t('draft.uploadInvalid')); return; }
+    if (file.size > 20 * 1024 * 1024) { toast(t('draft.uploadLarge')); return; }
+    if ($('draft').value.trim() && !confirm(t('draft.uploadReplace'))) return;
+    const original = $('draft').value;
+    importing = true;
+    $('btn-upload').disabled = true;
+    toast(t('draft.uploadLoading'));
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const response = await fetch('/app/document', { method: 'POST', headers: { 'X-Humanizer': '1' }, body });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'uploadUnreadable');
+      // An import must not replace edits made while extraction was running.
+      if (S.running || $('draft').value !== original) { toast(t('draft.uploadChanged')); return; }
+      $('draft').value = result.text;
+      setEditing(true);
+      onDraftInput();
+      toast(t('draft.uploadDone'));
+    } catch (error) {
+      const keys = ['uploadInvalid', 'uploadLarge', 'uploadEmpty', 'uploadUnreadable'];
+      toast(t('draft.' + (keys.includes(error.message) ? error.message : 'uploadUnreadable')));
+    } finally { importing = false; $('btn-upload').disabled = S.running; }
+  });
   $('draft').addEventListener('input', () => onDraftInput());
   $('draft-view').addEventListener('click', () => setEditing(true));
   $('btn-edit').addEventListener('click', () => setEditing(true));
