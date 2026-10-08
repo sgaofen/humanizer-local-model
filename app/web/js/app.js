@@ -401,7 +401,8 @@ function updateGo() {
   updateFactSelection();
   for (const button of $('facts-list').querySelectorAll('button')) button.disabled = S.running;
   $('btn-regen').disabled = S.running || !ready || !(S.result || S.retryable);
-  $('btn-copy').disabled = S.running || !S.result;
+  $('btn-copy').disabled = S.running || !S.result || copyState === 'copying';
+  renderCopyButton();
   $('out-empty-sub').innerHTML = t('out.emptySub', { key: KEY_LABEL });
 }
 
@@ -663,28 +664,49 @@ function openNumbers() {
 
 function closeNumbers() { $('numbers-pop').hidden = true; }
 
+let copyState = 'idle';
+let copyTimer = 0;
+let copiedResult = null;
+
+function renderCopyButton() {
+  if (copyState === 'copied' && copiedResult !== S.result) { clearTimeout(copyTimer); copyState = 'idle'; }
+  const b = $('btn-copy');
+  b.classList.toggle('done', copyState === 'copied');
+  b.setAttribute('aria-busy', String(copyState === 'copying'));
+  b.querySelector('span').textContent = t(copyState === 'copying' ? 'out.copying' : copyState === 'copied' ? 'out.copied' : 'out.copy');
+  b.querySelector('use').setAttribute('href', copyState === 'copied' ? '#i-check' : '#i-copy');
+}
+
 async function copyOut() {
   const r = S.result;
-  if (!r) return;
+  if (!r || S.running || copyState === 'copying') return;
+  clearTimeout(copyTimer);
+  copyState = 'copying';
+  updateGo(); // Acknowledge the click before waiting for the clipboard permission/write.
+  let copied = false;
   try {
     await navigator.clipboard.writeText(r.out);
+    copied = true;
   } catch {
+    const focus = document.activeElement;
     const ta = document.createElement('textarea');
     ta.value = r.out;
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
     document.body.append(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
+    try {
+      ta.select();
+      copied = document.execCommand('copy');
+    } catch { /* Report failure below if both clipboard methods fail. */ }
+    finally { ta.remove(); focus?.focus({ preventScroll: true }); }
   }
-  const b = $('btn-copy');
-  b.classList.add('done');
-  b.querySelector('span').textContent = t('out.copied');
-  b.querySelector('use').setAttribute('href', '#i-check');
-  setTimeout(() => {
-    b.classList.remove('done');
-    b.querySelector('span').textContent = t('out.copy');
-    b.querySelector('use').setAttribute('href', '#i-copy');
-  }, 1600);
+  copiedResult = r;
+  copyState = copied ? 'copied' : 'idle';
+  updateGo();
+  toast(t(copied ? 'out.copied' : 'out.copyFailed'), copied ? 'ok' : 'err');
+  if (copied) copyTimer = setTimeout(() => {
+    copyState = 'idle';
+    renderCopyButton();
+  }, 3000);
 }
 
 // ───────────────────────── 历史 ─────────────────────────
