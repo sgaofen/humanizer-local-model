@@ -1,3 +1,4 @@
+import { planDocument, newDocumentJob, documentSignature, readDocumentJob, jobMatches, combinedDocument, runDocumentSections } from '../web/js/document.js';
 // 网页纯逻辑的单测(不需要浏览器):node devtools/webtest.mjs 或 bun devtools/webtest.mjs
 import { activeFacts, protectFacts, restoreFacts, streamView, withFactGuard, FACT_TRIES } from '../web/js/facts.js';
 import { createHash } from 'node:crypto';
@@ -166,6 +167,50 @@ for (const s of fx.samples) {
   let stopped = false;
   try { await withFactGuard(p, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { stopped = e.name === 'AbortError'; }
   ok(stopped, '用户停止直接抛出,不重试');
+}
+
+// Long-document planning and durable, section-level commits.
+{
+  const dc = {...cfg, ctx_size:4096};
+  const count = async (s) => Math.ceil([...s].length / 4);
+  const source = '  '+Array.from({length:12}, (_,i)=>`Section ${i}: ` + 'Nadia approved 42 files. '.repeat(70)).join('\r\n\r\n')+'  ';
+  const fact = 'Nadia approved 42 files.';
+  const parts = await planDocument(source,[fact],dc,count);
+  ok(parts.length > 1 && parts.map(p=>p.before+p.draft+p.after).join('')===source, 'Document plan preserves source and paragraph separators exactly');
+  ok(parts.every(p=>!p.draft.includes('HZ_LOCK_')), 'Plan contains original passages rather than placeholders');
+  for (const p of parts) {
+    const masked=protectFacts(p.draft,[fact]).text, tokens=await count(masked);
+    ok(tokens<=700 && await count(buildPrompt(dc,masked))+nPredictFor(dc,tokens)+64<=dc.ctx_size, 'Every section fits actual input and output token budgets');
+  }
+  const unicode='你好。😀'.repeat(2400);
+  const up = await planDocument(unicode,[],dc,count);
+  ok(up.length>1 && up.map(p=>p.before+p.draft+p.after).join('')===unicode && up.every(p=>!/[\uD800-\uDBFF]$/.test(p.draft)), 'Unbroken Unicode text splits without losing characters or surrogate pairs');
+  const spanning='One fact\n\ncontinues across paragraphs';
+  const sp=await planDocument('Intro. '+spanning+' '+'more words '.repeat(1400),[spanning],dc,count);
+  ok(sp.some(p=>p.draft.includes(spanning)), 'A fact spanning paragraphs stays inside one section');
+  const padded=' '.repeat(3500)+'Body.';
+  const pp=await planDocument(padded,[],dc,count);
+  ok(pp.map(p=>p.before+p.draft+p.after).join('')===padded, 'Large leading whitespace survives planning');
+  let rejected=false;try { await planDocument('Text',[],{...dc,ctx_size:10},count); } catch(e) {rejected=e.message==='documentContext';}
+  ok(rejected,'Context too small fails instead of silently producing an oversized section');
+  const sig=documentSignature(dc,'q8');
+  const job=newDocumentJob(source,[fact],sig,parts);
+  let calls=0, saved=null;
+  try {await runDocumentSections(job,async(s)=>{calls++;if(calls===2)throw new Error('connection failed');return s;},{onCommit:j=>{saved=JSON.stringify(j);}});} catch {}
+  ok(job.outputs.length===1 && !!saved, 'Failure commits only completed sections');
+  const loaded=readDocumentJob(saved);
+  ok(!!loaded && jobMatches(loaded,source,[fact],sig) && !jobMatches(loaded,source+'changed',[fact],sig) && !jobMatches(loaded,source,[],sig) && !jobMatches(loaded,source,[fact],documentSignature(dc,'q4')), 'Resume requires matching draft, facts, and model settings');
+  const before=calls;
+  await runDocumentSections(loaded,async(s)=>{calls++;return s;});
+  ok(calls-before===parts.length-1 && combinedDocument(loaded)===source,'Resume skips completed sections and combines the whole document');
+  const bad=JSON.parse(saved);bad.outputs[0]='fact missing';
+  ok(readDocumentJob(JSON.stringify(bad))===null && readDocumentJob('{broken')===null,'Corrupt checkpoints or missing saved facts are rejected');
+  const canceled=newDocumentJob(source,[fact],sig,parts), ctl=new AbortController();
+  try {await runDocumentSections(canceled,async(s)=>{ctl.abort();return s;},{signal:ctl.signal});} catch {}
+  ok(canceled.outputs.length===0,'Canceled section is never committed');
+  const lost=newDocumentJob(source,[fact],sig,parts);
+  try {await runDocumentSections(lost,async()=> 'No protected phrase');} catch {}
+  ok(lost.outputs.length===0,'A section losing a fact cannot enter the combined result');
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }

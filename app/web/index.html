@@ -209,6 +209,12 @@
         <button class="tool toggle head-toggle" id="btn-diff" type="button" aria-pressed="true"><svg><use href="#i-diff"/></svg><span data-i18n="out.diff">显示改动</span></button>
       </header>
       <div class="sheet-body" id="out-body">
+        <div class="document-progress" id="document-progress" hidden>
+          <p id="document-status" role="status" aria-live="polite"></p>
+          <progress id="document-meter" value="0" max="1" data-i18n-attr="aria-label:document.progress"></progress>
+          <button class="tool" id="btn-document-resume" type="button" hidden data-i18n="document.resume">继续改写</button>
+          <button class="tool" id="btn-document-restart" type="button" hidden data-i18n="document.restart">重新开始</button>
+        </div>
         <div class="notice" id="out-notice" hidden></div>
         <div class="textview" id="output" aria-live="polite"></div>
         <div class="empty" id="out-empty">
@@ -222,6 +228,7 @@
         <span class="mono dim small stats" id="out-stats"></span>
         <span class="grow"></span>
         <button class="tool" id="btn-regen" type="button" disabled><svg><use href="#i-redo"/></svg><span data-i18n="out.regen">重新生成</span></button>
+        <button class="tool" id="btn-download-text" type="button" disabled data-i18n="document.download">下载文本</button>
         <button class="tool solid" id="btn-copy" type="button" disabled><svg><use href="#i-copy"/></svg><span data-i18n="out.copy">复制</span></button>
       </footer>
     </article>

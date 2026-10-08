@@ -13,11 +13,12 @@ export async function getJSON(path, { timeout = 6000 } = {}) {
   }
 }
 
-export async function postJSON(path, body) {
+export async function postJSON(path, body, { signal } = {}) {
   const r = await fetch(path, {
     method: 'POST',
     headers: { ...H, 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
+    signal,
   });
   let data = null;
   try { data = await r.json(); } catch { /* 空响应 */ }
@@ -26,8 +27,8 @@ export async function postJSON(path, body) {
 }
 
 /** 草稿 token 数(llama-server /tokenize,不加 BOS)。 */
-export async function countTokens(content) {
-  const d = await postJSON('/api/tokenize', { content, add_special: false });
+export async function countTokens(content, options) {
+  const d = await postJSON('/api/tokenize', { content, add_special: false }, options);
   return Array.isArray(d.tokens) ? d.tokens.length : 0;
 }
 
