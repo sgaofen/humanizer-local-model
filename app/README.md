@@ -222,3 +222,11 @@ Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.p
 - Markdown 标题保留模式(`--keep-markdown`)没做进 App。
 - 导入不保留格式,也不会自动分段改写;长文档整篇送进一次改写,超出上下文时照旧提示分段。要保留结构、按段改写,用命令行 `hz`。PDF 的阅读顺序取决于文件本身(多栏排版可能串行),竖排文字和表单 XObject 里的文字不提取。
 - Windows 版没有在真机上跑过(CI 里有冒烟测试,但 runner 没有 GPU,CUDA/Vulkan 路径只在假引擎上测了回退逻辑)。
+
+### Long documents in the GUI
+
+Extended drafts (the existing long-document threshold, or over 1,800 characters) are automatically rewritten in sections. This works with pasted text and imported DOCX/PDF text. The planner counts tokens using the local engine, targets at most 700 input tokens per section, and reserves room for the canonical prompt and predicted output. It prefers paragraph boundaries, then sentence ends and whitespace, with Unicode-safe cuts for oversized passages. Saved facts are never split across sections, including selections spanning paragraphs; the existing language and fact guards run for each section.
+
+The output panel shows section progress and accepted sections as they finish. **Stop** cancels the current section while keeping completed sections. **Resume** retries the unfinished section without regenerating earlier sections, including after refreshing the page. A checkpoint is stored in this browser alongside the draft and facts after every accepted section. Draft/fact edits invalidate it; changed model settings require **Start over**. A storage warning means resume is available only in the current page. Draft editing and replacement are disabled while a document is running.
+
+Empty, truncated, interrupted, or fact-invalid sections are never committed. Network or engine errors retain completed sections for resume. Copy and **Download text** become available only once the whole document finishes; download writes one UTF-8 `.txt` file. The combined result is saved in normal rewrite history. Review numbers, dates, names and transitions: sections are rewritten independently, and this is plain-text rewriting rather than the CLI's structure-aware Markdown or DOCX round-trip workflow. Import and export do not preserve original document styling.

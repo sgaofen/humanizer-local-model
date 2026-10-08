@@ -6,6 +6,7 @@ import { withLangGuard, langDrift } from './guard.js';
 import { tokenize, diffTokens, renderMarked, flagNumbers } from './diff.js';
 import { countText, isMostlyCJK, isLongDraft, numberCheck, fmtBytes, fmtDuration, fmtNum, escapeHTML, pyStrip } from './text.js';
 import { loadHistory, addHistory, removeHistory, clearHistory, store } from './history.js';
+import { planDocument, documentSignature, newDocumentJob, readDocumentJob, jobMatches, combinedDocument, runDocumentSections } from './document.js';
 import { SAMPLES } from './samples.js';
 import { activeFacts, protectFacts, restoreFacts, streamView, withFactGuard, FACT_TRIES } from './facts.js';
 
@@ -17,6 +18,9 @@ const BACKEND = { metal: 'Metal', cuda: 'CUDA', vulkan: 'Vulkan', cpu: 'CPU', cu
 
 const S = {
   protect: null, // 本次改写的占位符信息(Create fact),流式显示时用来换回原文
+  docJob: readDocumentJob(store.get('document', 'null')),
+  docPlanning: false,
+  docSaveFailed: false,
   retryable: false, // 上一次因为保留的文字没带过来而作废:允许直接点「重新生成」
   status: null,
   cfg: null,
@@ -51,6 +55,14 @@ function init() {
   onDraftInput(false);
   setDiffToggle(S.showDiff);
   bind();
+  if (S.docJob) {
+    $('output').textContent = combinedDocument(S.docJob);
+    $('out-empty').hidden = !!$('output').textContent;
+    if (S.docJob.outputs.length === S.docJob.parts.length) {
+      S.result = makeResult(S.docJob.draft, combinedDocument(S.docJob));
+      renderResult();
+    }
+  }
   loadConfig();
   poll();
   if (params.get('panel') === 'history') openDrawer(true);
@@ -371,6 +383,7 @@ let importing = false;
 function onDraftInput(save = true) {
   const v = $('draft').value;
   S.facts = activeFacts(S.facts, v);
+  if (S.docJob && !jobMatches(S.docJob, v, S.facts)) discardDocumentJob();
   store.set('facts', JSON.stringify(S.facts));
   renderFacts();
   updateFactSelection();
@@ -402,6 +415,8 @@ function updateGo() {
   for (const button of $('facts-list').querySelectorAll('button')) button.disabled = S.running;
   $('btn-regen').disabled = S.running || !ready || !(S.result || S.retryable);
   $('btn-copy').disabled = S.running || !S.result;
+  $('btn-download-text').disabled = S.running || !S.result;
+  updateDocumentProgress();
   $('out-empty-sub').innerHTML = t('out.emptySub', { key: KEY_LABEL });
 }
 
@@ -458,6 +473,7 @@ async function run() {
   if (!S.promptOK || !S.cfg) { showNotice('err', t('out.promptMismatch')); return; }
   if (S.status?.phase !== 'ready') { toast(t('out.notReady')); return; }
 
+  if (S.docJob || isLongDraft(draft) || draft.length > 1800) { await runLongDocument(); return; }
   const protectedDraft = protectFacts(draft, S.facts);
   togglePop(false);
   closeNumbers();
@@ -486,7 +502,7 @@ async function run() {
     let promptTokens;
     const prompt = buildPrompt(S.cfg, protectedDraft.text);
     try { promptTokens = await countTokens(prompt); } catch { promptTokens = Math.ceil(prompt.length / 3); }
-    if (promptTokens + nPred > S.cfg.ctx_size) throw Object.assign(new Error(t('out.tooLong', { n: fmtNum(nTok, getLang()) })), { notice: true });
+    if (promptTokens + nPred > S.cfg.ctx_size) throw Object.assign(new Error('documentNeeded'), { documentNeeded: true });
     if (nTok * r.factor > r.max) showNotice('warn', t('out.longDraft', { n: fmtNum(nTok, getLang()) }));
     const body = {
       ...S.cfg.sampling,
@@ -559,6 +575,7 @@ async function run() {
   if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
   const secs = (performance.now() - t0) / 1000;
   const text = S.out.trim();
+  if (error?.documentNeeded) { await runLongDocument(); return; }
 
   if (error && !text) {
     $('output').replaceChildren();
@@ -592,6 +609,125 @@ async function run() {
   }
   updateGo();
   renderStatus();
+}
+
+function updateDocumentProgress() {
+  const job = S.docJob;
+  const panel = $('document-progress');
+  panel.hidden = !job && !S.docPlanning;
+  if (panel.hidden) return;
+  const done = job?.outputs.length || 0, total = job?.parts.length || 1;
+  const complete = job && done === total;
+  $('document-meter').max = total;
+  $('document-meter').value = done;
+  const key = S.docPlanning ? 'document.planning' : complete ? 'document.complete' : S.running ? 'document.section' : 'document.paused';
+  $('document-status').textContent = t(key, {n: Math.min(done+1,total), done, total});
+  const ready = S.status?.phase === 'ready' && S.promptOK;
+  $('btn-document-resume').hidden = S.running || !job || complete;
+  $('btn-document-resume').disabled = !ready;
+  $('btn-document-restart').hidden = S.running || !job;
+  $('btn-document-restart').disabled = !ready;
+}
+
+function discardDocumentJob() {
+  if (S.docJob && !S.result) { $('output').textContent = ''; $('out-empty').hidden = false; $('out-notice').hidden = true; }
+  S.docJob = null;
+  store.set('document', 'null');
+  updateDocumentProgress();
+}
+
+function saveDocumentJob(job) {
+  S.docJob = job;
+  store.set('draft', job.draft);
+  store.set('facts', JSON.stringify(job.facts));
+  const saved = JSON.stringify(job);
+  store.set('document', saved);
+  S.docSaveFailed = store.get('document') !== saved;
+  updateDocumentProgress();
+}
+
+async function rewriteDocumentSection(draft, facts, signal) {
+  const protectedDraft = protectFacts(draft, facts);
+  const prompt = buildPrompt(S.cfg, protectedDraft.text);
+  const tokens = await countTokens(protectedDraft.text, {signal});
+  const nPred = nPredictFor(S.cfg, tokens);
+  const promptTokens = await countTokens(prompt, {signal});
+  if (promptTokens + nPred + 64 > S.cfg.ctx_size) throw new Error('documentContext');
+  // Reuse the same fact and language guards as a single-draft rewrite.
+  const fg = await withFactGuard(protectedDraft, async () => {
+    const res = await withLangGuard(draft, async (i, isLast) => {
+      if (signal.aborted) throw new DOMException('stopped', 'AbortError');
+      const ctl = new AbortController();
+      const stop = () => ctl.abort();
+      signal.addEventListener('abort', stop);
+      let raw = '', final = null, drifted = false;
+      try {
+        for await (const ev of streamCompletion({...S.cfg.sampling, prompt, n_predict:nPred, stream:true, cache_prompt:true}, ctl.signal)) {
+          raw += ev.content || '';
+          if (!isLast && langDrift(draft, restoreFacts(raw, protectedDraft, false), false)) { drifted = true; ctl.abort(); break; }
+          if (ev.stop) { final = ev; break; }
+        }
+      } catch (e) { if (!(drifted && e.name === 'AbortError' && !signal.aborted)) throw e; }
+      finally { signal.removeEventListener('abort', stop); }
+      return {raw, final, text:restoreFacts(raw,protectedDraft,false), drifted};
+    });
+    return {raw:res.raw, final:res.final};
+  });
+  if (!fg.ok) throw new Error('factsLost');
+  if (!fg.final || fg.final.stop_type === 'limit' || !fg.text.trim()) throw new Error('documentIncomplete');
+  return fg.text;
+}
+
+async function runLongDocument(resume = false) {
+  if (S.running || !S.promptOK || S.status?.phase !== 'ready') return;
+  const draft = $('draft').value, facts = activeFacts(S.facts,draft);
+  if (!draft.trim()) return;
+  const signature = documentSignature(S.cfg, S.status.tier);
+  if (resume && !jobMatches(S.docJob,draft,facts,signature)) { toast(t('document.changed')); return; }
+  const reuse = jobMatches(S.docJob,draft,facts,signature) && S.docJob.outputs.length < S.docJob.parts.length;
+  S.running = true; S.abort = new AbortController(); S.result = null; S.retryable = false;
+  S.docPlanning = !reuse; S.docSaveFailed = false;
+  $('out-notice').hidden = true; $('out-empty').hidden = true; $('chip-numbers').hidden = true;
+  $('out-stats').textContent = ''; $('out-count').textContent = '';
+  $('output').textContent = reuse ? combinedDocument(S.docJob) : '';
+  setEditing(true);
+  $('draft').readOnly = true;
+  $('btn-clear').disabled = true; $('btn-paste').disabled = true;
+  for (const button of $('sample-btns').querySelectorAll('button')) button.disabled = true;
+  updateGo(); renderStatus();
+  const signal = S.abort.signal;
+  try {
+    if (!reuse) {
+      S.docJob = null;
+      const parts = await planDocument(draft,facts,S.cfg,countTokens,signal);
+      saveDocumentJob(newDocumentJob(draft,facts,signature,parts));
+    }
+    S.docPlanning = false;
+    const job = S.docJob;
+    const text = await runDocumentSections(job,rewriteDocumentSection, {signal,
+      onProgress: () => updateDocumentProgress(),
+      onCommit: (j) => { saveDocumentJob(j); $('output').textContent = combinedDocument(j); },
+    });
+    S.out = text; S.result = makeResult(draft,text);
+    addHistory({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), t:Date.now(), draft, facts, out:text,
+      tier:S.status.tier, tierLabel:tierOf(S.status.tier)?.label, sections:job.parts.length, stop:'eos', ratio:S.result.diff?.ratio ?? null});
+    store.set('document', 'null');
+    renderResult();
+    if (S.docSaveFailed) showNotice('warn',t('document.storage'));
+    else showNotice('', t('document.review'));
+  } catch (e) {
+    $('output').textContent = S.docJob ? combinedDocument(S.docJob) : '';
+    $('out-empty').hidden = !!$('output').textContent;
+    const messages = {factsLost:'document.factFailed', documentIncomplete:'document.incomplete', documentContext:'document.context'};
+    const message = e.name === 'AbortError' ? t('document.stopped') : messages[e.message] ? t(messages[e.message]) : t('out.failed',{msg:escapeHTML(e.message)});
+    showNotice(e.name === 'AbortError' ? '' : 'warn', message + (S.docSaveFailed ? ' ' + t('document.storage') : ''));
+  } finally {
+    S.running = false; S.abort = null; S.docPlanning = false;
+    $('draft').readOnly = false;
+    $('btn-clear').disabled = false; $('btn-paste').disabled = false;
+    for (const button of $('sample-btns').querySelectorAll('button')) button.disabled = false;
+    updateGo(); renderStatus();
+  }
 }
 
 function stop() {
@@ -917,9 +1053,11 @@ function renderFacts(fresh = '') {
     remove.disabled = S.running;
     remove.addEventListener('click', () => {
       S.facts = S.facts.filter((f) => f !== fact);
+      discardDocumentJob();
       store.set('facts', JSON.stringify(S.facts));
       renderFacts();
       updateFactSelection();
+      updateDocumentProgress();
     });
     li.append(text, remove);
     return li;
@@ -927,6 +1065,20 @@ function renderFacts(fresh = '') {
 }
 
 function bind() {
+  $('btn-document-resume').addEventListener('click', () => runLongDocument(true));
+  $('btn-document-restart').addEventListener('click', () => {
+    if (!confirm(t('document.confirmRestart'))) return;
+    S.docJob = null;
+    store.set('document', 'null');
+    runLongDocument();
+  });
+  $('btn-download-text').addEventListener('click', () => {
+    if (!S.result || S.running) return;
+    const url = URL.createObjectURL(new Blob([S.result.out], {type:'text/plain;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'humanizer-rewrite.txt'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
   $('btn-upload').addEventListener('click', () => { if (!S.running && !importing) $('document-file').click(); });
   $('document-file').addEventListener('change', () => {
     const file = $('document-file').files[0];
@@ -946,6 +1098,7 @@ function bind() {
     if (!fact || S.facts.includes(fact)) return;
     if (S.facts.length >= 50) { toast(t('facts.limit'), 'err'); return; }
     S.facts.push(fact);
+    discardDocumentJob();
     store.set('draft', $('draft').value);
     store.set('facts', JSON.stringify(S.facts));
     renderFacts(fact);
@@ -953,6 +1106,7 @@ function bind() {
     ta.focus({ preventScroll: true });
     ta.setSelectionRange(ta.selectionEnd, ta.selectionEnd);
     updateFactSelection();
+    updateDocumentProgress();
     toast(t('facts.created'), 'ok');
   });
   $('draft').addEventListener('input', () => onDraftInput());
