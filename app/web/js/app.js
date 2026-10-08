@@ -477,15 +477,23 @@ async function run() {
   renderStatus();
 
   const t0 = performance.now();
+  const runSignal = S.abort.signal;
   let final = null, error = null, aborted = false, factsLost = false, factTries = 0;
   try {
     let nTok;
-    try { nTok = await countTokens(pyStrip(draft)); } catch { nTok = Math.ceil(countText(draft).chars / 3); }
+    try { nTok = await countTokens(pyStrip(draft), { signal: runSignal }); } catch (e) {
+      if (runSignal.aborted || e.name === 'AbortError' || e.name === 'TimeoutError') throw e;
+      nTok = Math.ceil(countText(draft).chars / 3);
+    }
     const nPred = nPredictFor(S.cfg, nTok);
     const r = S.cfg.n_predict;
     let promptTokens;
     const prompt = buildPrompt(S.cfg, protectedDraft.text);
-    try { promptTokens = await countTokens(prompt); } catch { promptTokens = Math.ceil(prompt.length / 3); }
+    try { promptTokens = await countTokens(prompt, { signal: runSignal }); } catch (e) {
+      if (runSignal.aborted || e.name === 'AbortError' || e.name === 'TimeoutError') throw e;
+      promptTokens = Math.ceil(prompt.length / 3);
+    }
+    if (runSignal.aborted) throw runSignal.reason;
     if (promptTokens + nPred > S.cfg.ctx_size) throw Object.assign(new Error(t('out.tooLong', { n: fmtNum(nTok, getLang()) })), { notice: true });
     if (nTok * r.factor > r.max) showNotice('warn', t('out.longDraft', { n: fmtNum(nTok, getLang()) }));
     const body = {
@@ -498,7 +506,6 @@ async function run() {
     };
     // 语言保险(guard.js):英文草稿写着写着成了中文,当场掐掉、同样参数静默重采,最多 3 次;最后一次照常交出。
     // Create fact(facts.js):写完核对占位符,丢了/改了/重复了就整篇重写,最多 FACT_TRIES 次;都不行就作废。
-    const runSignal = S.abort.signal;
     const locked = protectedDraft.locks.length > 0;
     S.protect = locked ? protectedDraft : null;
     let note = '';
@@ -549,6 +556,7 @@ async function run() {
     }
   } catch (e) {
     if (e.name === 'AbortError') aborted = true;
+    else if (e.name === 'TimeoutError') error = Object.assign(new Error(t('out.requestTimeout')), { notice: true });
     else error = e;
     if (S.protect) S.out = ''; // 有保护段时,没核对过的半截结果不显示(可能缺原文)
   }
