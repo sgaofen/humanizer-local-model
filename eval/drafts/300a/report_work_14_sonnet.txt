@@ -1,5 +1,5 @@
 PRODUCT RECALL STATUS UPDATE — Model X-200 Thermostat
-Prepared by: S. Yu, Product Safety & Compliance
+Prepared by: S. Park, Product Safety & Compliance
 Date: September 21, 2026
 
 Recall Summary: The Model X-200 smart thermostat recall (initiated August 4, 2026, per CPSC filing #26-417) remains active due to a wiring defect in the R-terminal connector that can cause overheating under sustained HVAC load. Of the 5,000 units shipped between January 15 and June 30, 2026, 1,800 units (36%) have been recovered as of today.
