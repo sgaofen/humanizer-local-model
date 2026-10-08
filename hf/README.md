@@ -321,6 +321,8 @@ Where the judge did find a problem, the fix is usually small: a second pass re-r
 3. **GRPO in three rounds, 500 steps in total**: 200 steps with a strict single-vote fact judge, then two rounds of 150 steps (v1 was released after the first of these, v2 after the second) (16 drafts × 8 samples per step, temperature 1.0). Reward: an LLM judge reads the whole rewrite against the draft (severe errors, invented content, changed meaning and dropped formatting cost), plus a copy penalty on 5-gram and syntactic-skeleton reuse (free below .22, then linear). Round 3 drew its drafts from a genre-balanced pool of 8,268. In all, RL produced 41,600 rewrites, each scored by an LLM judge against its draft.
 4. This release (v2) = the final checkpoint of the last round.
 
+**Training data:** every row used to train v2 is in **[jialinyyzz/humanizer-data](https://huggingface.co/datasets/jialinyyzz/humanizer-data)** (one config per step; openly licensed text in full, other sources as IDs with a rebuild script). How it was built: [docs/DATA.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/DATA.md).
+
 <img src="assets/training-en.png" alt="Training pipeline" width="100%">
 
 ## Speed
