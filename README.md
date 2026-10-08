@@ -10,15 +10,39 @@
 
 <p align="center"><b>English</b> · <a href="README.zh.md">中文</a> · <a href="docs/USAGE.md"><b>Usage without the app</b></a> · <a href="docs/INSTALL.md">Install guide</a> · <a href="docs/QUANTIZATION.md">Quantization</a> · <a href="AGENTS.md">AGENTS.md</a></p>
 
-**humanizer** is a 12B model that rewrites AI-written drafts, in English or Chinese, so they read like a person wrote them. It runs on your own computer and is trained to keep every number, date, name and quote.
+<img src="assets/app-showcase-en.png" alt="The humanizer app running the 12B model locally: draft on the left, rewrite on the right, new wording highlighted" width="100%">
+
+**humanizer** is a 12B model that rewrites AI-written drafts (emails, essays, reports, forum posts; English and Chinese) so they read like a person wrote them. It is trained to keep every number, unit, date, name and quote and to add nothing, and it runs on your own computer.
 
 **Quick start:** get the app for **[Mac (Apple silicon)](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-macos-arm64.dmg)** or **[Windows](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-windows-x64-setup.exe)**, open it and paste a draft; it works offline. Without the app: [one llama.cpp command](#option-2-one-command-llamacpp), or [AGENTS.md](AGENTS.md) for coding agents.
 
-## Facts survive the rewrite
+## Before and after
 
-<img src="assets/results-fidelity-en.png" alt="Fact fidelity: 376 of 420 English rewrites with no factual problem; most fixes are a single word or phrase" width="100%">
+Four drafts from the held-out evaluation set (never seen in training). For each draft we generated 8 samples with this release's `humanizer-12b-Q8_0.gguf` file (llama.cpp, the app's settings) and picked the one that reads best among those the fact judge passed. The right side is that sample, **not edited**; only whitespace is normalised for display. All 8 samples per draft are in [eval/outputs/examples-12b-Q8_0_x8.json](eval/outputs/examples-12b-Q8_0_x8.json). Highlight = new wording, strikethrough = draft wording that was replaced. We also checked every number and name in these four by hand.
 
-On our held-out evaluation set, a strict LLM judge found no factual problem in **376 of 420 English rewrites** (210 drafts, two samples each, on the Q8_0 file you download); where it did find one, more than 9 in 10 fixes are a single word or phrase. Originality.ai at its strictest setting judged **95% of the English rewrites human-written** (bf16), although no AI detector was used anywhere in training. Details: [Results](#results).
+These are picks, not every sample. Across the whole evaluation set the model still changes details: the judge flagged 44 of the 420 English rewrites, 135 problems in all, and 125 of them are a single word or phrase (the draft's "The remaining 37 complaints" came out as "The other 37% of complaints"). **Read the result before you send it, especially numbers, dates and names.** Details in [Evaluation details](#evaluation-details).
+
+<img src="assets/compare-en-email.png" alt="Work email: draft and rewrite" width="100%">
+
+<details>
+<summary><b>Three more examples</b> (a forum answer; a Chinese work email and a Zhihu answer)</summary>
+
+<img src="assets/compare-en-forum.png" alt="Forum answer: draft and rewrite" width="100%">
+
+<img src="assets/compare-zh-email.png" alt="Chinese work email: draft and rewrite" width="100%">
+
+<img src="assets/compare-zh-zhihu.png" alt="Zhihu answer: draft and rewrite" width="100%">
+</details>
+
+## Results
+
+<img src="assets/results-detector-en.png" alt="Originality.ai: 95% of rewrites judged human" width="100%">
+
+**95% judged human by Originality.ai** at its strictest setting (210 English drafts, bf16 weights, 2026-10-02): 11 of 210 rewrites were flagged as AI, against 26 for the previous release, and no AI detector was used anywhere in training. On the same 60 drafts, the most popular de-AI skill on GitHub, applied by Claude Sonnet, had all 60 flagged; this release had 4.
+
+<img src="assets/results-fidelity-en.png" alt="Fact fidelity compared with the previous releases" width="100%">
+
+**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge, measured on the `humanizer-12b-Q8_0.gguf` file you download; where it did find one, more than 9 in 10 fixes are a single word or phrase. Method, every genre and the Chinese results: [Evaluation details](#evaluation-details).
 
 ## Quantization: smaller files, closer to the full model
 
@@ -28,7 +52,7 @@ Most GGUF files come from one `llama-quantize` pass that rounds every weight to 
 
 <sub>Numbers behind every point, KL, per-file fact checks and how each file was made: [docs/QUANTIZATION.md](docs/QUANTIZATION.md).</sub>
 
-**Contents:** [Quick start](#quick-start) · [Before and after](#before-and-after) · [Results](#results) · [How it was trained](#how-it-was-trained) · [Usage](#usage) · [Limitations](#limitations) · [License](#license)
+**Contents:** [Quick start](#quick-start) · [Before and after](#before-and-after) · [Evaluation details](#evaluation-details) · [How it was trained](#how-it-was-trained) · [Usage](#usage) · [Limitations](#limitations) · [License](#license)
 
 ## Quick start
 
@@ -52,7 +76,7 @@ The app offers five sizes: Q8_0 (best), Q6_K (no measurable loss), Q4_K_M (sligh
 
 The app is not code-signed yet, so macOS and Windows will warn you the first time. The one-time fix is in [docs/INSTALL.md](docs/INSTALL.md#first-launch-warnings).
 
-<img src="assets/app-showcase-en.png" alt="The humanizer app running the 12B model locally: draft on the left, rewrite on the right, new wording highlighted" width="100%">
+<img src="assets/app-en.png" alt="The humanizer app: draft on the left, rewrite on the right" width="100%">
 
 <sub>Real screenshots of the app running the 12B model (llama.cpp Q8_0, Metal, M5 Max). The speed in the bottom bar is real.</sub>
 
@@ -91,31 +115,11 @@ On stderr it lists every piece where a number from the draft is missing in the r
 > [!IMPORTANT]
 > **Not using the app? Read [docs/USAGE.md](docs/USAGE.md) (Usage without the app).** It has complete, copy-paste steps for llama.cpp (server and one-shot), MLX, transformers, vLLM, Ollama and LM Studio, a script that rewrites a whole folder, how to handle long documents and Chinese, and a troubleshooting table.
 
-## Before and after
-
-Four drafts from the held-out evaluation set (never seen in training). For each draft we generated 8 samples with this release's `humanizer-12b-Q8_0.gguf` file (llama.cpp, the app's settings) and picked the one that reads best among those the fact judge passed. The right side is that sample, **not edited**; only whitespace is normalised for display. All 8 samples per draft are in [eval/outputs/examples-12b-Q8_0_x8.json](eval/outputs/examples-12b-Q8_0_x8.json). Highlight = new wording, strikethrough = draft wording that was replaced. We also checked every number and name in these four by hand.
-
-These are picks, not every sample. Across the whole evaluation set the model still changes details: the judge flagged 44 of the 420 English rewrites, 135 problems in all, and 125 of them are a single word or phrase (the draft's "The remaining 37 complaints" came out as "The other 37% of complaints"). **Read the result before you send it, especially numbers, dates and names.** Details in [Results](#results).
-
-<img src="assets/compare-en-email.png" alt="Work email: draft and rewrite" width="100%">
-
-<img src="assets/compare-en-forum.png" alt="Forum answer: draft and rewrite" width="100%">
-
-<details>
-<summary><b>Two Chinese examples</b> (work email, Zhihu answer)</summary>
-
-<img src="assets/compare-zh-email.png" alt="Chinese work email: draft and rewrite" width="100%">
-
-<img src="assets/compare-zh-zhihu.png" alt="Zhihu answer: draft and rewrite" width="100%">
-</details>
-
-## Results
+## Evaluation details
 
 All numbers come from our own evaluation set: **312 drafts** (210 English, 102 Chinese) across 18 genres: emails, emails to professors, work reports, policy memos, paper sections, student essays, opinion essays, blog posts, Reddit posts, forum answers, product reviews and social posts; in Chinese, emails, Zhihu answers, personal essays, social posts, reports and paper sections. Three frontier models wrote the drafts from scratch, about a third each: GLM-5.3, GPT-5.6 luna and Claude Sonnet. None of them were used in training. Each draft was rewritten twice. Every output and every verdict is in [eval/](eval/).
 
 ### AI detection (an external check)
-
-<img src="assets/results-detector-en.png" alt="Originality.ai: 95% of rewrites judged human" width="100%">
 
 **95% judged human.** Originality.ai, API v3, **AI Allowance 0% (its strictest setting)**, measured **2026-10-02** on the **210 English drafts**, first sample of each, **bf16 weights**: **11 of 210 rewrites were flagged as AI**.
 
@@ -148,7 +152,7 @@ Detectors change over time; this is what one detector said on one date, not a pr
 
 ### Fact fidelity
 
-**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge (GLM-5.3, one vote per rewrite; 210 drafts × 2 samples), measured on the `humanizer-12b-Q8_0.gguf` file you download. The previous release: 369 of 420. The chart is at the [top of this page](#facts-survive-the-rewrite).
+**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge (GLM-5.3, one vote per rewrite; 210 drafts × 2 samples), measured on the `humanizer-12b-Q8_0.gguf` file you download. The previous release: 369 of 420. The chart is at the [top of this page](#results).
 
 | | **v2, this release (Q8_0 file)** | v1, previous 12B release |
 |---|---|---|
@@ -186,20 +190,24 @@ The training code will be released later.
 
 ### Files on Hugging Face
 
-| File | Size | Peak memory (Mac) ¹ | Top-1 vs. bf16 ² | For |
-|---|---|---|---|---|
-| `humanizer-12b-Q8_0.gguf` | 12.7 GB | 13.7 GB | 98.4% | 32 GB of memory or more. **Recommended**, best quality. |
-| `humanizer-12b-Q6_K.gguf` | 10.0 GB | about 11.0 GB | 97.7% | 16 GB. No measurable loss. |
-| `humanizer-12b-Q4_K_M.gguf` | 7.6 GB | 10.0 GB | 95.2% | About 14 GB, or when disk is tight. Slight loss; quantization-aware trained. |
-| `humanizer-12b-Q3-QAT.gguf` | 5.6 GB | 8.0 GB | 93.1% | 12 GB. Small loss; a few more fact slips in English. |
-| `humanizer-12b-IQ2_XS-QAT.gguf` | 3.9 GB | 6.2 GB | 87.4% | 8 GB; the smallest (2-bit). Lowest AI-detector score, a few more fact slips: check numbers and names. |
-| `humanizer-12b-bf16.gguf` | 23.8 GB | about 24.8 GB | 100% (reference) | Unquantised weights as one GGUF, for reference or for quantising yourself. |
-| `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | | | transformers, vLLM, converting to MLX. |
-| `prompt_format.json` | tiny | | | The instruction and separator, verbatim. |
+| File | Size | Peak memory (Mac) ¹ | Top-1 vs. bf16 ² | Fact check: English rewrites flagged ³ | Flagged as AI, same 60 drafts ⁴ | For |
+|---|---|---|---|---|---|---|
+| `humanizer-12b-Q8_0.gguf` | 12.7 GB | 13.7 GB | 98.4% | 44 / 420 | 7 / 60 | 32 GB of memory or more. **Recommended**, best quality. |
+| `humanizer-12b-Q6_K.gguf` | 10.0 GB | about 11.0 GB | 97.7% | 56 / 420 | not measured | 16 GB. No measurable loss. |
+| `humanizer-12b-Q4_K_M.gguf` | 7.6 GB | 10.0 GB | 95.2% | 58 / 420 | not measured | About 14 GB, or when disk is tight. Slight loss; quantization-aware trained. |
+| `humanizer-12b-Q3-QAT.gguf` | 5.6 GB | 8.0 GB | 93.1% | 64 / 420 | 4 / 60 | 12 GB. Small loss; a few more fact slips in English. |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | 3.9 GB | 6.2 GB | 87.4% | 70 / 420 | **0 / 60** | 8 GB; the smallest (2-bit). Lowest AI-detector score, a few more fact slips: check numbers and names. |
+| `humanizer-12b-bf16.gguf` | 23.8 GB | about 24.8 GB | 100% (reference) | 52 / 420 | 4 / 60 | Unquantised weights as one GGUF, for reference or for quantising yourself. |
+| `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | | | | | transformers, vLLM, converting to MLX. |
+| `prompt_format.json` | tiny | | | | | The instruction and separator, verbatim. |
 
 ¹ `llama-server` (Metal) on an M5 Max with the app's settings, while rewriting; Q6_K and bf16 are estimates. Leave room for the system (the app keeps about 4 GB free).
 
 ² How often the file's most likely next token is the same as bf16's, English and Chinese averaged (llama.cpp `--kl-divergence`).
+
+³ The strict fact judge from [Evaluation details](#fact-fidelity) (GLM-5.3, one vote per rewrite), all 420 English rewrites, run on each file. For every file about 9 in 10 of the problems it lists are a single word, number or phrase. Q8_0, Q6_K and Q4_K_M are within noise of bf16; Q3 and 2-bit make a few more slips. Chinese results are in [docs/QUANTIZATION.md](docs/QUANTIZATION.md).
+
+⁴ Originality.ai, strictest setting, the same 60 English drafts for every file. Detectors change; this is one measurement on one date.
 
 ### Quantized versions
 

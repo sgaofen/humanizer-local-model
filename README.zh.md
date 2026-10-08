@@ -10,15 +10,39 @@
 
 <p align="center"><a href="README.md">English</a> · <b>中文</b> · <a href="docs/USAGE.zh.md"><b>不用 App 怎么用</b></a> · <a href="docs/INSTALL.zh.md">安装指南</a> · <a href="docs/QUANTIZATION.zh.md">量化说明</a> · <a href="AGENTS.md">AGENTS.md</a></p>
 
-**humanizer** 是一个 12B 的改写模型：把 AI 写的中英文草稿改成读起来像人写的。在你自己的电脑上跑，训练目标是数字、日期、人名、引语一个不丢。
+<img src="assets/app-showcase-zh.png" alt="humanizer App 在本地运行 12B 模型:左边草稿,右边改写,新写的部分用荧光笔标出" width="100%">
+
+**humanizer** 是一个 12B 的改写模型：把 AI 写的草稿（邮件、作文、报告、论坛帖，中英文都行）改成读起来像人写的。训练目标是数字、单位、日期、人名、引语一个不丢，也不往里加东西，而且在你自己的电脑上跑。
 
 **快速开始**：下载 App（**[Mac，Apple 芯片](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-macos-arm64.dmg)** 或 **[Windows](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-windows-x64-setup.exe)**），打开后贴草稿就行，之后完全离线。不用 App：[一行 llama.cpp 命令](#方式二一行命令llamacpp)，或者把 [AGENTS.md](AGENTS.md) 交给你的编程 Agent。
 
-## 改完事实还在
+## 改写前后
 
-<img src="assets/results-fidelity-zh.png" alt="事实忠实度:英文 420 篇改写里 376 篇没挑出事实问题,有问题的大多改一个词或短语就好" width="100%">
+下面四篇草稿来自留出评测集（训练时从没见过）。每篇我们用本版的 `humanizer-12b-Q8_0.gguf` 文件（llama.cpp，和 App 相同的设置）生成 8 发，在事实判官判为通过的几发里挑了读起来最好的一发。右边就是这一发，**未经任何修改**，只为显示统一了空白；每篇 8 发全文都在 [eval/outputs/examples-12b-Q8_0_x8.json](eval/outputs/examples-12b-Q8_0_x8.json)。荧光笔 = 新写的，删除线 = 被改掉的原文。这四篇里的每个数字和人名我们也人工核对过。
 
-在留出评测集上，从严的 LLM 判官逐篇核对了 **420 篇英文改写，376 篇没挑出事实问题**（210 篇草稿各 2 发，用的就是你下载的 Q8_0 文件）；挑出问题的，9 成以上改一个词或短语就好。Originality.ai 最严档把 **95% 的英文改写判为人写**（bf16），而训练全程没有用过任何 AI 检测器。详见[评测结果](#评测结果)。
+这是挑出来的，不是每一发都这样。放到整个评测集上，模型还是会改错细节：中文 204 篇改写里，判官标出 54 篇，共 236 处，其中 212 处只是一个词或一个短语（比如草稿的“本月20日前后”被写成“20号以前”）。**发出去之前请通读一遍，特别是数字、日期和人名**。详见[评测细节](#评测细节)。
+
+<img src="assets/compare-zh-email.png" alt="中文工作邮件:草稿与改写" width="100%">
+
+<details>
+<summary><b>再看三个例子</b>（知乎回答；英文工作邮件和论坛回答）</summary>
+
+<img src="assets/compare-zh-zhihu.png" alt="知乎回答:草稿与改写" width="100%">
+
+<img src="assets/compare-en-email.png" alt="英文工作邮件:草稿与改写" width="100%">
+
+<img src="assets/compare-en-forum.png" alt="英文论坛回答:草稿与改写" width="100%">
+</details>
+
+## 评测结果
+
+<img src="assets/results-detector-zh.png" alt="Originality.ai:95% 判为人写" width="100%">
+
+**Originality.ai 最严档把 95% 的改写判为人写**（英文 210 篇，bf16 权重，2026-10-02 实测）：210 篇里 11 篇被判 AI，上一版是 26 篇；训练全程没有用过任何 AI 检测器。同一批 60 篇上，GitHub 上最火的去 AI 味 skill 交给 Claude Sonnet 执行，60 篇全被判 AI；本版只有 4 篇。
+
+<img src="assets/results-fidelity-zh.png" alt="与之前版本的事实忠实度对比" width="100%">
+
+**英文 420 篇改写里，有 376 篇判官没挑出事实问题**（从严的 LLM 判官，实测的是你下载的 `humanizer-12b-Q8_0.gguf` 文件）；挑出问题的，9 成以上改一个词或短语就好。中文 204 篇改写里，149 篇没挑出事实问题。方法、各体裁结果和中文细节见[评测细节](#评测细节)。
 
 ## 量化：文件更小，离完整模型更近
 
@@ -28,7 +52,7 @@
 
 <sub>每个点背后的数字、KL、各档事实检查和每个文件的做法：[docs/QUANTIZATION.zh.md](docs/QUANTIZATION.zh.md)。</sub>
 
-**目录**：[快速开始](#快速开始) · [改写前后](#改写前后) · [评测结果](#评测结果) · [怎么训的](#怎么训的) · [用法](#用法) · [局限](#局限) · [协议](#协议)
+**目录**：[快速开始](#快速开始) · [改写前后](#改写前后) · [评测细节](#评测细节) · [怎么训的](#怎么训的) · [用法](#用法) · [局限](#局限) · [协议](#协议)
 
 ## 快速开始
 
@@ -52,7 +76,7 @@ App 有五个档位：Q8_0（最好）、Q6_K（测不出损失）、Q4_K_M（�
 
 App 目前没有代码签名，macOS 和 Windows 第一次打开都会拦一下，处理方法见[安装指南](docs/INSTALL.zh.md#第一次打开被拦)。
 
-<img src="assets/app-showcase-zh.png" alt="humanizer App 在本地运行 12B 模型:左边草稿,右边改写,新写的部分用荧光笔标出" width="100%">
+<img src="assets/app-zh.png" alt="humanizer App:左边草稿,右边改写" width="100%">
 
 <sub>以上都是 App 跑 12B 模型的真机截图（llama.cpp Q8_0，Metal，M5 Max），底栏里的速度是真实的。</sub>
 
@@ -93,31 +117,11 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 > [!IMPORTANT]
 > **不用 App？请看 [docs/USAGE.zh.md](docs/USAGE.zh.md)（不用 App 怎么用）**。里面有 llama.cpp（服务和一次性跑）、MLX、transformers、vLLM、Ollama、LM Studio 的完整步骤，可以直接复制；还有批量改写一个文件夹的脚本、长文和中文怎么处理，以及排错表。
 
-## 改写前后
-
-下面四篇草稿来自留出评测集（训练时从没见过）。每篇我们用本版的 `humanizer-12b-Q8_0.gguf` 文件（llama.cpp，和 App 相同的设置）生成 8 发，在事实判官判为通过的几发里挑了读起来最好的一发。右边就是这一发，**未经任何修改**，只为显示统一了空白；每篇 8 发全文都在 [eval/outputs/examples-12b-Q8_0_x8.json](eval/outputs/examples-12b-Q8_0_x8.json)。荧光笔 = 新写的，删除线 = 被改掉的原文。这四篇里的每个数字和人名我们也人工核对过。
-
-这是挑出来的，不是每一发都这样。放到整个评测集上，模型还是会改错细节：中文 204 篇改写里，判官标出 54 篇，共 236 处，其中 212 处只是一个词或一个短语（比如草稿的“本月20日前后”被写成“20号以前”）。**发出去之前请通读一遍，特别是数字、日期和人名**。详见[评测结果](#评测结果)。
-
-<img src="assets/compare-zh-email.png" alt="中文工作邮件:草稿与改写" width="100%">
-
-<img src="assets/compare-zh-zhihu.png" alt="知乎回答:草稿与改写" width="100%">
-
-<details>
-<summary><b>两个英文例子</b>（工作邮件、论坛回答）</summary>
-
-<img src="assets/compare-en-email.png" alt="英文工作邮件:草稿与改写" width="100%">
-
-<img src="assets/compare-en-forum.png" alt="英文论坛回答:草稿与改写" width="100%">
-</details>
-
-## 评测结果
+## 评测细节
 
 所有数字都来自我们自建的评测集：**312 篇草稿**（英文 210 篇、中文 102 篇），18 种体裁：邮件、给教授的邮件、工作报告、政策备忘、论文段落、学生作文、议论文、博客、Reddit、论坛回答、产品评论、社交帖；中文有邮件、知乎、随笔、社媒、报告、论文。草稿由三个前沿模型从零写成，各约三分之一：GLM-5.3、GPT-5.6 luna、Claude Sonnet。这些草稿都没有进训练。每篇改写 2 发。所有输出和判词都在 [eval/](eval/)。
 
 ### AI 检测（外部核对）
-
-<img src="assets/results-detector-zh.png" alt="Originality.ai:95% 判为人写" width="100%">
 
 **95% 判为人写**。检测器 Originality.ai，API v3，**AI Allowance 0%（最严档）**，**2026-10-02** 实测，**英文 210 篇**，每篇取第 1 发，**bf16 权重**：**210 篇里 11 篇被判 AI**。
 
@@ -150,7 +154,7 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 
 ### 事实忠实度
 
-**英文 420 篇改写里，有 376 篇判官没挑出事实问题**（LLM 判官 GLM-5.3，每篇一票、从严判；210 篇草稿 × 每篇 2 发），实测的是你下载的 `humanizer-12b-Q8_0.gguf` 文件。上一版是 420 篇里 369 篇。图在[本页开头](#改完事实还在)。
+**英文 420 篇改写里，有 376 篇判官没挑出事实问题**（LLM 判官 GLM-5.3，每篇一票、从严判；210 篇草稿 × 每篇 2 发），实测的是你下载的 `humanizer-12b-Q8_0.gguf` 文件。上一版是 420 篇里 369 篇。图在[本页开头](#评测结果)。
 
 | | **v2，本版（Q8_0 文件）** | v1，上一版 12B |
 |---|---|---|
@@ -188,20 +192,24 @@ hz paper.md --json                    # 每块的统计,给脚本和 Agent 用
 
 ### Hugging Face 上的文件
 
-| 文件 | 大小 | Mac 峰值内存 ¹ | 与 bf16 首选词一致 ² | 适合 |
-|---|---|---|---|---|
-| `humanizer-12b-Q8_0.gguf` | 12.7 GB | 13.7 GB | 98.4% | 32 GB 及以上内存。**推荐**，质量最好。 |
-| `humanizer-12b-Q6_K.gguf` | 10.0 GB | 约 11.0 GB | 97.7% | 16 GB 内存。测不出损失。 |
-| `humanizer-12b-Q4_K_M.gguf` | 7.6 GB | 10.0 GB | 95.2% | 14 GB 左右内存，或硬盘紧张时。略有损失；做过量化感知训练。 |
-| `humanizer-12b-Q3-QAT.gguf` | 5.6 GB | 8.0 GB | 93.1% | 12 GB 内存。小幅损失；英文事实小错略多。 |
-| `humanizer-12b-IQ2_XS-QAT.gguf` | 3.9 GB | 6.2 GB | 87.4% | 8 GB 内存；最小（2-bit）。AI 检测表现最好，事实小错多一些：发出前核对数字和名字。 |
-| `humanizer-12b-bf16.gguf` | 23.8 GB | 约 24.8 GB | 100%（基准） | 未量化权重的单文件 GGUF，作参考或自己量化用。 |
-| `model.safetensors` 及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json` | 约 24 GB（bf16） | | | transformers、vLLM、转 MLX。 |
-| `prompt_format.json` | 很小 | | | 指令和分隔符原文。 |
+| 文件 | 大小 | Mac 峰值内存 ¹ | 与 bf16 首选词一致 ² | 事实检查：英文改写标出篇数 ³ | 同 60 篇被判 AI ⁴ | 适合 |
+|---|---|---|---|---|---|---|
+| `humanizer-12b-Q8_0.gguf` | 12.7 GB | 13.7 GB | 98.4% | 44 / 420 | 7 / 60 | 32 GB 及以上内存。**推荐**，质量最好。 |
+| `humanizer-12b-Q6_K.gguf` | 10.0 GB | 约 11.0 GB | 97.7% | 56 / 420 | 未测 | 16 GB 内存。测不出损失。 |
+| `humanizer-12b-Q4_K_M.gguf` | 7.6 GB | 10.0 GB | 95.2% | 58 / 420 | 未测 | 14 GB 左右内存，或硬盘紧张时。略有损失；做过量化感知训练。 |
+| `humanizer-12b-Q3-QAT.gguf` | 5.6 GB | 8.0 GB | 93.1% | 64 / 420 | 4 / 60 | 12 GB 内存。小幅损失；英文事实小错略多。 |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | 3.9 GB | 6.2 GB | 87.4% | 70 / 420 | **0 / 60** | 8 GB 内存；最小（2-bit）。AI 检测表现最好，事实小错多一些：发出前核对数字和名字。 |
+| `humanizer-12b-bf16.gguf` | 23.8 GB | 约 24.8 GB | 100%（基准） | 52 / 420 | 4 / 60 | 未量化权重的单文件 GGUF，作参考或自己量化用。 |
+| `model.safetensors` 及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json` | 约 24 GB（bf16） | | | | | transformers、vLLM、转 MLX。 |
+| `prompt_format.json` | 很小 | | | | | 指令和分隔符原文。 |
 
 ¹ `llama-server`（Metal）在 M5 Max 上、用 App 的设置改写时的最大内存；Q6_K 和 bf16 是估算。要给系统留出空间（App 会留约 4 GB）。
 
 ² 量化文件认为最可能的下一个词和 bf16 相同的比例，中英文取平均（llama.cpp `--kl-divergence`）。
+
+³ [评测细节](#事实忠实度)里那个从严的事实判官（GLM-5.3，每篇一票），每个文件判全部 420 篇英文改写。每个文件列出的问题都有约 9 成只是一个词、一个数字或一个短语。Q8_0、Q6_K、Q4_K_M 和 bf16 的差别在噪声范围内；Q3 和 2-bit 小错稍多。中文结果见 [docs/QUANTIZATION.zh.md](docs/QUANTIZATION.zh.md)。
+
+⁴ Originality.ai 最严档，每个文件都用同一批 60 篇英文草稿。检测器会更新，这只是某一天的一次测量。
 
 ### 量化版本
 
