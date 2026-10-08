@@ -31,7 +31,57 @@
   --del: #FF6159;
   --ok: #3DD68C;
   --grid: #1F2328;
+  /* 数据标记:深色主题直接用青柠绿;浅色主题换成同色相的深绿,保证在白底上看得清 */
+  --accent: var(--lime);
+  --accent-ink: var(--lime);
+  --bar: #5B626C;
+  --bar-old: #3A3F46;
+  --bar-base: #3A3F47;
+  --bar-flag: #8A919C;
+  --shadow: 0 0 0 1px rgba(255,255,255,.02), 0 24px 48px -28px rgba(0,0,0,.9);
   color-scheme: dark;
+}
+
+/* 浅色"纸面"主题(?theme=light):暖白底 + 白卡片 + 发丝边,青柠绿只当荧光笔和小标签,数据用同色相深绿。
+ * 外圈圆角留透明,放在 GitHub 浅色、深色页面上都是一张干净的卡片。 */
+:root[data-theme="light"] {
+  --bg: #F5F4EF;
+  --dot: #E3E1D9;
+  --sheet: #FFFFFF;
+  --sheet-2: #FAFAF7;
+  --sunk: #F1F0EA;
+  --ink: #15171B;
+  --ink-2: #4A505A;
+  --ink-3: #80868F;
+  --ink-4: #C4C8CE;
+  --line: #E3E1D9;
+  --line-2: #EEECE6;
+  --lime: #CDF54B;
+  --lime-ink: #15171B;
+  --hl: rgba(205, 245, 75, .62);
+  --hl-ink: #15171B;
+  --hl-edge: rgba(132, 181, 0, .55);
+  --del: #E5484D;
+  --ok: #2F9E62;
+  --grid: #EFEEE8;
+  --accent: #4F8F00;
+  --accent-ink: #3E7300;
+  --bar: #B9BEC5;
+  --bar-old: #D9DCE0;
+  --bar-base: #9EA4AC;
+  --bar-flag: #AEB3BA;
+  --shadow: 0 1px 2px rgba(21,23,27,.04), 0 10px 28px -18px rgba(21,23,27,.18);
+  color-scheme: light;
+}
+:root[data-theme="light"] body { background: transparent; }
+:root[data-theme="light"] main {
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1.1px, transparent 1.4px);
+  background-size: 18px 18px;
+  background-position: -9px -9px;
+  border: 1px solid #DEDCD3;
+  border-radius: 28px;
+  padding-bottom: 34px;
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +98,7 @@ body {
 }
 .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
 .eyebrow { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
-.sheet { background: var(--sheet); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,.02), 0 24px 48px -28px rgba(0,0,0,.9); }
+.sheet { background: var(--sheet); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
 
 /* 荧光笔(新写的)和删除线(被改掉的),与 App 一致 */
 .ins {

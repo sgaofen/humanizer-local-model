@@ -42,13 +42,9 @@ More examples (a forum answer, a Zhihu answer) are in the [GitHub README](https:
 
 ## Results
 
-<img src="assets/results-detector-en.png" alt="Originality.ai: 95% of rewrites judged human" width="100%">
+<img src="assets/eval-en.png" alt="Evaluation card: 95% of English rewrites judged human by Originality.ai at its strictest setting (11 of 210 flagged; previous release 26); 376 of 420 English rewrites with no factual problem (previous release 369)" width="100%">
 
-**95% judged human by Originality.ai** at its strictest setting (210 English drafts, bf16 weights, 2026-10-02): 11 of 210 rewrites were flagged as AI, against 26 for the previous release, and no AI detector was used anywhere in training. On the same 60 drafts, the most popular de-AI skill on GitHub, applied by Claude Sonnet, had all 60 flagged; this release had 4.
-
-<img src="assets/results-fidelity-en.png" alt="Fact fidelity compared with the previous releases" width="100%">
-
-**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge, measured on the `humanizer-12b-Q8_0.gguf` file you download; where it did find one, more than 9 in 10 fixes are a single word or phrase. Method, every genre and the Chinese results: [Evaluation details](#evaluation-details).
+**95% judged human by Originality.ai** at its strictest setting (210 English drafts, bf16 weights, 2026-10-02): 11 of 210 rewrites were flagged as AI, against 26 for the previous release, and no AI detector was used anywhere in training. **376 of 420 English rewrites came back with no factual problem** from a strict LLM judge, measured on the `humanizer-12b-Q8_0.gguf` file you download; where it did find one, more than 9 in 10 fixes are a single word or phrase. Method, every genre and the Chinese results: [Evaluation details](#evaluation-details).
 
 ## Quantization: smaller files, closer to the full model
 
@@ -290,7 +286,7 @@ If a chat reply greets you, repeats the instruction or doesn't stop, the file ha
 
 ## Evaluation details
 
-Evaluation set: 312 drafts (210 English, 102 Chinese), 18 genres, written from scratch by GLM-5.3, GPT-5.6 luna and Claude Sonnet (about a third each), never used in training. Two samples per draft.
+Evaluation set: 312 drafts (210 English, 102 Chinese), 18 genres, written from scratch by GLM-5.3, GPT-5.6 Luna and Claude Sonnet (about a third each), never used in training. Two samples per draft.
 
 **AI detection (external check only): 95% judged human.** Originality.ai, API v3, AI Allowance 0% (strictest), 2026-10-02, 210 English drafts, first sample each, bf16 weights: 11 of 210 rewrites flagged as AI.
 

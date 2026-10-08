@@ -36,13 +36,9 @@ These are picks, not every sample. Across the whole evaluation set the model sti
 
 ## Results
 
-<img src="assets/results-detector-en.png" alt="Originality.ai: 95% of rewrites judged human" width="100%">
+<img src="assets/eval-en.png" alt="Evaluation card: 95% of English rewrites judged human by Originality.ai at its strictest setting (11 of 210 flagged; previous release 26); 376 of 420 English rewrites with no factual problem (previous release 369)" width="100%">
 
-**95% judged human by Originality.ai** at its strictest setting (210 English drafts, bf16 weights, 2026-10-02): 11 of 210 rewrites were flagged as AI, against 26 for the previous release, and no AI detector was used anywhere in training. On the same 60 drafts, the most popular de-AI skill on GitHub, applied by Claude Sonnet, had all 60 flagged; this release had 4.
-
-<img src="assets/results-fidelity-en.png" alt="Fact fidelity compared with the previous releases" width="100%">
-
-**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge, measured on the `humanizer-12b-Q8_0.gguf` file you download; where it did find one, more than 9 in 10 fixes are a single word or phrase. Method, every genre and the Chinese results: [Evaluation details](#evaluation-details).
+**95% judged human by Originality.ai** at its strictest setting (210 English drafts, bf16 weights, 2026-10-02): 11 of 210 rewrites were flagged as AI, against 26 for the previous release, and no AI detector was used anywhere in training. **376 of 420 English rewrites came back with no factual problem** from a strict LLM judge, measured on the `humanizer-12b-Q8_0.gguf` file you download; where it did find one, more than 9 in 10 fixes are a single word or phrase. Method, every genre and the Chinese results: [Evaluation details](#evaluation-details).
 
 ## Quantization: smaller files, closer to the full model
 
@@ -117,7 +113,7 @@ On stderr it lists every piece where a number from the draft is missing in the r
 
 ## Evaluation details
 
-All numbers come from our own evaluation set: **312 drafts** (210 English, 102 Chinese) across 18 genres: emails, emails to professors, work reports, policy memos, paper sections, student essays, opinion essays, blog posts, Reddit posts, forum answers, product reviews and social posts; in Chinese, emails, Zhihu answers, personal essays, social posts, reports and paper sections. Three frontier models wrote the drafts from scratch, about a third each: GLM-5.3, GPT-5.6 luna and Claude Sonnet. None of them were used in training. Each draft was rewritten twice. Every output and every verdict is in [eval/](eval/).
+All numbers come from our own evaluation set: **312 drafts** (210 English, 102 Chinese) across 18 genres: emails, emails to professors, work reports, policy memos, paper sections, student essays, opinion essays, blog posts, Reddit posts, forum answers, product reviews and social posts; in Chinese, emails, Zhihu answers, personal essays, social posts, reports and paper sections. Three frontier models wrote the drafts from scratch, about a third each: GLM-5.3, GPT-5.6 Luna and Claude Sonnet. None of them were used in training. Each draft was rewritten twice. Every output and every verdict is in [eval/](eval/).
 
 ### AI detection (an external check)
 

@@ -13,15 +13,15 @@
   .pq .q span { display: block; color: var(--ink-3); font-size: 12.5px; margin-top: 3px; }
   .pq .bars, .pq .vals { display: flex; flex-direction: column; gap: 7px; }
   .pq .tr { position: relative; height: 13px; }
-  .pq .bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: #5B626C; }
-  .pq .bar.me { background: var(--lime); }
+  .pq .bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: var(--bar); }
+  .pq .bar.me { background: var(--accent); }
   .pq .vals b { font-weight: 600; font-size: 14.5px; line-height: 13px; height: 13px; display: flex; align-items: center; font-variant-numeric: tabular-nums; color: var(--ink-2); }
-  .pq .vals b.me { color: var(--lime); }
+  .pq .vals b.me { color: var(--accent-ink); }
   .legend { display: flex; gap: 20px; font-size: 12.5px; color: var(--ink-2); margin: 0 0 6px; }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
-  .legend i { width: 18px; height: 10px; border-radius: 0 3px 3px 0; background: #5B626C; }
-  .legend i.me { background: var(--lime); }
-  .pq .bar.old, .legend i.old { background: #3A3F46; }
+  .legend i { width: 18px; height: 10px; border-radius: 0 3px 3px 0; background: var(--bar); }
+  .legend i.me { background: var(--accent); }
+  .pq .bar.old, .legend i.old { background: var(--bar-old); }
   .pq .vals b.old { color: var(--ink-3); }
   .tiles.t3 { grid-template-columns: 1fr 1fr 1fr; }
 </style>

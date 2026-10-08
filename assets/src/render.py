@@ -18,23 +18,25 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 OUT = os.path.join(ROOT, 'assets')
 CHROME = os.environ.get('CHROME', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
 
-SHOTS = [  # (页面?参数, 输出文件(相对 assets/), CSS 宽度)
-    ('banner.html?lang=en', 'banner-en.png', 1280),
-    ('banner.html?lang=zh', 'banner-zh.png', 1280),
-    ('compare.html?id=en-email', 'compare-en-email.png', 1080),
-    ('compare.html?id=en-forum', 'compare-en-forum.png', 1080),
-    ('compare.html?id=zh-email', 'compare-zh-email.png', 1080),
-    ('compare.html?id=zh-zhihu', 'compare-zh-zhihu.png', 1080),
-    ('detector.html?lang=en', 'results-detector-en.png', 1080),
-    ('detector.html?lang=zh', 'results-detector-zh.png', 1080),
-    ('fidelity.html?lang=en', 'results-fidelity-en.png', 1080),
-    ('fidelity.html?lang=zh', 'results-fidelity-zh.png', 1080),
-    ('training.html?lang=en', 'training-en.png', 1080),
-    ('training.html?lang=zh', 'training-zh.png', 1080),
-    ('showcase.html?lang=en', 'app-showcase-en.png', 1280),   # README / HF 卡片顶部的 App 主展示(真机截图)
-    ('showcase.html?lang=zh', 'app-showcase-zh.png', 1280),
-    ('app.html?lang=en&shot=editor-en-light', 'app-en.png', 1080),   # 快速开始里的单张截图
-    ('app.html?lang=zh&shot=editor-en-light', 'app-zh.png', 1080),
+SHOTS = [  # (页面?参数, 输出文件(相对 assets/), CSS 宽度)。全部是浅色"纸面"卡片(?theme=light),外圈圆角透明。
+    # 量化卡片要先跑 `python3 assets/src/quant_chart.py --plot` 生成 _quant-plot-*.svg。
+    # 旧的深色版(含 results-detector / results-fidelity 两张)存档在 assets/data/archive/,detector.html、fidelity.html 去掉 theme 参数还能出深色版。
+    ('banner.html?lang=en&theme=light', 'banner-en.png', 1280),
+    ('banner.html?lang=zh&theme=light', 'banner-zh.png', 1280),
+    ('compare.html?id=en-email&theme=light', 'compare-en-email.png', 1080),
+    ('compare.html?id=en-forum&theme=light', 'compare-en-forum.png', 1080),
+    ('compare.html?id=zh-email&theme=light', 'compare-zh-email.png', 1080),
+    ('compare.html?id=zh-zhihu&theme=light', 'compare-zh-zhihu.png', 1080),
+    ('eval.html?lang=en&theme=light', 'eval-en.png', 1080),          # 评测卡:AI 检测 + 事实忠实度
+    ('eval.html?lang=zh&theme=light', 'eval-zh.png', 1080),
+    ('quant.html?lang=en&theme=light', 'quant-top1-en.png', 1080),   # 量化卡片
+    ('quant.html?lang=zh&theme=light', 'quant-top1-zh.png', 1080),
+    ('training.html?lang=en&theme=light', 'training-en.png', 1080),
+    ('training.html?lang=zh&theme=light', 'training-zh.png', 1080),
+    ('showcase.html?lang=en&theme=light', 'app-showcase-en.png', 1280),   # README / HF 卡片顶部的 App 主展示(真机截图,外框是纸面)
+    ('showcase.html?lang=zh&theme=light', 'app-showcase-zh.png', 1280),
+    ('app.html?lang=en&shot=editor-en-light&theme=light', 'app-en.png', 1080),   # 快速开始里的单张截图
+    ('app.html?lang=zh&shot=editor-en-light&theme=light', 'app-zh.png', 1080),
 ]
 PREVIEW = [  # 先由 build_preview() 把 README 渲染成仿 GitHub 样式的 HTML,再按 1 倍像素比截整页
     ('_preview-en.html', 'preview/readme-en.png', 1012),
@@ -201,6 +203,8 @@ def main():
             time.sleep(0.05)
         cdp = CDP(WS(targets[0]['webSocketDebuggerUrl']))
         cdp.call('Page.enable'); cdp.call('Runtime.enable')
+        # 浅色卡片的外圈圆角要透明,放在 GitHub 浅色、深色页面上都干净
+        cdp.call('Emulation.setDefaultBackgroundColorOverride', color={'r': 0, 'g': 0, 'b': 0, 'a': 0})
         dsf = 1 if preview else 2   # 整页预览很高,用 1 倍免得超出 Chrome 的纹理上限
         for page, out, w in shots:
             cdp.call('Emulation.setDeviceMetricsOverride', width=w, height=1200, deviceScaleFactor=dsf, mobile=False)

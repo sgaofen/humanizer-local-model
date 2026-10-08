@@ -6,7 +6,7 @@
   "sample": 4,
   "of": 8,
   "genre": "Work email",
-  "model": "GPT-5.6 luna",
+  "model": "GPT-5.6 Luna",
   "facts": [
    [
     "Maya"
@@ -168,7 +168,7 @@
   "sample": 5,
   "of": 8,
   "genre": "知乎回答",
-  "model": "GPT-5.6 luna",
+  "model": "GPT-5.6 Luna",
   "facts": [
    [
     "2025年3月18日",

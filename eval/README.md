@@ -8,7 +8,7 @@ Everything behind the numbers in the main README. Nothing here was used in train
 
 | Path | What it is |
 |---|---|
-| `drafts/300a/`, `drafts/300b/` | The 312 drafts (210 English, 102 Chinese; files starting with `zh_` are Chinese). Each draft was written from scratch by a frontier model; the writer is the last part of the file name (`glm` = GLM-5.3, `luna` = GPT-5.6 luna, `sonnet` = Claude Sonnet). The genre is the first part. |
+| `drafts/300a/`, `drafts/300b/` | The 312 drafts (210 English, 102 Chinese; files starting with `zh_` are Chinese). Each draft was written from scratch by a frontier model; the writer is the last part of the file name (`glm` = GLM-5.3, `luna` = GPT-5.6 Luna, `sonnet` = Claude Sonnet). The genre is the first part. |
 | `outputs/humanizer-12b-bf16_300{a,b}.json` | **This release (v2), bf16 weights** (vLLM): `{case: [{"text": ...}, {"text": ...}]}`, two samples per draft, temperature 1.0, top-p 0.95. The detector numbers use the first sample of each English draft. `retried: true` marks the few outputs (1 English second sample, 14 Chinese) that the evaluation pipeline resampled once with a copy penalty because the first try copied more than 35% of the draft; none of the 210 English first samples was resampled. |
 | `outputs/humanizer-12b-Q8_0_300{a,b}.json` | **This release (v2), the `humanizer-12b-Q8_0.gguf` file you download**, run with llama.cpp (v0.5.0) and plain sampling: temperature 1.0, top-p 0.95, top-k off, min-p off, repetition penalty 1.0 (the app's settings). Two samples per draft, nothing resampled. The fact-fidelity numbers come from these outputs. |
 | `outputs/humanizer-12b-v1_300{a,b}.json` | The previous 12B release (v1), same format. |
@@ -48,7 +48,7 @@ Privacy note: a few drafts (and the rewrites of them) contained a real person's 
 
 主 README 里所有数字的原始数据都在这里。这些数据没有用于训练。
 
-- `drafts/`:312 篇草稿(英文 210、中文 102,`zh_` 开头的是中文),由三个前沿模型从零写成,文件名最后一段是写手(`glm` = GLM-5.3、`luna` = GPT-5.6 luna、`sonnet` = Claude Sonnet),第一段是体裁。
+- `drafts/`:312 篇草稿(英文 210、中文 102,`zh_` 开头的是中文),由三个前沿模型从零写成,文件名最后一段是写手(`glm` = GLM-5.3、`luna` = GPT-5.6 Luna、`sonnet` = Claude Sonnet),第一段是体裁。
 - `outputs/humanizer-12b-bf16_*`:本版(v2)bf16 权重的输出(vLLM),每篇 2 发,温度 1.0、top-p 0.95。检测器数字用的是每篇英文草稿的第 1 发。`retried: true` 标的是评测流程因首发照抄草稿超过 35% 而加照抄惩罚重采过一次的少数输出(英文第 2 发 1 条、中文 14 条);210 篇英文的第 1 发一条都没有重采。
 - `outputs/humanizer-12b-Q8_0_*`:本版(v2)**你下载的 `humanizer-12b-Q8_0.gguf` 文件**,用 llama.cpp(v0.5.0)普通采样跑出来(温度 1.0、top-p 0.95,top-k、min-p 关闭,重复惩罚 1.0,和 App 相同),每篇 2 发,没有重采。事实忠实度的数字来自这些输出。
 - `outputs/humanizer-12b-v1_*`:上一版 12B(v1)的输出,格式相同。

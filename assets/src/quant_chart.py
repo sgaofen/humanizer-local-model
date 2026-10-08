@@ -6,7 +6,9 @@ our released GGUF files, and plain llama.cpp quantization (llama-quantize + imat
 English and Chinese are averaged 50/50; both languages have the same number of scored tokens,
 so this equals the token-weighted mean. Every point is a measured value from assets/data/quant-top1.csv.
 
-    python3 assets/src/quant_chart.py            # writes assets/quant-top1-{en,zh}.{png,svg}
+    python3 assets/src/quant_chart.py --plot     # plot area for assets/src/quant.html + assets/quant-top1-{en,zh}.svg;
+                                                 # then assets/src/render.py renders the card PNG (quant-top1-{en,zh}.png)
+    python3 assets/src/quant_chart.py            # the older standalone matplotlib chart (title and footnote drawn by matplotlib)
 
 Needs matplotlib and fontTools (with brotli, to read the app's woff2 fonts). Chinese text uses
 PingFang SC (macOS) or Hiragino Sans GB.
@@ -151,13 +153,17 @@ def load():
     return ours, std
 
 
+PLOT_ONLY = False  # --plot: only the plot area, transparent, light "paper" palette, for assets/src/quant.html
+
+
 def label(ax, r, text, dx, dy, ha, mine, mono):
+    std_edge = "#DEDCD3" if PLOT_ONLY else "#C9CDD3"
     ax.annotate(
         text, (r["x"], r["y"]), xytext=(dx, dy), textcoords="offset points", ha=ha, va="center",
         fontsize=9.2 if mine else 8.6, fontfamily=mono, fontweight=500 if mine else 400,
         color=INK if mine else INK_2, zorder=6,
         bbox=dict(boxstyle="round,pad=0.28,rounding_size=0.25", fc=OURS_TINT if mine else SURFACE,
-                  ec=OURS if mine else "#C9CDD3", lw=0.9),
+                  ec=OURS if mine else std_edge, lw=0.9),
         arrowprops=dict(arrowstyle="-", color=OURS if mine else "#B5BAC2", lw=0.8, shrinkA=0, shrinkB=4.5),
     )
 
@@ -173,9 +179,15 @@ def draw(lang, cjk):
     })
     ours, std = load()
 
-    fig = plt.figure(figsize=(10, 6.3), dpi=240, facecolor=SURFACE)
-    ax = fig.add_axes([0.075, 0.17, 0.905, 0.65])
-    ax.set_facecolor(SURFACE)
+    if PLOT_ONLY:
+        fig = plt.figure(figsize=(10.2, 5.5), dpi=240)
+        fig.patch.set_alpha(0)
+        ax = fig.add_axes([0.072, 0.115, 0.918, 0.87])
+        ax.set_facecolor("none")
+    else:
+        fig = plt.figure(figsize=(10, 6.3), dpi=240, facecolor=SURFACE)
+        ax = fig.add_axes([0.075, 0.17, 0.905, 0.65])
+        ax.set_facecolor(SURFACE)
 
     # Frame: hairline solid grid, left and bottom spines only.
     ax.set_xlim(3.2, 13.3)
@@ -237,6 +249,16 @@ def draw(lang, cjk):
     for txt in leg.get_texts():
         txt.set_color(INK)
 
+    if PLOT_ONLY:
+        out = ROOT / "assets" / "src" / f"_quant-plot-{lang}.svg"
+        fig.savefig(str(out), transparent=True)
+        pub = ROOT / "assets" / f"quant-top1-{lang}.svg"   # 对外的 SVG:同一张图,白底
+        fig.savefig(str(pub), facecolor="white")
+        print("wrote", pub.relative_to(ROOT))
+        plt.close(fig)
+        print("wrote", out.relative_to(ROOT))
+        return
+
     # Title, subtitle, footnote.
     fig.text(0.075, 0.935, t["title"], fontsize=16.5, fontweight=600, color=INK, ha="left", va="baseline")
     fig.text(0.075, 0.885, t["sub"], fontsize=10.5, color=INK_2, ha="left", va="baseline")
@@ -250,8 +272,14 @@ def draw(lang, cjk):
 
 
 def main():
+    global PLOT_ONLY, GRID, STD, OURS_TINT
     cjk = setup_fonts()
-    langs = sys.argv[1:] or ["en", "zh"]
+    args = sys.argv[1:]
+    if "--plot" in args:
+        PLOT_ONLY = True
+        GRID, STD, OURS_TINT = "#EFEEE8", "#A3A9B1", "#EDFAC0"
+        args = [a for a in args if a != "--plot"]
+    langs = args or ["en", "zh"]
     for lang in langs:
         if lang == "zh" and not cjk:
             sys.exit("no CJK font found for the Chinese chart")

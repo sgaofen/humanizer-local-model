@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>humanizer · evaluation</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="chart.css">
+<script>addEventListener("error",e=>window.__err=e.message);addEventListener("unhandledrejection",e=>window.__err=String(e.reason))</script>
+<style>
+  /* 一张"评测卡":AI 检测 + 事实忠实度。数字与 detector.html / fidelity.html 完全相同,只是排版合在一起。 */
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0 4px; align-items: stretch; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+  .col .grow { flex: 1; }
+  .stat { padding: 20px 22px 20px; }
+  .stat .k { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .stat .k i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .stat .big { margin: 14px 0 6px; }
+  .stat .big b { display: block; font-family: var(--f-display); font-weight: 700; font-size: 56px; line-height: 1; letter-spacing: -.035em; color: var(--ink); }
+  .stat .big span { display: block; margin-top: 8px; font-size: 17px; color: var(--ink); font-weight: 500; }
+  .stat .note { font-size: 12.5px; color: var(--ink-3); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .pn { padding: 18px 22px 18px; }
+  .pn .t { font-weight: 600; font-size: 15px; }
+  .pn .s { color: var(--ink-3); font-size: 12.5px; margin-top: 3px; line-height: 1.45; }
+  .grp { margin-top: 14px; }
+  .grp + .grp { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-2); }
+  .grp .gl { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; color: var(--ink); margin-bottom: 8px; }
+  .grp .gl small { color: var(--ink-3); font-size: 12px; }
+  .br { display: grid; grid-template-columns: 1fr 70px; column-gap: 12px; align-items: center; margin-top: 8px; }
+  .br .bl { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--ink-2); margin-bottom: 5px; }
+  .br .bl small { font-size: 12px; color: var(--ink-3); text-align: right; }
+  .br .tr { position: relative; height: 12px; border-radius: 6px; background: var(--sunk); overflow: hidden; }
+  .br .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--bar); }
+  .br.me .tr i { background: var(--accent); }
+  .br.old .tr i { background: var(--bar-old); }
+  .br .v { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; text-align: right; color: var(--ink-2); }
+  .br.me .v { color: var(--accent-ink); }
+  .key { display: flex; gap: 16px; font-size: 12px; color: var(--ink-3); margin-top: 14px; }
+  .key span { display: inline-flex; align-items: center; gap: 6px; }
+  .key i { width: 16px; height: 8px; border-radius: 4px; background: var(--bar-old); }
+  .key i.me { background: var(--accent); }
+
+  .gen { margin-top: 10px; }
+  .gr { display: grid; grid-template-columns: 1fr 110px 48px; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line-2); font-size: 13px; color: var(--ink-2); }
+  .gr .tr { position: relative; height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+  .gr .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--bar-flag); }
+  .gr b { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; color: var(--ink); white-space: nowrap; }
+  .gtot { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12.5px; color: var(--ink-3); }
+  .gtot b { color: var(--ink); font-weight: 600; }
+
+  .facts3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .ft { padding: 16px 18px; }
+  .ft .k { font-size: 12.5px; color: var(--ink-3); }
+  .ft .b { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 6px; flex-wrap: wrap; }
+  .ft .b b { font-family: var(--f-ui); font-weight: 600; font-size: 24px; letter-spacing: -.02em; color: var(--accent-ink); }
+  .ft .b span { font-size: 13px; color: var(--ink-2); }
+  .ft .b em { font-style: normal; font-weight: 600; color: var(--ink); }
+  .ft .n { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+  :root[lang="zh-CN"] .stat .k, :root[lang="zh-CN"] .eyebrow { letter-spacing: .08em; }
+</style>
+</head>
+<body>
+<main id="m"></main>
+<script type="module">
+import { lang, markSvg, esc, done } from './common.js';
+const zh = lang === 'zh';
+
+// 数字与 detector.html、fidelity.html 逐个相同(来源见那两个文件的注释);这里只改排版,不改数。
+const G = [['social', 3, 16], ['memo', 2, 13], ['paper', 2, 22], ['essay', 2, 38], ['report', 1, 20], ['forum', 1, 18],
+           ['blog', 0, 16], ['reddit', 0, 18], ['email', 0, 35], ['review', 0, 14]];
+const GN = zh
+  ? { social: '社交帖（emoji / 井号 / 连载）', memo: '政策备忘', blog: '博客', essay: '作文 / 议论文', report: '工作报告', paper: '论文段落', reddit: 'Reddit 帖', email: '邮件', forum: '论坛回答', review: '产品评论' }
+  : { social: 'social posts (emoji, hashtags, threads)', memo: 'policy memos', blog: 'blog posts', essay: 'essays', report: 'work reports', paper: 'paper sections', reddit: 'Reddit posts', email: 'emails', forum: 'forum answers', review: 'product reviews' };
+
+const T = zh ? {
+  eye: '评测 · 自建留出评测集，从未进入训练',
+  h: '被判为人写，事实也逐篇核过',
+  sub: '草稿由 GLM-5.3、GPT-5.6 Luna、Claude Sonnet 从零写成 · 越高越好',
+  ak: 'AI 检测 · Originality.ai 最严档', ab: '95%', as: '判为人写', an: '英文 210 篇 · 每篇第 1 发 · bf16 权重 · 2026-10-02 实测',
+  a1: 'v2 本版', a1v: '11 / 210 被判 AI', a2: 'v1 上一版', a2v: '26 / 210 被判 AI',
+  fk: '事实忠实度 · LLM 判官 GLM-5.3，从严', fb: '376 / 420', fs: '篇英文改写没挑出事实问题', fn: '210 篇草稿 × 2 发 · 实测的是你下载的 Q8_0 文件',
+  f1: 'v2 本版', f2: 'v1 上一版',
+  bt: '同一批 60 篇：对比公开基线', bs: 'blader/humanizer：GitHub 上最火的去 AI 味 skill（5.3 万星），由 Claude Sonnet 按它的规则改写；基线 2026-10-01 实测',
+  b1: 'humanizer 12B，本版（bf16）', b1n: '4 / 60 被判 AI', b2: 'blader/humanizer skill v3.1.0 + Claude Sonnet', b2n: '60 / 60 被判 AI · AI 分中位 100%', bl: '条长 = 判为人写的篇数（共 60 篇）',
+  qt: '格式和照抄', qs: '同样这 420 篇英文改写',
+  q: [['没挑出事实问题', '数字、事件、意思都没改'], ['格式保住了', '主题行、列表、落款都在'], ['改写而非照抄', '与草稿的复用率不超过 0.5']],
+  kv2: 'v2（本版，Q8_0 文件）', kv1: 'v1（上一版 12B）',
+  gt: '本版仍被判 AI 的地方', gs: '按体裁：被判 AI 篇数 / 篇数 · 最模板化的体裁仍然最难', gtot: '合计',
+  t0k: '判官挑出问题时', t0b: '9 成以上', t0s: '改一个词或短语就好', t0n: '比如“The remaining 37 complaints”写成了“The other 37% of complaints”。要改一句的 8 处，要重写一段的只有 2 处。',
+  t2k: '中文 204 篇改写', t2b: '149 / 204', t2s: '没挑出事实问题', t2n: '中文还在追赶英文（上一版 135 篇）。有问题的约 9 成改一个词或短语就好，比如“本月20日前后”写成了“20号以前”。',
+  t1k: '照抄程度中位数（复用率）', t1s: '上一版', t1n: '逐字 5-gram 与句法骨架复用取大者，越低说明改得越深。',
+  foot: '你下载的 Q8_0 文件在同一批草稿上是 15 / 210 被判 AI，和 bf16 的差别在噪声范围内。问题清单来自同一判官的第二遍复核，连细小的措辞差别也列出来；发出去之前请读一遍，重点看数字、日期和人名。检测器会更新；这是某一天的实测，不是承诺。',
+} : {
+  eye: 'Evaluation · held-out drafts, never used in training',
+  h: 'Judged human-written. Checked for facts.',
+  sub: 'Drafts written from scratch by GLM-5.3, GPT-5.6 Luna and Claude Sonnet · higher is better',
+  ak: 'AI detection · Originality.ai, strictest setting', ab: '95%', as: 'judged human-written', an: '210 English drafts · first sample each · bf16 weights · measured 2026-10-02',
+  a1: 'v2, this release', a1v: '11 / 210 flagged as AI', a2: 'v1, previous release', a2v: '26 / 210 flagged as AI',
+  fk: 'Fact fidelity · LLM judge GLM-5.3, strict', fb: '376 / 420', fs: 'English rewrites with no factual problem', fn: '210 drafts × 2 samples · measured on the Q8_0 file you download',
+  f1: 'v2, this release', f2: 'v1, previous release',
+  bt: 'Same 60 drafts vs. a public baseline', bs: 'blader/humanizer: the most popular de-AI skill on GitHub (53k stars), applied by Claude Sonnet following its rules; baseline measured 2026-10-01',
+  b1: 'humanizer 12B, this release (bf16)', b1n: '4 / 60 flagged as AI', b2: 'blader/humanizer skill v3.1.0 + Claude Sonnet', b2n: '60 / 60 flagged as AI · median AI score 100%', bl: 'bar length = drafts judged human, of 60',
+  qt: 'Format and copying', qs: 'the same 420 English rewrites',
+  q: [['No factual problem found', 'no changed number, event or meaning'], ['Kept the format', 'subject line, lists, sign-off all there'], ['Rewritten, not copied', 'reuse of the draft at most 0.5']],
+  kv2: 'v2 (this release, Q8_0 file)', kv1: 'v1 (previous 12B)',
+  gt: 'Where this release still gets flagged', gs: 'by genre: flagged / drafts · the most templated genres are still the hardest', gtot: 'total',
+  t0k: 'When the judge did find a problem', t0b: 'more than 9 in 10', t0s: 'fixes are one word or phrase', t0n: 'E.g. “The remaining 37 complaints” came out as “The other 37% of complaints”. 8 fixes took one sentence; only 2 needed a passage rewritten.',
+  t2k: 'Chinese, 204 rewrites', t2b: '149 / 204', t2s: 'no factual problem found', t2n: 'Still catching up with English (previous release: 135). About 9 in 10 fixes are one word or phrase, e.g. “本月20日前后” became “20号以前”.',
+  t1k: 'Median reuse', t1s: 'previous', t1n: 'The larger of verbatim 5-gram copy and syntactic-skeleton reuse. Lower means a deeper rewrite.',
+  foot: 'The Q8_0 file you download measured 15 / 210 flagged on the same drafts, within noise of bf16. Problems were listed by a second pass of the same judge, which lists every nitpick down to small wording nuances; read numbers, dates and names before you send. Detectors change; this is one day’s measurement, not a promise.',
+};
+const pct = (v) => `${(v * 100).toFixed(2)}%`;
+const Q = [[376 / 420, '376 / 420', 369 / 420, '369 / 420'], [392 / 420, '392 / 420', 385 / 420, '385 / 420'], [0.998, '99.8%', 0.990, '99.0%']];
+
+const bar = (cls, w, v, lab, note) => `<div class="br ${cls}">${lab ? `<div class="bl"><span>${esc(lab)}</span>${note ? `<small>${esc(note)}</small>` : ''}</div>` : ''}<div class="tr">${w > 0 ? `<i style="width:${pct(w)}"></i>` : ''}</div><div class="v">${v}</div></div>`;
+document.getElementById('m').innerHTML = `
+  <header class="hd"><span class="brand">${markSvg()}<b>humanizer</b></span><span class="eyebrow">${esc(T.eye)}</span></header>
+  <h2>${esc(T.h)}</h2><p class="sub">${esc(T.sub)}</p>
+  <div class="cols2">
+    <div class="col">
+      <section class="stat sheet"><div class="k"><i></i>${esc(T.ak)}</div>
+        <div class="big"><b>${T.ab}</b><span>${esc(T.as)}</span></div><div class="note">${esc(T.an)}</div>
+        <div class="grp">${bar('me', 199 / 210, '95%', T.a1, T.a1v)}${bar('old', 184 / 210, '88%', T.a2, T.a2v)}</div></section>
+      <section class="pn sheet"><div class="t">${esc(T.bt)}</div><div class="s">${esc(T.bs)}</div>
+        <div class="grp">${bar('me', 56 / 60, '56 / 60', T.b1, T.b1n)}${bar('', 0, '0 / 60', T.b2, T.b2n)}</div>
+        <div class="key">${esc(T.bl)}</div></section>
+      <section class="pn sheet grow"><div class="t">${esc(T.gt)}</div><div class="s">${esc(T.gs)}</div>
+        <div class="gen">${G.map(([k, f, n]) => `<div class="gr"><span>${esc(GN[k])}</span><div class="tr">${f ? `<i style="width:${pct(f / n)}"></i>` : ''}</div><b>${f} / ${n}</b></div>`).join('')}</div>
+        <div class="gtot"><span></span><span>${esc(T.gtot)} <b>11 / 210</b></span></div></section>
+    </div>
+    <div class="col">
+      <section class="stat sheet"><div class="k"><i></i>${esc(T.fk)}</div>
+        <div class="big"><b>${T.fb}</b><span>${esc(T.fs)}</span></div><div class="note">${esc(T.fn)}</div>
+        <div class="grp">${bar('me', 376 / 420, '376 / 420', T.f1)}${bar('old', 369 / 420, '369 / 420', T.f2)}</div></section>
+      <section class="pn sheet"><div class="t">${esc(T.qt)}</div><div class="s">${esc(T.qs)}</div>
+        ${T.q.slice(1).map(([a, b2], i) => `<div class="grp"><div class="gl"><span>${esc(a)}</span><small>${esc(b2)}</small></div>
+          ${bar('me', Q[i + 1][0], Q[i + 1][1])}${bar('old', Q[i + 1][2], Q[i + 1][3])}</div>`).join('')}
+        <div class="key"><span><i class="me"></i>${esc(T.kv2)}</span><span><i></i>${esc(T.kv1)}</span></div></section>
+      <section class="ft sheet"><div class="k">${esc(T.t0k)}</div><div class="b"><b>${esc(T.t0b)}</b><span>${esc(T.t0s)}</span></div><div class="n">${esc(T.t0n)}</div></section>
+      <section class="ft sheet"><div class="k">${esc(T.t2k)}</div><div class="b"><b>${T.t2b}</b><span>${esc(T.t2s)}</span></div><div class="n">${esc(T.t2n)}</div></section>
+      <section class="ft sheet grow"><div class="k">${esc(T.t1k)}</div><div class="b"><b>0.165</b><span><em>0.19</em> ${esc(T.t1s)}</span></div><div class="n">${esc(T.t1n)}</div></section>
+    </div>
+  </div>
+  <p class="foot">${esc(T.foot)}</p>`;
+await done();
+</script>
+</body>
+</html>

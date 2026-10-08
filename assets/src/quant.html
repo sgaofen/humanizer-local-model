@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>humanizer · quantization</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="chart.css">
+<script>addEventListener("error",e=>window.__err=e.message);addEventListener("unhandledrejection",e=>window.__err=String(e.reason))</script>
+<style>
+  /* 量化图的卡片外框。图本身由 quant_chart.py --plot 画成透明 SVG(_quant-plot-*.svg),数据见 assets/data/quant-top1.csv。 */
+  .plotcard { margin-top: 20px; padding: 14px 14px 8px; }
+  .plotcard img { display: block; width: 100%; }
+  .foot { margin-top: 12px; }
+</style>
+</head>
+<body>
+<main id="m"></main>
+<script type="module">
+import { lang, markSvg, esc, done } from './common.js';
+const zh = lang === 'zh';
+const T = zh ? {
+  eye: '量化 · 与 bf16 的首选词一致率',
+  h: '文件更小，离完整模型更近',
+  sub: '量化文件认为最可能的下一个词，和完整 bf16 模型相同的比例。中英文取平均，越高越好。',
+  foot: 'llama.cpp llama-perplexity --kl-divergence 的 “Same top p”；同一个 bf16 基准，每种语言同样约 30,700 个留出 token。中英文 token 数相同，直接平均就等于按 token 加权。普通量化用的是我们的文件起步时同一个 imatrix，其余参数默认。每个点都是实测的文件。',
+} : {
+  eye: 'Quantization · top-1 agreement with bf16',
+  h: 'Smaller files, closer to the full model',
+  sub: 'How often each file’s most likely next token is the same as the full bf16 model’s. English and Chinese averaged; higher is better.',
+  foot: 'llama.cpp llama-perplexity --kl-divergence (“Same top p”), same bf16 reference and the same ~30,700 held-out tokens per language. English and Chinese have equal token counts, so the plain average is also the token-weighted one. Standard builds use the importance matrix our files started from and default settings. Every point is a measured file.',
+};
+document.getElementById('m').innerHTML = `
+  <header class="hd"><span class="brand">${markSvg()}<b>humanizer</b></span><span class="eyebrow">${esc(T.eye)}</span></header>
+  <h2>${esc(T.h)}</h2><p class="sub">${esc(T.sub)}</p>
+  <section class="plotcard sheet"><img src="_quant-plot-${zh ? 'zh' : 'en'}.svg" alt=""></section>
+  <p class="foot">${esc(T.foot)}</p>`;
+await new Promise((r) => { const i = document.querySelector('.plotcard img'); i.complete ? r() : (i.onload = i.onerror = r); });
+await done();
+</script>
+</body>
+</html>
