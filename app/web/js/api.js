@@ -1,33 +1,55 @@
 // 和启动器说话。所有写操作都带 X-Humanizer 头(启动器据此挡掉别的网站发来的请求)。
 const H = { 'X-Humanizer': '1' };
 
-export async function getJSON(path, { timeout = 6000 } = {}) {
+// Keep the deadline active through response-body parsing, and distinguish it
+// from the caller's cancellation. Always release the timer and abort listener.
+async function withRequestSignal({ timeout, signal }, request) {
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), timeout);
+  const onAbort = () => ctl.abort(signal.reason);
+  let timer;
   try {
-    const r = await fetch(path, { cache: 'no-store', signal: ctl.signal });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
+    if (signal?.aborted) throw signal.reason;
+    signal?.addEventListener('abort', onAbort, { once: true });
+    timer = setTimeout(() => ctl.abort(new DOMException('Request timed out. Please try again.', 'TimeoutError')), timeout);
+    return await request(ctl.signal);
+  } catch (error) {
+    if (ctl.signal.aborted) throw ctl.signal.reason;
+    throw error;
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
   }
 }
 
-export async function postJSON(path, body) {
-  const r = await fetch(path, {
-    method: 'POST',
-    headers: { ...H, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body || {}),
+export async function getJSON(path, { timeout = 6000, signal } = {}) {
+  return withRequestSignal({ timeout, signal }, async (requestSignal) => {
+    const r = await fetch(path, { cache: 'no-store', signal: requestSignal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
   });
-  let data = null;
-  try { data = await r.json(); } catch { /* 空响应 */ }
-  if (!r.ok) throw new Error((data && (data.error?.message || data.error)) || `HTTP ${r.status}`);
-  return data;
 }
 
-/** 草稿 token 数(llama-server /tokenize,不加 BOS)。 */
-export async function countTokens(content) {
-  const d = await postJSON('/api/tokenize', { content, add_special: false });
+export async function postJSON(path, body, { timeout = 10000, signal } = {}) {
+  return withRequestSignal({ timeout, signal }, async (requestSignal) => {
+    const r = await fetch(path, {
+      method: 'POST',
+      headers: { ...H, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+      signal: requestSignal,
+    });
+    let data = null;
+    try { data = await r.json(); } catch (error) {
+      if (requestSignal.aborted) throw requestSignal.reason;
+      // Preserve support for empty/non-JSON launcher responses.
+    }
+    if (!r.ok) throw new Error((data && (data.error?.message || data.error)) || `HTTP ${r.status}`);
+    return data;
+  });
+}
+
+/** Tokenization is cancellable and gets a little more time on slower machines. */
+export async function countTokens(content, { timeout = 15000, signal } = {}) {
+  const d = await postJSON('/api/tokenize', { content, add_special: false }, { timeout, signal });
   return Array.isArray(d.tokens) ? d.tokens.length : 0;
 }
 

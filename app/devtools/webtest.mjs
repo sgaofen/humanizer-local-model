@@ -1,3 +1,4 @@
+import { getJSON, postJSON, countTokens } from '../web/js/api.js';
 // 网页纯逻辑的单测(不需要浏览器):node devtools/webtest.mjs 或 bun devtools/webtest.mjs
 import { activeFacts, protectFacts, restoreFacts, streamView, withFactGuard, FACT_TRIES } from '../web/js/facts.js';
 import { createHash } from 'node:crypto';
@@ -166,6 +167,54 @@ for (const s of fx.samples) {
   let stopped = false;
   try { await withFactGuard(p, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { stopped = e.name === 'AbortError'; }
   ok(stopped, '用户停止直接抛出,不重试');
+}
+
+// Request deadlines cover both headers and JSON bodies; cancellation is distinct.
+{
+  const originalFetch = globalThis.fetch;
+  const stalled = (signal) => new Promise((resolve,reject) => {
+    if (signal.aborted) reject(new DOMException('aborted','AbortError'));
+    else signal.addEventListener('abort',()=>reject(new DOMException('aborted','AbortError')),{once:true});
+  });
+  try {
+    let calls=0, observed;
+    globalThis.fetch=async(path,options)=>{calls++;observed=options.signal;return stalled(options.signal);};
+    for (const request of [()=>getJSON('/app/status',{timeout:15}),()=>postJSON('/app/setup',{}, {timeout:15}),()=>countTokens('draft',{timeout:15})]) {
+      let name='';try {await request();} catch(e) {name=e.name;}
+      ok(name==='TimeoutError' && observed.aborted,'Stalled request expires as TimeoutError, not user cancellation');
+    }
+    const ctl=new AbortController();
+    const pending=countTokens('draft',{signal:ctl.signal,timeout:1000});
+    ctl.abort();
+    let name='';try {await pending;} catch(e) {name=e.name;}
+    ok(name==='AbortError' && observed.aborted,'Stop aborts tokenization immediately');
+    const before=calls;
+    try {await countTokens('draft',{signal:ctl.signal});} catch(e) {name=e.name;}
+    ok(name==='AbortError' && calls===before,'Already-canceled requests do not reach the engine');
+    globalThis.fetch=async(path,options)=>{observed=options.signal;return {ok:true,json:()=>stalled(options.signal)};};
+    for (const request of [()=>getJSON('/app/status',{timeout:15}),()=>postJSON('/app/setup',{}, {timeout:15})]) {
+      name='';try {await request();} catch(e) {name=e.name;}
+      ok(name==='TimeoutError','Deadline covers a response body that never finishes');
+    }
+    const bodyCtl=new AbortController();
+    const bodyRequest=postJSON('/app/setup',{}, {signal:bodyCtl.signal,timeout:1000});
+    bodyCtl.abort();
+    name='';try {await bodyRequest;} catch(e) {name=e.name;}
+    ok(name==='AbortError','POST body cancellation is not swallowed as an empty response');
+    let sent;
+    globalThis.fetch=async(path,options)=>{sent={path,...options};return {ok:true,json:async()=>({tokens:[1,2,3]})};};
+    const doneCtl=new AbortController();
+    const tokens=await countTokens('draft',{timeout:15,signal:doneCtl.signal});
+    doneCtl.abort();
+    await new Promise(resolve=>setTimeout(resolve,25));
+    ok(tokens===3 && sent.path==='/api/tokenize' && sent.headers['X-Humanizer']==='1' && JSON.parse(sent.body).content==='draft','Successful requests preserve payload and headers');
+    ok(!sent.signal.aborted,'Completed requests release both their caller listener and deadline timer');
+    globalThis.fetch=async()=>({ok:false,status:409,json:async()=>({error:{message:'no model'}})});
+    let message='';try {await postJSON('/app/setup',{});} catch(e) {message=e.message;}
+    ok(message==='no model','Structured HTTP errors remain intact');
+    globalThis.fetch=async()=>({ok:true,json:async()=>{throw new SyntaxError('empty');}});
+    ok(await postJSON('/app/quit')===null,'Empty successful launcher responses still work');
+  } finally {globalThis.fetch=originalFetch;}
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }
