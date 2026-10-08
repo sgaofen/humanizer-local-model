@@ -233,6 +233,7 @@ textarea#draft::placeholder { color: var(--ink-4); }
 .tool.toggle[aria-pressed="true"] svg rect { opacity: 1; fill: var(--hl-solid); }
 .tool.solid { background: var(--ink); color: var(--sheet); margin-left: 4px; padding: 0 14px; }
 .tool.solid:hover:not(:disabled) { background: var(--ink); color: var(--sheet); opacity: .88; }
+#btn-copy[aria-busy="true"] { opacity: .75; cursor: progress; }
 .tool.solid.done { background: var(--hl-solid); color: #101216; }
 
 .legend { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-3); margin-right: 8px; }
