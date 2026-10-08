@@ -84,20 +84,7 @@ Also in the repo:
 - `humanizer-12b-bf16.gguf` (23,832,049,568 bytes, about 23.8 GB): the unquantised 12B as one GGUF, for reference or for quantising yourself.
 - `model.safetensors` (bf16, about 24 GB) with `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` and `prompt_format.json` at the root: what transformers, vLLM and the MLX converter use.
 
-**How much the quantised files differ from bf16.** In Q8_0, Q6_K and Q4_K_M the token embeddings and the output layer stay at 8-bit; Q6_K and Q4_K_M are also imatrix-calibrated on our own rewriting data. KL was measured over about 33,000 tokens of drafts and rewrites from the evaluation set (no overlap with the calibration data). The last column is the strict fact judge from the README on all 420 English rewrites of the evaluation set, run on each file with llama.cpp.
-
-| File | Mean KL vs. bf16 | Top token same as bf16 | Perplexity | No factual problem (English) |
-|---|---|---|---|---|
-| bf16 (reference) | | | | 368 / 420 |
-| Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
-| Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
-| Q4_K_M (updated 2026-10-04, see below) | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
-| Q3 (`Q3-QAT`, added 2026-10-05) | 0.0300 ¹ | 93.6% ¹ | | 356 / 420 |
-| 2-bit (`IQ2_XS-QAT`) | 0.106 ¹ | 87.7% ¹ | | 350 / 420 |
-
-Compared draft by draft with bf16, Q8_0, Q6_K and Q4_K_M are within noise on the fact judge. Q3 and 2-bit make a few more fact slips in English (64 and 70 rewrites flagged, against 52 for bf16), mostly a single word or number; in Chinese Q3 is on par with bf16 (53 vs. 50 of 204 flagged). Full table, Chinese results and how these two were made: [README, Quantized versions](https://github.com/sgaofen/humanizer-local-model#quantized-versions) or the [GGUF repo](https://huggingface.co/jialinyyzz/humanizer-GGUF).
-
-**Q4_K_M was refined on 2026-10-04 with quantization-aware training:** same size and format, about 1/3 lower KL to the full-precision model than a standard Q4_K_M. ¹ Measured on a larger KL set (30 blocks of English drafts and rewrites), where the standard Q4_K_M scores 0.0203 and 94.5% (Chinese: 0.0146 vs. 0.0225). On the fact judge, compared draft by draft with the standard Q4_K_M, it is within noise: 58 vs. 56 of 420 English rewrites flagged, 162 vs. 163 problems listed by the second pass, more than 9 in 10 of them a single word or phrase. Q3 and 2-bit were measured on the same larger set (Chinese: 0.0318 and 0.106; measured on A100 and A30 GPUs, which differ by about 3%).
+**How much the quantised files differ from bf16.** How often each file picks the same most likely next token as bf16, English and Chinese averaged: Q8_0 98.4%, Q6_K 97.7%, Q4_K_M 95.2%, Q3 93.1%, 2-bit 87.4%. Q4_K_M, Q3 and 2-bit are quantization-aware trained and distilled from bf16, so they stay closer to it than standard llama.cpp files of the same size. On the strict fact judge from the README, Q8_0, Q6_K and Q4_K_M are within noise of bf16; Q3 and 2-bit make a few more fact slips in English (64 and 70 of 420 rewrites flagged, against 52 for bf16), mostly a single word or number. The comparison with standard quantization, KL, the full fact-check table and how the files were made: [docs/QUANTIZATION.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/QUANTIZATION.md).
 
 **Download:**
 

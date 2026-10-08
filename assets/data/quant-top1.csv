@@ -1,0 +1,19 @@
+line,label,file,bytes,gb,top1_en,top1_zh,top1_avg,kl_en,kl_zh,plotted,qat,gpu,reference
+ours,2-bit,humanizer-12b-IQ2_XS-QAT.gguf,3893632896,3.894,87.716,87.074,87.395,0.106324,0.105790,yes,yes,NVIDIA A100 80GB PCIe,bf16 with the same pruned 130k vocabulary
+ours,Q3,humanizer-12b-Q3-QAT.gguf,5587794816,5.588,93.630,92.639,93.135,0.029981,0.031765,yes,yes,NVIDIA A30,bf16 with the same pruned 130k vocabulary
+ours,Q4_K_M,humanizer-12b-Q4_K_M.gguf,7625160864,7.625,95.624,94.767,95.196,0.013551,0.014564,yes,yes,NVIDIA A100 80GB PCIe,bf16 (full vocabulary)
+ours,Q6_K,humanizer-12b-Q6_K.gguf,10029799584,10.030,97.954,97.478,97.716,0.003116,0.003469,yes,no,NVIDIA A100 80GB PCIe,bf16 (full vocabulary)
+ours,Q8_0,humanizer-12b-Q8_0.gguf,12669630368,12.670,98.449,98.254,98.352,0.001686,0.001647,yes,no,NVIDIA A100 80GB PCIe,bf16 (full vocabulary)
+standard,IQ1_M,IQ1_M.gguf,3202830080,3.203,52.858,39.101,45.980,1.845898,2.878836,no (below the smallest file here),no,NVIDIA A30,bf16 (full vocabulary)
+standard,IQ2_XXS,IQ2_XXS.gguf,3568090880,3.568,67.885,45.839,56.862,0.822831,2.268070,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,IQ2_XS,IQ2_XS.gguf,3887824640,3.888,74.438,66.210,70.324,0.470915,0.759620,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,IQ2_M,IQ2_M.gguf,4371787520,4.372,81.551,76.777,79.164,0.245268,0.367020,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,Q2_K,Q2_K.gguf,4830129920,4.830,82.030,78.840,80.435,0.223955,0.302681,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,IQ3_XXS,IQ3_XXS.gguf,4849176320,4.849,85.702,82.766,84.234,0.135706,0.185140,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,IQ3_M,IQ3_M.gguf,5733973760,5.734,90.938,89.192,90.065,0.055640,0.066976,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,Q3_K_M,Q3_K_M.gguf,6087069440,6.087,89.980,88.231,89.106,0.063059,0.080015,no (IQ3_M is smaller and higher),no,NVIDIA A30,bf16 (full vocabulary)
+standard,IQ4_XS,IQ4_XS.gguf,6635237120,6.635,93.793,92.577,93.185,0.025981,0.029112,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,Q4_K_M,Q4_K_M.gguf,7381364480,7.381,94.324,93.447,93.886,0.020562,0.023383,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,Q5_K_M,Q5_K_M.gguf,8547249920,8.547,95.979,95.621,95.800,0.010822,0.010795,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,Q6_K,Q6_K.gguf,9786003200,9.786,97.869,97.410,97.640,0.003273,0.003541,yes,no,NVIDIA A30,bf16 (full vocabulary)
+standard,Q8_0,Q8_0.gguf,12669628160,12.670,98.498,98.240,98.369,0.001473,0.001913,yes,no,NVIDIA A30,bf16 (full vocabulary)

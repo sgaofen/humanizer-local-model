@@ -48,4 +48,5 @@ Rules: one draft per request; use the completion endpoint, not a chat endpoint o
 
 - [Hugging Face model card](https://huggingface.co/jialinyyzz/humanizer)
 - [GGUF repo](https://huggingface.co/jialinyyzz/humanizer-GGUF): every quantization with size, memory, KL to bf16 and fact-check results
+- [docs/QUANTIZATION.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/QUANTIZATION.md): how the quantized files compare with standard llama.cpp quantization, and how they were made
 - [README.zh.md](https://github.com/sgaofen/humanizer-local-model/blob/main/README.zh.md): Chinese README

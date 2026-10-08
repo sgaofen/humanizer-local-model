@@ -84,20 +84,7 @@ assert hashlib.sha256(build_prompt("X").encode("utf-8")).hexdigest()[:16] == "cc
 - `humanizer-12b-bf16.gguf`（23,832,049,568 字节，约 23.8 GB）：不量化的 12B，单个 GGUF，给需要参照或想自己量化的人。
 - 根目录的 `model.safetensors`（bf16，约 24 GB），以及 `config.json`、`generation_config.json`、`tokenizer.json`、`tokenizer_config.json`、`prompt_format.json`：transformers、vLLM 和 MLX 转换都用它们。
 
-**量化版和 bf16 差多少。**Q8_0、Q6_K、Q4_K_M 的词表和输出层都保留 8 bit；Q6_K 和 Q4_K_M 另外用我们自己的改写数据做了 imatrix 校准。KL 在评测集草稿和改写上测了约 33,000 个 token（和校准数据不重叠）。最后一栏是 README 里那个从严的事实判官，用 llama.cpp 分别跑每个文件、判评测集全部 420 篇英文改写。
-
-| 文件 | 与 bf16 的平均 KL | 首选词与 bf16 一致 | 困惑度 | 没挑出事实问题（英文） |
-|---|---|---|---|---|
-| bf16（基准） | | | | 368 / 420 |
-| Q8_0 | 0.0015 | 98.4% | +0.3% | 376 / 420 |
-| Q6_K | 0.0031 | 97.7% | +0.6% | 364 / 420 |
-| Q4_K_M（2026-10-04 更新，见下） | 0.0136 ¹ | 95.6% ¹ | | 362 / 420 |
-| Q3（`Q3-QAT`，2026-10-05 加入） | 0.0300 ¹ | 93.6% ¹ | | 356 / 420 |
-| 2 bit（`IQ2_XS-QAT`） | 0.106 ¹ | 87.7% ¹ | | 350 / 420 |
-
-逐篇和 bf16 对比，Q8_0、Q6_K、Q4_K_M 在事实判官上的差别都在噪声范围内。Q3 和 2 bit 英文事实小错稍多（标出 64 篇、70 篇，bf16 是 52 篇），多是一个词或一个数字；中文 Q3 和 bf16 持平（204 篇里标出 53 篇对 50 篇）。完整表格、中文结果和这两档怎么做的，见 [README 的量化版本一节](https://github.com/sgaofen/humanizer-local-model/blob/main/README.zh.md#量化版本)或 [GGUF 仓库](https://huggingface.co/jialinyyzz/humanizer-GGUF)。
-
-**Q4_K_M 在 2026-10-04 用量化感知训练重新做过一遍：**大小和格式不变，和全精度模型的 KL 比普通 Q4_K_M 低约三分之一。¹ 这两个数是在更大的一套 KL 测试上量的（30 块英文草稿和改写），普通 Q4_K_M 在同一套上是 0.0203 和 94.5%（中文：0.0146 对 0.0225）。事实判官上，和普通 Q4_K_M 逐篇对比在噪声范围内：英文 420 篇改写里标出 58 篇对 56 篇，第二遍复核列出的问题 162 处对 163 处，9 成以上只是一个词或短语。Q3 和 2 bit 也是在这套更大的测试上量的（中文：0.0318 和 0.106；在 A100 和 A30 两种卡上测，卡型之间只差约 3%）。
+**量化版和 bf16 差多少**。量化文件认为最可能的下一个词和 bf16 相同的比例（中英文平均）：Q8_0 98.4%、Q6_K 97.7%、Q4_K_M 95.2%、Q3 93.1%、2-bit 87.4%。Q4_K_M、Q3 和 2-bit 做过量化感知训练，并从 bf16 蒸馏过，所以比同样大小的普通 llama.cpp 量化更接近完整模型。用 README 里那个从严的事实判官看，Q8_0、Q6_K、Q4_K_M 和 bf16 的差别都在噪声范围内；Q3 和 2-bit 英文事实小错稍多（420 篇改写里标出 64 篇、70 篇，bf16 是 52 篇），多是一个词或一个数字。和普通量化的对比、KL、完整的事实检查表以及这些文件是怎么做的，见 [docs/QUANTIZATION.zh.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/QUANTIZATION.zh.md)。
 
 **下载：**
 

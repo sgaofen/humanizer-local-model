@@ -8,18 +8,32 @@
   <img alt="Languages: English and Chinese" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-ECEEF1?style=flat-square&labelColor=101216">
 </p>
 
-<p align="center"><b>English</b> · <a href="README.zh.md">中文</a> · <a href="docs/USAGE.md"><b>Usage without the app</b></a> · <a href="docs/INSTALL.md">Install guide</a> · <a href="AGENTS.md">AGENTS.md</a></p>
+<p align="center"><b>English</b> · <a href="README.zh.md">中文</a> · <a href="docs/USAGE.md"><b>Usage without the app</b></a> · <a href="docs/INSTALL.md">Install guide</a> · <a href="docs/QUANTIZATION.md">Quantization</a> · <a href="AGENTS.md">AGENTS.md</a></p>
 
-<img src="assets/app-showcase-en.png" alt="The humanizer app running the 12B model locally: draft on the left, rewrite on the right, new wording highlighted" width="100%">
+**humanizer** is a 12B model that rewrites AI-written drafts, in English or Chinese, so they read like a person wrote them. It runs on your own computer and is trained to keep every number, date, name and quote.
 
-**humanizer** is a 12B model that rewrites AI-written drafts (emails, essays, reports, forum posts; English and Chinese) so they read like a person wrote them. It is trained to keep every number, unit, date, name and quote, and to add nothing. It runs on your own machine. No AI detector was used anywhere in training.
+**Quick start:** get the app for **[Mac (Apple silicon)](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-macos-arm64.dmg)** or **[Windows](https://github.com/sgaofen/humanizer-local-model/releases/download/app-v0.3.2/Humanizer-0.3.2-windows-x64-setup.exe)**, open it and paste a draft; it works offline. Without the app: [one llama.cpp command](#option-2-one-command-llamacpp), or [AGENTS.md](AGENTS.md) for coding agents.
 
-> [!TIP]
-> **Setting this up with an AI agent?** Point it at **[AGENTS.md](AGENTS.md)** (also [llms.txt](llms.txt)). It has the exact files to download, the server command, the prompt byte for byte, and a self-test.
+## Facts survive the rewrite
+
+<img src="assets/results-fidelity-en.png" alt="Fact fidelity: 376 of 420 English rewrites with no factual problem; most fixes are a single word or phrase" width="100%">
+
+On our held-out evaluation set, a strict LLM judge found no factual problem in **376 of 420 English rewrites** (210 drafts, two samples each, on the Q8_0 file you download); where it did find one, more than 9 in 10 fixes are a single word or phrase. Originality.ai at its strictest setting judged **95% of the English rewrites human-written** (bf16), although no AI detector was used anywhere in training. Details: [Results](#results).
+
+## Quantization: smaller files, closer to the full model
+
+<img src="assets/quant-top1-en.png" alt="Top-1 agreement with bf16 against file size: our GGUF files (green) sit above standard llama.cpp quantization (gray) at 2-bit, Q3 and Q4_K_M; at 3.9 GB, 87% against 70%" width="100%">
+
+Most GGUF files come from one `llama-quantize` pass that rounds every weight to the target type; our 2-bit, Q3 and Q4_K_M files go further. In the 2-bit and Q3 files, we measured how much each weight tensor hurts the model when it is squeezed and gave the sensitive tensors more bits and the robust ones fewer. All three were then trained layer by layer to reproduce the full model (quantization-aware training) and distilled from the full bf16 model, used as the teacher, on English and Chinese rewriting data. For the 2-bit file, a standard build of the same size picks the same next token as bf16 70% of the time; these steps take it to 81%, 85% and then 87%. The result is still an ordinary GGUF that any recent llama.cpp runs; Q6_K and Q8_0 are standard builds, because at those sizes there is almost nothing left to recover.
+
+<sub>Numbers behind every point, KL, per-file fact checks and how each file was made: [docs/QUANTIZATION.md](docs/QUANTIZATION.md).</sub>
 
 **Contents:** [Quick start](#quick-start) · [Before and after](#before-and-after) · [Results](#results) · [How it was trained](#how-it-was-trained) · [Usage](#usage) · [Limitations](#limitations) · [License](#license)
 
 ## Quick start
+
+> [!TIP]
+> **Setting this up with an AI agent?** Point it at **[AGENTS.md](AGENTS.md)** (also [llms.txt](llms.txt)). It has the exact files to download, the server command, the prompt byte for byte, and a self-test.
 
 ### Option 1: the app (easiest)
 
@@ -38,7 +52,7 @@ The app offers five sizes: Q8_0 (best), Q6_K (no measurable loss), Q4_K_M (sligh
 
 The app is not code-signed yet, so macOS and Windows will warn you the first time. The one-time fix is in [docs/INSTALL.md](docs/INSTALL.md#first-launch-warnings).
 
-<img src="assets/app-en.png" alt="The humanizer app: draft on the left, rewrite on the right" width="100%">
+<img src="assets/app-showcase-en.png" alt="The humanizer app running the 12B model locally: draft on the left, rewrite on the right, new wording highlighted" width="100%">
 
 <sub>Real screenshots of the app running the 12B model (llama.cpp Q8_0, Metal, M5 Max). The speed in the bottom bar is real.</sub>
 
@@ -134,9 +148,7 @@ Detectors change over time; this is what one detector said on one date, not a pr
 
 ### Fact fidelity
 
-<img src="assets/results-fidelity-en.png" alt="Fact fidelity compared with the previous releases" width="100%">
-
-**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge (GLM-5.3, one vote per rewrite; 210 drafts × 2 samples), measured on the `humanizer-12b-Q8_0.gguf` file you download. The previous release: 369 of 420.
+**376 of 420 English rewrites came back with no factual problem** from a strict LLM judge (GLM-5.3, one vote per rewrite; 210 drafts × 2 samples), measured on the `humanizer-12b-Q8_0.gguf` file you download. The previous release: 369 of 420. The chart is at the [top of this page](#facts-survive-the-rewrite).
 
 | | **v2, this release (Q8_0 file)** | v1, previous 12B release |
 |---|---|---|
@@ -174,43 +186,24 @@ The training code will be released later.
 
 ### Files on Hugging Face
 
-| File | Size | For |
-|---|---|---|
-| `humanizer-12b-Q8_0.gguf` | about 12.7 GB | 32 GB of memory or more. Recommended. |
-| `humanizer-12b-Q6_K.gguf` | about 10.0 GB | 16 GB of memory. |
-| `humanizer-12b-Q4_K_M.gguf` | about 7.6 GB | About 14 GB of memory, or when disk is tight. Quantization-aware trained. |
-| `humanizer-12b-Q3-QAT.gguf` | about 5.6 GB | 12 GB of memory. 3-bit class, quantization-aware trained; a few more fact slips in English than Q4_K_M (see below). |
-| `humanizer-12b-IQ2_XS-QAT.gguf` | about 3.9 GB | 8 GB of memory; the smallest. 2-bit; more fact mistakes than the larger files (see below). |
-| `humanizer-12b-bf16.gguf` | about 23.8 GB | Unquantised weights as one GGUF, for reference or for quantising yourself. |
-| `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | transformers, vLLM, converting to MLX. |
-| `prompt_format.json` | tiny | The instruction and separator, verbatim. |
+| File | Size | Peak memory (Mac) ¹ | Top-1 vs. bf16 ² | For |
+|---|---|---|---|---|
+| `humanizer-12b-Q8_0.gguf` | 12.7 GB | 13.7 GB | 98.4% | 32 GB of memory or more. **Recommended**, best quality. |
+| `humanizer-12b-Q6_K.gguf` | 10.0 GB | about 11.0 GB | 97.7% | 16 GB. No measurable loss. |
+| `humanizer-12b-Q4_K_M.gguf` | 7.6 GB | 10.0 GB | 95.2% | About 14 GB, or when disk is tight. Slight loss; quantization-aware trained. |
+| `humanizer-12b-Q3-QAT.gguf` | 5.6 GB | 8.0 GB | 93.1% | 12 GB. Small loss; a few more fact slips in English. |
+| `humanizer-12b-IQ2_XS-QAT.gguf` | 3.9 GB | 6.2 GB | 87.4% | 8 GB; the smallest (2-bit). Lowest AI-detector score, a few more fact slips: check numbers and names. |
+| `humanizer-12b-bf16.gguf` | 23.8 GB | about 24.8 GB | 100% (reference) | Unquantised weights as one GGUF, for reference or for quantising yourself. |
+| `model.safetensors` + `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json` | about 24 GB (bf16) | | | transformers, vLLM, converting to MLX. |
+| `prompt_format.json` | tiny | | | The instruction and separator, verbatim. |
+
+¹ `llama-server` (Metal) on an M5 Max with the app's settings, while rewriting; Q6_K and bf16 are estimates. Leave room for the system (the app keeps about 4 GB free).
+
+² How often the file's most likely next token is the same as bf16's, English and Chinese averaged (llama.cpp `--kl-divergence`).
 
 ### Quantized versions
 
-All GGUF files, with this table and how they were made, are also in their own repo: **[jialinyyzz/humanizer-GGUF](https://huggingface.co/jialinyyzz/humanizer-GGUF)**. The same files stay in `jialinyyzz/humanizer`, so the download commands here keep working.
-
-| File | In short | Bits / type | Size | Peak memory (Mac) ¹ | KL to bf16, EN / ZH ² | Standard `llama-quantize` build, same size class: KL EN / ZH (top token same) ² | Top token same as bf16, EN / ZH ² | Fact check (GLM): rewrites flagged · spots listed ³ | Flagged as AI, same 60 drafts ⁵ |
-|---|---|---|---|---|---|---|---|---|---|
-| `humanizer-12b-bf16.gguf` | Reference (full precision) | 16-bit (bf16) | 23.8 GB | about 24.8 GB (est.) | 0 (reference) | | 100% (reference) | EN 52 · 160 spots <br> ZH 50 · 216 spots | 4 / 60 |
-| `humanizer-12b-Q8_0.gguf` | **Best quality** | 8-bit (Q8_0) | 12.7 GB | 13.7 GB | 0.0017 / 0.0017 | same file: Q8_0 is a standard build | 98.45% / 98.25% | EN 44 · 135 spots <br> ZH 54 · 236 spots | 7 / 60 |
-| `humanizer-12b-Q6_K.gguf` | No measurable loss | 6-bit (Q6_K) | 10.0 GB | about 11.0 GB (est.) | 0.0031 / 0.0035 | same file: Q6_K is a standard build | 97.95% / 97.48% | EN 56 · 153 spots <br> ZH 56 · 255 spots | not measured |
-| `humanizer-12b-Q4_K_M.gguf` | Slight loss | 4-bit (Q4_K_M), quantization-aware trained | 7.6 GB | 10.0 GB | **0.0136 / 0.0146** | Q4_K_M, 7.6 GB: 0.0203 / 0.0225 (94.46% / 93.46%) | 95.62% / 94.77% | EN 58 · 162 spots <br> ZH 51 · 194 spots <br> (standard Q4_K_M: EN 56 · 163, ZH 48 · 218) | not measured |
-| `humanizer-12b-Q3-QAT.gguf` | Small loss; a few more fact slips in English | 3-bit class, mixed precision (about 3.9 bits per weight) ⁴, quantization-aware trained | 5.6 GB | 8.0 GB | **0.0300 / 0.0318** ² | IQ3_XXS (3-bit), 4.7 GB: 0.138 / 0.190 (85.72% / 82.55%) | 93.63% / 92.64% | EN 64 · 210 spots <br> ZH 53 · 233 spots | 4 / 60 |
-| `humanizer-12b-IQ2_XS-QAT.gguf` | Lowest AI-detector score; a few more fact slips (mostly single words or numbers): check numbers and names before sending | 2-bit (mostly IQ2_XS) ⁴, quantization-aware trained | 3.9 GB | 6.2 GB | **0.106 / 0.106** ⁴ | IQ2_XS, 3.8 GB: 0.474 / 0.769 (74.43% / 65.53%) | 87.72% / 87.07% | EN 70 · 265 spots <br> ZH 66 · 361 spots | 0 / 60 |
-
-**What KL means:** how far a file's next-word probabilities drift from the full bf16 model, averaged over every word of real drafts and rewrites. Lower is better; 0 means identical. "Top token same" is how often the file and bf16 would pick the same most likely next word. "Standard" means a plain `llama-quantize` run of the same type with the same importance matrix our build started from, with no extra training.
-
-The Q4_K_M was refined with quantization-aware training on 2026-10-04: same size and format, about 1/3 lower KL than the standard Q4_K_M. The 2-bit build is closer to the full model than a standard 3-bit build that is 0.8 GB larger, and Chinese, which plain 2-bit quantization hurts most, comes out the same as English. It still makes more fact mistakes than the larger files (see ³), so use it only when memory is tight and check its output with extra care.
-
-The Q3 build (added 2026-10-05) sits between them: at 5.6 GB it is 2 GB smaller than Q4_K_M, and its KL, about 0.03 in both languages, is a fraction of a standard 3-bit IQ3_XXS (0.138 / 0.190), which is 0.9 GB smaller. Its Chinese fact check and its AI-detector result are on par with bf16. In English it makes a few more fact slips (64 of 420 rewrites flagged, against 52 for bf16 and 58 for Q4_K_M), almost all a single word or phrase, so check numbers and names before you send.
-
-¹ Maximum resident memory of llama-server (llama.cpp, Metal) on an Apple M5 Max with the app's settings (8,192-token context, one request at a time) while rewriting. Q4_K_M, Q3 and 2-bit were measured side by side with the app's llama.cpp build on four real drafts; generation ran at about 52, 65 and 69 tokens per second. Q8_0 was measured in an earlier run on one 470-token draft, which read about 1.3 GB lower for the same file (2-bit: 4.9 GB there, 6.2 GB here), so it may need a little more than shown; Q6_K and bf16 are estimated (est.). A 32,768-token context adds about 0.4 GB. Leave room for the system and other apps (the app keeps about 4 GB free).
-² llama.cpp `llama-perplexity --kl-divergence`, 30 chunks of 2,048 tokens per language (about 30,700 scored tokens each) of held-out drafts and rewrites from the evaluation set (no overlap with calibration or training data), reference = the bf16 GGUF, measured on A100 and A30 GPUs (the same file measures within about 3% across GPU models, far below the gaps between files). A full comparison with standard llama.cpp quantization and a third-party imatrix GGUF, IQ1_M to Q8_0, is on the [GGUF page](https://huggingface.co/jialinyyzz/humanizer-GGUF#how-it-compares-to-standard-quantization). Q8_0, Q6_K and Q4_K_M keep the token embeddings and output layer at 8-bit; the IQ2_XS and IQ3_XXS comparison builds use 4-bit embeddings.
-³ The strict fact judge from [Results](#fact-fidelity) (GLM-5.3, one vote per rewrite) on all 420 English and 204 Chinese rewrites (two per draft; for bf16, 4 Chinese rewrites could not be judged). "Rewrites flagged" = rewrites it found a factual problem in; a second pass re-read each flagged rewrite against its draft and listed every problem ("spots"). Most spots are a single word, number or phrase: about 9 in 10 for every file (2-bit: 243 of 265 English, 330 of 361 Chinese). Compared draft by draft with Q8_0, Q6_K and Q4_K_M are within noise, and the quantization-aware Q4_K_M is within noise of the standard one. The 2-bit build is not: in English it was flagged on 70 rewrites against 44 for Q8_0 on the same drafts, a difference beyond noise; in Chinese 66 against 54, within noise. Against the Q4_K_M it is 70 vs. 58 and 66 vs. 51, within noise. Q3: 64 English rewrites flagged (bf16 52, Q4_K_M 58), and 191 of its 210 English spots are a single word or short phrase; in Chinese 53 (bf16 50).
-⁴ The Q3 and 2-bit builds keep about 130,000 of the 262,144 vocabulary tokens: the ones English and Chinese text actually uses, plus everything needed to spell any input. Any text still encodes and decodes exactly; rare symbols, emoji and other scripts just take a few more tokens. Pruning alone moves the model by KL 0.0013 (English) / 0.0002 (Chinese), and their KL above is measured against a bf16 with the same pruned vocabulary. Bits are spread by sensitivity: the 2-bit build is mostly IQ2_XS, with 3- and 4-bit types where they matter; in the Q3 build about half the bytes are Q4_K and a fifth Q6_K, with IQ3_XXS and IQ2_XS on the least sensitive tensors (about 3.9 bits per weight on average). Then each layer is tuned with quantization-aware training and the scales are distilled from the bf16 model on English and Chinese rewriting data. The files report their types as IQ2_XS and IQ3_XXS, but neither is a plain build of that type.
-⁵ The 2-bit build had the best AI-detector result of all versions: 0/60 flagged (Q8_0 7/60, bf16 4/60; Originality.ai strictest setting). A likely reason: the small drift from quantization makes the wording a bit less predictable, which detectors read as less machine-like. Q3: 4/60, the same as bf16 (3 drafts flagged only with Q3, 3 only with bf16).
-
-sha256 checksums are in [USAGE.md](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.md#2-pick-a-file).
+All GGUF files are also in their own repo, **[jialinyyzz/humanizer-GGUF](https://huggingface.co/jialinyyzz/humanizer-GGUF)**; the same files stay in `jialinyyzz/humanizer`, so the download commands here keep working. How they compare with standard llama.cpp quantization is in the [chart at the top](#quantization-smaller-files-closer-to-the-full-model). KL to bf16, the fact check and AI-detector results for every file, the full comparison table and how each file was made: **[docs/QUANTIZATION.md](docs/QUANTIZATION.md)**. sha256 checksums are in [USAGE.md](docs/USAGE.md#2-pick-a-file).
 
 ### Prompt format
 
