@@ -20,8 +20,6 @@ tags:
 - gemma4
 ---
 
-<img src="assets/banner-en.png" alt="humanizer: rewrites AI drafts so they read like a person wrote them" width="100%">
-
 # humanizer
 
 **A 12B model that rewrites AI-written drafts, in English or Chinese, so they read like a person wrote them.** It runs on your own computer and is trained to keep every number, date, name and quote.
