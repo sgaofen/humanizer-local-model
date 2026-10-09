@@ -44,6 +44,7 @@ App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。**之后想
 
 - App 没有窗口，也不在 Dock 里，它就是浏览器里的一个标签页。**退出**在网页右上角的「…」菜单。关掉网页 30 分钟后它会自己退出、释放内存。
 - 模型和设置放在 `~/Library/Application Support/Humanizer`。
+- **想放到别的盘**？首次运行那页，在选档下面打开「存储位置」：运行目录（设置、日志、引擎更新）和模型目录（`.gguf` 文件）分开设置，可以直接粘贴路径，也可以点「更改…」用系统窗口选。**不勾「把已下载的模型一起搬过去」就不会动已有的文件。**改完立刻生效；之后也能从右上角「…」→「更改存储位置」再进来。
 - **数字核对**：App 会拿草稿里的每个数字去改写里找，找不到的标出来。只比阿拉伯数字，所以「60 分钟 → 一个小时」也会被标出来，其实没错。把它当提醒，不是判决。
 
 ## Windows 上的 App
@@ -58,6 +59,7 @@ App 有 1 GB 的容差，32 GB 的电脑报 31.x GB 也会选 Q8_0。**之后想
 
 - **显卡**：App 先试 NVIDIA（CUDA），再试 Vulkan（多数 AMD、Intel 显卡），最后用 CPU。CPU 能跑，但慢很多。
 - 模型和设置放在 `%LOCALAPPDATA%\Humanizer`。
+- **想放到别的盘（别放 C 盘）？**首次运行那页，在选档下面打开「存储位置」：运行目录（设置、日志、引擎更新）和模型目录（`.gguf` 文件）分开设置，可以直接粘贴路径，也可以点「更改…」用系统窗口选。**不勾「把已下载的模型一起搬过去」就不会动已有的文件。**改完立刻生效；之后也能从右上角「…」→「更改存储位置」再进来。卸载时会问你要不要连改过的这些目录一起删。
 - 退出同样在网页的「…」菜单。
 - Windows 版还没在真机上跑过（只有 CI 冒烟测试）。遇到问题请[提 issue](https://github.com/sgaofen/humanizer-local-model/issues)。
 
@@ -175,6 +177,6 @@ print(json.load(urllib.request.urlopen(req))["content"].strip())
 
 **我的文字会被发到哪里吗**？不会。App 和服务只听 `127.0.0.1`（你自己的电脑），网页也不从网上加载任何东西。唯一的下载就是模型本身。
 
-**怎么卸载**？macOS：删掉 `Humanizer.app` 和 `~/Library/Application Support/Humanizer`。Windows：在「设置 → 应用」里卸载（便携版直接删文件夹），再删掉 `%LOCALAPPDATA%\Humanizer`。
+**怎么卸载**？macOS：删掉 `Humanizer.app` 和 `~/Library/Application Support/Humanizer`。Windows：在「设置 → 应用」里卸载（便携版直接删文件夹），再删掉 `%LOCALAPPDATA%\Humanizer`。如果你在「存储位置」里改过目录，卸载程序会读那个记录并问你要不要连改过的目录一起删；选「否」也可以留着，下次重装直接用。
 
 **怎么换成更新后的模型**？Hugging Face 上的模型文件在 2026-10-02 更新为 v2（见 [README](../README.zh.md#评测结果)）。App 0.3.2 起，点「…」→「检查更新」就会找到新文件并替你换上。0.3.1 及更早的版本不会替换已经下好的模型：先退出 App，删掉数据目录里 `models` 文件夹中的 `.gguf` 文件（macOS 是 `~/Library/Application Support/Humanizer/models`，Windows 是 `%LOCALAPPDATA%\Humanizer\models`），再打开 App，它会弹出选档页面并下载当前版本。用 `hf download` 的话，再执行一遍同样的命令就会拿到新版。

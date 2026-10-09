@@ -453,6 +453,38 @@ textarea#draft::placeholder { color: var(--ink-4); }
 .cta:active { transform: scale(.99); }
 .fine { margin: 14px 2px 0; font-size: 12px; color: var(--ink-3); line-height: 1.55; }
 
+/* ───────── 存储位置 ───────── */
+.paths { margin-bottom: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet-2, rgba(127,127,127,.06)); }
+.paths summary {
+  display: flex; align-items: center; gap: 8px; padding: 11px 13px;
+  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink); list-style: none;
+}
+.paths summary::-webkit-details-marker { display: none; }
+.paths summary::before { content: "▸"; color: var(--ink-3); font-size: 11px; transition: transform .15s; }
+.paths[open] summary::before { transform: rotate(90deg); }
+.paths[open] summary { border-bottom: 1px solid var(--line); }
+.paths-hint { margin-left: auto; font-family: var(--f-mono); font-size: 11.5px; font-weight: 500; color: var(--ink-3); }
+/* 第一列跟着内容走(英文 "Models folder" 比中文宽),输入框自己吃掉剩下的 */
+.path-row { display: grid; grid-template-columns: minmax(52px, max-content) minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 12px 0; }
+.path-label { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+.path-input {
+  width: 100%; min-width: 0; height: 32px; padding: 0 9px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--sheet); font-family: var(--f-mono); font-size: 11.5px; color: var(--ink);
+}
+.path-input:focus { outline: none; border-color: var(--ink-4); box-shadow: 0 0 0 3px var(--hl-ring); }
+.path-input[readonly] { color: var(--ink-3); background: var(--sunk); }
+.path-btn { height: 32px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; }
+.path-btn svg { width: 15px; height: 15px; }
+/* 选文件夹要弹系统的窗口,得等它关掉 —— 按钮上写清楚,免得以为点了没反应 */
+.path-btn[data-picking] { opacity: 1; pointer-events: none; border-color: var(--ink-4); color: var(--ink-2); }
+.path-btn[data-picking] span { visibility: hidden; }
+.path-btn[data-picking] span::after { content: attr(data-picking); visibility: visible; }
+.paths .fine { margin: 10px 12px 0; }
+.paths-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px; }
+.movebox { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 100%; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.movebox input { accent-color: var(--cta-bg); width: 15px; height: 15px; flex: none; }
+.paths-actions .btn { flex: none; }
+
 .prog-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .prog-head .eyebrow { margin: 0; }
 .prog-pct {
@@ -474,6 +506,9 @@ textarea#draft::placeholder { color: var(--ink-4); }
   font-size: 13.5px; font-weight: 600; color: var(--ink); transition: border-color .15s, background .15s;
 }
 .btn:hover { border-color: var(--ink-4); background: var(--sheet-2); }
+/* disabled 不做样式的话,按钮看起来和能点的一样,点下去没反应 —— 最容易被当成"坏了" */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .4; cursor: not-allowed; pointer-events: none; }
+.btn:disabled:hover, .btn[aria-disabled="true"]:hover { border-color: var(--line); background: var(--sheet); }
 .btn.primary { background: var(--cta-bg); color: var(--cta-ink); border-color: transparent; }
 .btn.primary:hover { box-shadow: 0 0 0 4px var(--hl-ring); }
 .btn.ghost { border-color: transparent; color: var(--ink-2); font-weight: 500; }

@@ -252,7 +252,8 @@ func (a *App) runEngine(ctx context.Context, tier Tier) {
 		a.setError("engine", "no_engine", "找不到随包附带的 llama-server,安装可能不完整", "")
 		return
 	}
-	logPath := filepath.Join(a.dataDir, "logs", "llama-server.log")
+	engineDataDir, _ := a.pathsNow()
+	logPath := filepath.Join(engineDataDir, "logs", "llama-server.log")
 	rotateLog(logPath, 4<<20)
 	logf, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {

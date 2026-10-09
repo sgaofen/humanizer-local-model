@@ -8,6 +8,7 @@ import { countText, isMostlyCJK, isLongDraft, numberCheck, fmtBytes, fmtDuration
 import { loadHistory, addHistory, removeHistory, clearHistory, store } from './history.js';
 import { SAMPLES } from './samples.js';
 import { activeFacts, protectFacts, restoreFacts, streamView, withFactGuard, FACT_TRIES } from './facts.js';
+import { pathsHintKey, modelDirDefault } from './paths.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -36,6 +37,8 @@ const S = {
   quit: false,
   autoRun: params.get('run') === '1',
   tierSig: '',
+  pathsDirty: false, // 存储位置的输入框被改过但还没保存
+  savingPaths: false,
   pollTimer: 0,
 };
 
@@ -230,6 +233,81 @@ function renderChoose() {
   $('cta-text').textContent = cta;
   $('endpoint').closest('.field').hidden = !!tr.downloaded;
   $('btn-back').hidden = !(S.forceSetup && ['ready', 'starting'].includes(st.phase));
+  renderPaths();
+}
+
+// ───────── 存储位置(运行目录 / 模型目录)─────────
+// 启动器把当前生效的两个目录放在 /app/status 里;改完 POST /app/paths。
+// 输入框可以手动改路径(选择器打不开时也能用),所以改过就别被轮询刷掉。
+function renderPaths() {
+  const st = S.status;
+  if (!st) return;
+  const data = $('path-data'), model = $('path-model');
+  const locked = !!st.data_dir_locked;
+  data.readOnly = locked;
+  $('pick-data').disabled = locked || S.savingPaths;
+  $('pick-model').disabled = S.savingPaths;
+  // 说清楚为什么不让点,不然就是一个"按了没反应"的按钮
+  $('pick-data').title = locked ? t('paths.lockedTitle') : t('paths.browse');
+  $('pick-model').title = t('paths.browse');
+  $('paths-save').disabled = S.savingPaths;
+  $('paths-reset').disabled = S.savingPaths;
+  if (!S.pathsDirty) {
+    if (data.value !== (st.data_dir || '')) data.value = st.data_dir || '';
+    if (model.value !== (st.model_dir || '')) model.value = st.model_dir || '';
+  }
+  // 路径太长时输入框里看不全,悬停给全的
+  data.title = data.value;
+  model.title = model.value;
+  $('paths-hint').textContent = t(pathsHintKey(st));
+  $('paths-note').innerHTML = locked ? t('paths.locked')
+    : t('paths.note', { data: st.default_data_dir || st.data_dir, model: modelDirDefault(st) });
+}
+
+async function pickDir(what) {
+  const el = $(what === 'data' ? 'path-data' : 'path-model');
+  const btn = $(what === 'data' ? 'pick-data' : 'pick-model');
+  const label = t(what === 'data' ? 'paths.data' : 'paths.model');
+  btn.disabled = true;
+  el.disabled = true;
+  // 系统的选文件夹窗口可能弹在浏览器后面,按钮上写清楚在等什么
+  const span = btn.querySelector('span');
+  btn.dataset.picking = t('paths.picking');
+  if (span) span.dataset.picking = t('paths.picking');
+  try {
+    const r = await postJSON('/app/pick-dir', { what });
+    if (r.path) { el.value = r.path; S.pathsDirty = true; }
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    el.disabled = false;
+    delete btn.dataset.picking;
+    if (span) delete span.dataset.picking;
+    renderPaths();
+  }
+}
+
+async function savePaths(reset) {
+  if (S.savingPaths) return;
+  S.savingPaths = true;
+  renderPaths();
+  try {
+    const r = await postJSON('/app/paths', {
+      data_dir: reset ? '' : $('path-data').value.trim(),
+      model_dir: reset ? '' : $('path-model').value.trim(),
+      move: !reset && $('path-move').checked,
+      reset,
+    });
+    S.pathsDirty = false;
+    $('path-move').checked = false;
+    toast(r.moved ? t('toast.pathsMoved', { n: r.moved }) : t('toast.pathsSaved'), 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    S.savingPaths = false;
+    poll(); // 成功失败都重新对一次:后端可能已经改了位置(比如只存设置失败)
+    renderPaths();
+  }
 }
 
 function renderProgress() {
@@ -341,6 +419,7 @@ function renderPop() {
   $('pi-device').textContent = e.device || st.sys.cpu || '—';
   $('pi-ram').textContent = `${Math.round(st.sys.ram_gb)} GB`;
   $('pi-ctx').textContent = `${fmtNum(st.ctx_size, getLang())} tokens`;
+  $('pi-paths').textContent = st.model_dir || '—';
   $('pi-idle').textContent = st.idle_exit_minutes > 0 ? t('menu.idle', { n: st.idle_exit_minutes }) : '';
   $('pa-restart').hidden = !['ready', 'starting', 'error'].includes(st.phase);
 }
@@ -981,6 +1060,15 @@ function bind() {
   // 首次运行
   $('btn-download').addEventListener('click', () => setup(S.pickTier, $('endpoint').value));
   $('endpoint').addEventListener('change', (e) => { S.pickEndpoint = e.target.value; });
+  $('pick-data').addEventListener('click', () => pickDir('data'));
+  $('pick-model').addEventListener('click', () => pickDir('models'));
+  for (const id of ['path-data', 'path-model']) {
+    $(id).addEventListener('input', () => { S.pathsDirty = true; });
+  }
+  $('path-data').addEventListener('keydown', (e) => { if (e.key === 'Enter') savePaths(false); });
+  $('path-model').addEventListener('keydown', (e) => { if (e.key === 'Enter') savePaths(false); });
+  $('paths-save').addEventListener('click', () => savePaths(false));
+  $('paths-reset').addEventListener('click', () => savePaths(true));
   $('btn-back').addEventListener('click', () => { S.forceSetup = false; S.tierSig = ''; render(); });
   $('btn-pause').addEventListener('click', async () => {
     const st = S.status;
@@ -1026,6 +1114,16 @@ function bind() {
     });
   }
   $('pa-tier').addEventListener('click', () => { togglePop(false); S.forceSetup = true; S.pickTier = S.status?.tier; S.tierSig = ''; render(); });
+  $('pa-paths').addEventListener('click', () => {
+    togglePop(false);
+    S.forceSetup = true;
+    S.tierSig = '';
+    S.pathsDirty = false;
+    render();
+    $('paths').open = true;
+    $('path-data').focus({ preventScroll: false });
+    $('paths').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
   $('pa-reveal').addEventListener('click', () => postJSON('/app/reveal', { what: 'models' }).then(() => toast(t('toast.revealed'))).catch((e) => toast(e.message)));
   $('pa-restart').addEventListener('click', async () => { togglePop(false); toast(t('toast.restarting')); await postJSON('/app/engine/restart').catch((e) => toast(e.message)); poll(); });
   $('pa-quit').addEventListener('click', async () => {

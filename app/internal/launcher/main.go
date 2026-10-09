@@ -44,7 +44,9 @@ func envOr(k, def string) string {
 // Main 是启动器入口,返回进程退出码。
 func Main(o Options) int {
 	fl := flag.NewFlagSet("humanizer", flag.ContinueOnError)
-	dataDir := fl.String("data-dir", envOr("HUMANIZER_DATA_DIR", defaultDataDir()), "数据目录(模型、日志、设置)")
+	// 存储位置:命令行 > 默认目录里的 location.json(网页上改过的地方) > 默认目录。
+	sp := resolveStartPaths(envOr("HUMANIZER_DATA_DIR", ""))
+	dataDir := fl.String("data-dir", sp.DataDir, "数据目录(设置、日志、更新包;模型目录在网页上改)")
 	var engines multiFlag
 	fl.Var(&engines, "engine", "指定 llama-server 路径,可写 name=path,可重复(开发/测试用)")
 	baseURL := fl.String("base-url", envOr("HUMANIZER_BASE_URL", os.Getenv("HF_ENDPOINT")), "自定义下载源(替代 huggingface.co)")
@@ -78,6 +80,14 @@ func Main(o Options) int {
 	if abs, err := filepath.Abs(*dataDir); err == nil { // 引擎的工作目录不是这里,必须用绝对路径
 		*dataDir = abs
 	}
+	if !sp.DataDirLock {
+		fl.Visit(func(f *flag.Flag) { // 命令行给了 --data-dir 就锁死,网页上不让改
+			if f.Name == "data-dir" {
+				sp.DataDirLock, sp.PointerDir = true, ""
+			}
+		})
+	}
+	sp.DataDir = *dataDir
 	if e := os.Getenv("HUMANIZER_ENGINE"); e != "" && len(engines) == 0 {
 		engines = append(engines, e)
 	}
@@ -114,6 +124,7 @@ func Main(o Options) int {
 	}
 	logger := log.New(logw, "", log.LstdFlags)
 	logger.Printf("===== Humanizer %s 启动 (%s/%s) 数据目录 %s", o.Version, runtime.GOOS, runtime.GOARCH, *dataDir)
+	logger.Printf("模型目录 %s(网页上的「存储位置」里可以改)", modelDirLog(sp.DataDir, sp.ModelDir))
 
 	cfg, err := loadConfig(o.DefaultConfig, filepath.Join(*dataDir, "config.json"))
 	if err != nil {
@@ -127,7 +138,8 @@ func Main(o Options) int {
 		cfg.Update.GitHubAPI = *updateAPI
 	}
 
-	a := &App{opts: o, cfg: cfg, dataDir: *dataDir, logger: logger, apiKey: randomKey()}
+	a := &App{opts: o, cfg: cfg, dataDir: *dataDir, logger: logger, apiKey: randomKey(),
+		locModelDir: sp.ModelDir, pointerDir: sp.PointerDir, dataDirLocked: sp.DataDirLock}
 	a.settings = loadSettings(a.settingsPath())
 	if _, ok := cfg.endpoint(a.settings.Endpoint); !ok {
 		a.settings.Endpoint = cfg.Endpoints[0].ID

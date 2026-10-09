@@ -51,15 +51,19 @@ type engineInfo struct {
 type App struct {
 	opts     Options
 	cfg      Config
-	dataDir  string
+	dataDir  string // 运行目录:设置、日志、更新包
 	settings Settings
-	sys      SysInfo
-	backends []Backend
-	web      fs.FS
-	logger   *log.Logger
-	port     int
-	url      string
-	apiKey   string // llama-server 的访问密钥,每次启动随机生成,只有启动器的反代知道
+	// locModelDir:网页上设过的模型目录,空 = dataDir/models。指针文件 pointerDir 里记着。
+	locModelDir   string
+	pointerDir    string // location.json 放哪儿(被 --data-dir 钉死时为空)
+	dataDirLocked bool   // 运行目录由 --data-dir / HUMANIZER_DATA_DIR 固定,网页上不让改
+	sys           SysInfo
+	backends      []Backend
+	web           fs.FS
+	logger        *log.Logger
+	port          int
+	url           string
+	apiKey        string // llama-server 的访问密钥,每次启动随机生成,只有启动器的反代知道
 
 	rootCtx  context.Context
 	shutdown context.CancelFunc
@@ -91,11 +95,13 @@ func (a *App) logf(format string, args ...any) {
 	}
 }
 
-func (a *App) settingsPath() string { return filepath.Join(a.dataDir, "settings.json") }
-
-func (a *App) modelPath(t Tier) string {
-	return filepath.Join(a.dataDir, "models", filepath.FromSlash(t.File))
+func (a *App) settingsPath() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return filepath.Join(a.dataDir, "settings.json")
 }
+
+// modelsDir 在 storage.go:模型目录可以改,默认是数据目录下的 models。
 
 func fileExists(p string) bool {
 	st, err := os.Stat(p)
@@ -278,9 +284,10 @@ func (a *App) writeInstance() {
 	if a.engine != nil && a.engine.cmd.Process != nil {
 		inst.EnginePID = a.engine.cmd.Process.Pid
 	}
+	instPath := filepath.Join(a.dataDir, "instance.json")
 	a.mu.Unlock()
 	b, _ := json.Marshal(inst)
-	_ = writeFileAtomic(filepath.Join(a.dataDir, "instance.json"), b)
+	_ = writeFileAtomic(instPath, b)
 }
 
 // stopAll 退出前收尾:停下载(半截文件留着下次续)、关引擎。
@@ -291,9 +298,10 @@ func (a *App) stopAll() {
 		a.dlCancel()
 	}
 	a.phase = phaseStopped
+	instPath := filepath.Join(a.dataDir, "instance.json")
 	a.mu.Unlock()
 	a.stopEngine()
-	_ = os.Remove(filepath.Join(a.dataDir, "instance.json"))
+	_ = os.Remove(instPath)
 }
 
 func (a *App) idleLoop(ctx context.Context) {

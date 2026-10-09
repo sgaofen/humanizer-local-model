@@ -44,6 +44,7 @@ Good to know:
 
 - The app has no window and no Dock icon; it lives in your browser tab. **Quit** from the **…** menu at the top right. If you close the page, it quits by itself after 30 minutes and frees the memory.
 - Models and settings are in `~/Library/Application Support/Humanizer`.
+- **Want them somewhere else (another drive)?** On the first-run screen, open **Storage location** under the size picker: you can set the **run folder** (settings, logs, engine updates) and the **models folder** (the `.gguf` files) separately, and paste a path or use **Change…** to pick a folder. Nothing moves unless you tick **Move the models already downloaded**. It takes effect immediately; also reachable later from the **…** menu → **Change storage location**.
 - **Numbers check:** the app compares every number in the draft with the rewrite and flags any that are missing. It only compares Arabic digits, so "60 minutes → an hour" is flagged even though it's fine. Treat it as a reminder, not a verdict.
 
 ## App on Windows
@@ -58,6 +59,7 @@ Good to know:
 
 - **GPU:** the app tries NVIDIA (CUDA) first, then Vulkan (most AMD and Intel GPUs), then the CPU. The CPU works but is much slower.
 - Models and settings are in `%LOCALAPPDATA%\Humanizer`.
+- **Want them somewhere else (another drive, not C:)?** On the first-run screen, open **Storage location** under the size picker: **run folder** (settings, logs, engine updates) and **models folder** (the `.gguf` files) are set separately, and you can paste a path or use **Change…** to browse. Nothing moves unless you tick **Move the models already downloaded**. It takes effect immediately; also reachable later from the **…** menu → **Change storage location**. The uninstaller asks about these folders too, so it can clean up a relocated model.
 - Quit from the **…** menu in the page, as on macOS.
 - The Windows build has not been run on real Windows hardware yet (only CI smoke tests). If something breaks, please [open an issue](https://github.com/sgaofen/humanizer-local-model/issues).
 
@@ -175,6 +177,6 @@ The prompt must be built exactly like this; see [Prompt format](../README.md#pro
 
 **Is my text sent anywhere?** No. The app and the server listen on `127.0.0.1` (your own computer) only, and the page loads nothing from the internet. The only download is the model itself.
 
-**How do I uninstall?** macOS: delete `Humanizer.app` and `~/Library/Application Support/Humanizer`. Windows: uninstall from Settings → Apps (or delete the portable folder), then delete `%LOCALAPPDATA%\Humanizer`.
+**How do I uninstall?** macOS: delete `Humanizer.app` and `~/Library/Application Support/Humanizer`. Windows: uninstall from Settings → Apps (or delete the portable folder), then delete `%LOCALAPPDATA%\Humanizer`. If you moved things in **Storage location**, the uninstaller reads that record and asks about those folders too; answering No keeps them for a later reinstall.
 
 **How do I get the updated model?** The model files on Hugging Face were updated on 2026-10-02 (v2, see the [README](../README.md#results)). From app 0.3.2 on, **…** → **Check for updates** finds the newer file and swaps it in for you. With 0.3.1 or earlier, the app doesn't replace a model it has already downloaded: quit the app, delete the `.gguf` file in the `models` folder of its data folder (macOS `~/Library/Application Support/Humanizer/models`, Windows `%LOCALAPPDATA%\Humanizer\models`), and open the app again: it shows the size picker and downloads the current file. With `hf download`, run the same command again; it fetches the new version.

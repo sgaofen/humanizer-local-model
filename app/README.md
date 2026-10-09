@@ -46,6 +46,12 @@
 - **导入 .docx / .pdf**(0.3.2,外部贡献 PR #2):草稿底栏「导入」或把文件拖到草稿上。网页把文件 POST 到 `/app/document`(同样要带 `X-Humanizer` 头),启动器在内存里提取文字、不落盘,最大 20 MB、500 页、2 MB 文字。DOCX 只取正文段落和表格(页眉页脚、批注、图片不要),段落之间空一行,和模型训练时草稿的分段一致;表格一行一行、单元格用 Tab 隔开。PDF 由 `github.com/ledongthuc/pdf` 解析文件结构,解码和排版在 `document_pdf.go` 自己做:库只在 Identity-H 时才用 ToUnicode,Chrome / Skia 打印的中文 PDF(Type3 字体 + Differences + ToUnicode)会整篇乱码;库按文字对象一行一换行,英文段落会被切碎。这里只要有 ToUnicode 就用,按文字矩阵算坐标拼行,行距明显变大、字号变化、上一行是短句收尾才分段,没写满又不是句末的短行(落款、地址、列表项)保留换行,段内英文行用空格接回、中文行直接接上;再把 Chrome 写成部首码位的字(⼀ U+2F00、⻋ U+2ECB 等,对照表来自 Unicode EquivalentUnifiedIdeograph.txt)和连字 ﬁ 归一。控制字符/替换符/私用区字符超过 5% 就报「编码认不出来」,不把乱码塞进草稿。扫描版 PDF 没有文字层,提示先 OCR。提取期间草稿被改过就不覆盖。
 - **长文档提示**(0.3.2):草稿估算超过约 1,000 token(≈ 700 个英文词 / 1,100 个汉字,`text.js` 的 `LONG_DRAFT_TOKENS`)时,草稿框底部显示一条提示:长文档改写可能出现事实偏差,建议检查结果,或让 AI 把改错的地方纠正一下。门槛的依据:评测集最长的草稿约 450 词;草稿过了约 820 token,输出就顶到 n_predict 上限 2,048。
 - **原样保留 / Create fact**(0.3.2,外部贡献 PR #3):在草稿里选中一段文字,选区旁弹出「原样保留」按钮,点了这段就进草稿下方的保留条(可逐条移除,最多 50 段,跟草稿一起存在浏览器 localStorage,也记进历史;草稿里找不到原文的会自动去掉)。改写时 `web/js/facts.js` 把每段原文换成占位符 `[[HZ_LOCK_0]]`、`[[HZ_LOCK_1]]`…(重叠的选区合并,同一段出现几次换几次;前缀保证不在草稿里出现,撞了就在前面加 `_`),模型只看到占位符,提示词和采样参数不变。流式途中已写完的占位符当场换回原文显示,写到一半的先不显示;写完核对每个占位符恰好出现一次(模型偶尔写成 `[HZ_LOCK_0]` 或不带括号,编号还在也认),再换回原文。丢了、重复了、被截断就整篇重写,最多 3 次(`FACT_TRIES`),都不行就作废,绝不交出缺了原文的版本。选这个做法的依据(10 月真模型实测,12B Q8_0,App 同款提示词和采样;32 篇中英文草稿 × 2 次,共 130 处保留段,有名字、日期、从句和整句):占位符方案 64 次改写首次全部原样带回,只有 3 处模型改了括号写法(少一层或换成圆括号),按上面的宽松规则都认得出;不用占位符、事后核对的话,模型会改掉大部分保留段(整句和从句几乎全被改写,多是换个说法、调个语序),重试 4 次也只有少数篇过关;给保留段加引号同样没用;换成 `ZQ-7301` 这种编号样的占位符,模型会把它当成真实编号复制或挪位置,首次就有 7 次没过。占位符方案的改写深度和长度与不保护时相比只差一点(照抄略多、略短一点)。保留段越多、越短,改写的自由越小;保留的只是这段文字本身,周围的说法仍要人看。提示词 token 数按带占位符的文本算。
+- **存储位置**(0.3.3):下载模型那一页有个「存储位置」折叠块,运行目录(设置、日志、引擎更新包)和模型目录(GGUF 与半截文件)都能改,不用再只能落在系统盘。两条路径各有一个输入框(可以直接粘贴路径)和「更改…」(弹系统文件夹选择器:Windows 用资源管理器同款选择器(IFileOpenDialog,经 PowerShell 调用,失败退 WinForms / Shell.Application),macOS 用 `choose folder`,Linux 依次试 zenity / kdialog)。默认都在 `%LOCALAPPDATA%\Humanizer`(Mac `~/Library/Application Support/Humanizer`),摘要上会写「默认在系统盘」「已自定义」还是「由启动参数指定」。
+  - **改位置不会自动搬文件** —— 几十 GB 的移动是用户自己的决定,网页上要勾「把已下载的模型一起搬过去」才搬(跨盘符时 `os.Rename` 失败会退化成复制,可能要几分钟;`.part` 半截文件也一起搬,续传不用从头下)。新位置已经有同名文件就不覆盖。
+  - 改完立刻生效:停下载、停引擎(引擎正开着模型文件,Windows 上不关掉搬不动),搬文件,换目录,写 `settings.json`,再按新位置重新判断开机状态(找到模型就重新起引擎,没找到就回到"选档")。手上正在改写的话会等这一篇写完再动。
+  - 记在**默认数据目录**下的 `location.json`(`{"data_dir":…,"model_dir":…}`),所以运行目录整个换掉、甚至搬走了,下次启动照样找得回来;两个都回默认就把这个文件删掉。这个文件指到一个建不出来的目录时当没设过,回默认(免得卡在用不了的位置);模型目录则原样记着,等用户自己处理(悄悄改回默认等于把几十 GB 的模型挪了地方)。
+  - 命令行 `--data-dir` / `HUMANIZER_DATA_DIR` 给了就把**运行目录**钉死,网页上那一栏变只读、说明文字写清楚;**模型目录**照样能改。卸载时安装器读 `location.json`,问要不要连改过的那两个目录一起删。
+  - 接口:`POST /app/paths`(`{"data_dir","model_dir","move","reset"}`)、`POST /app/pick-dir`(`{"what":"data"|"models"}`,取消返回空路径)。`/app/status` 多了 `model_dir`、`default_data_dir`、`data_dir_locked`。
 - **选档**(0.3.0 起五档):内存 ≥32G → Q8_0;≥16G → Q6_K;≥14G → Q4_K_M;≥12G → Q3;更少 → 2-bit(内存不到 8 GB 时选档页会提示可能装不下)。有 1 GB 容差(32 GB 的 Windows 机器常报 31.x GB,16 GB 带集显的常报 13–15 GB)。门槛 = 改写时 llama-server 峰值内存(M5 Max 实测:Q8_0 约 14 GB、Q4_K_M 10.0、Q3 8.0、2-bit 6.2;Q6_K 估 11)再给系统和浏览器留约 4 GB;8 GB 机器只剩 2-bit 装得下。以前选过 lite 档(已下线)的机器,选档页会提示并预选推荐档,旧文件不删。
 - **Q3 / 2-bit**:这两个文件把词表从 262,144 裁到约 130,000(BOS/EOS 编号不变,任何文本照样能编码),内嵌同一份聊天模板;App 走 `/completion` 拼原始提示词、显式传采样参数,所以和其他档完全一样。随包的 llama-server(b11335)实测两档都能加载,靠 EOS 停。
 - **引擎回退**:Windows 有 NVIDIA 驱动(`nvcuda.dll`)先试 CUDA,有 `vulkan-1.dll` 再试 Vulkan,最后 CPU;每个 GPU 后端先 `-ngl all`,起不来再 `-ngl auto`(让 llama.cpp 按显存自动分层)。GPU 后端起来了但日志显示 `offloaded 0/N layers` 也算失败,换下一个。macOS:Metal(all → auto)→ 同一个二进制 `--device none` 跑 CPU。
@@ -63,6 +69,9 @@ app/
 ├── internal/launcher/
 │   ├── main.go                命令行参数、单实例、macOS 后台化、端口、信号
 │   ├── app.go                 状态机(setup/downloading/paused/starting/ready/error)
+│   ├── storage.go             存储位置:运行目录 / 模型目录,改、搬文件、location.json、/app/paths、/app/pick-dir
+│   ├── pickdir_windows.go pickdir_unix.go   系统的「选文件夹」窗口(PowerShell FolderBrowserDialog / osascript / zenity)
+│   ├── paths.go               数据目录解析(location.json)、路径收拾、引擎发现
 │   ├── download.go            断点续传下载 + sha256 + GGUF 魔数检查
 │   ├── engine.go              拉起 llama-server、后端回退、日志解析、崩溃重启
 │   ├── server.go              HTTP:静态网页、/app/* 接口、/api/* 反代、安全检查
@@ -70,13 +79,14 @@ app/
 │   ├── document_pdf.go        PDF:ToUnicode 解码、按坐标拼行分段、部首码位归一、乱码拦截(testdata/ 里是 Chrome 打印的真实 PDF)
 │   ├── update*.go semver.go   检查更新:GitHub Releases / HF 比对、下载、原地替换、重启计划与回滚(见下文「检查更新」)
 │   ├── prompt.go              提示词(唯一事实源)
-│   ├── config.go paths.go     配置合并、选档、数据目录、引擎发现
+│   ├── config.go              配置合并、选档、设置读写
 │   ├── sysinfo_*.go           内存 / GPU 探测(darwin / windows / 其他)
 │   ├── proc_unix.go proc_windows.go   进程组 / Job 对象、磁盘空间、打开浏览器
-│   └── *_test.go              提示词指纹、选档、配置覆盖、下载(断线续传/不支持 Range/校验失败/非 GGUF/404/暂停)、文档导入
+│   └── *_test.go              提示词指纹、选档、配置覆盖、下载(断线续传/不支持 Range/校验失败/非 GGUF/404/暂停)、文档导入、存储位置
 ├── web/                       纯静态网页(离线可用)
 │   ├── index.html  css/app.css
-│   ├── js/app.js              主控:轮询状态、视图、改写流式、历史、菜单
+│   ├── js/app.js              主控:轮询状态、视图、改写流式、历史、菜单、存储位置
+│   ├── js/paths.js            存储位置的纯逻辑(默认目录算哪、算不算自定义、摘要那句话说哪句)
 │   ├── js/diff.js             词级差异(英文按词、中文按字)+ 语义清理 + 标点静音
 │   ├── js/prompt.js text.js   拼提示词、Python 式 strip、字数、数字核对
 │   ├── js/api.js history.js i18n.js samples.js boot.js
@@ -99,7 +109,7 @@ app/
 │   ├── llama-cpp.lock.json    llama.cpp 钉死版本(b11335)+ 每个压缩包的 sha256
 │   ├── fetch_engine.py        下载 + 校验 + 整理成 engine/{metal|cuda|vulkan|cpu}/
 │   ├── macos/                 Info.plist、build_app.sh(.app + .dmg + 签名/公证)、打不开怎么办.txt
-│   ├── windows/               humanizer.iss(Inno Setup)、build_win.sh(安装包 + 便携 zip)
+│   ├── windows/               humanizer.iss(Inno Setup)、build_win.sh(安装包 + 便携 zip)、README.md(出 Windows 包的完整步骤)
 │   └── icon/                  图标源文件 svg、1024 png、Windows ico
 ├── .github-workflows/release-app.yml   CI(发布时挪到仓库根的 .github/workflows/)
 ├── docs/screenshots-real/       真机实拍截图(README 用这批)
@@ -148,7 +158,7 @@ cp humanizer-12b-Q8_0.gguf ~/Library/Application\ Support/Humanizer/models/   # 
 
 | 参数 | 作用 |
 |---|---|
-| `--data-dir` | 数据目录(默认 Mac `~/Library/Application Support/Humanizer`,Windows `%LOCALAPPDATA%\Humanizer`) |
+| `--data-dir` | 数据目录(设置、日志、引擎更新包)。默认 Mac `~/Library/Application Support/Humanizer`,Windows `%LOCALAPPDATA%\Humanizer`;网页上的「存储位置」改过的话用它记下的那个。给了命令行参数就锁死,网页上那一栏改不了 |
 | `--engine name=path` | 指定 llama-server,可重复;不给就找随包附带的 |
 | `--base-url` | 换下载源(也认 `HF_ENDPOINT`),比如私有镜像 |
 | `--port` | 网页端口(默认用配置里的固定端口 47615,被占就顺延) |
@@ -180,7 +190,13 @@ python3 packaging/fetch_engine.py --target macos --out dist/engine
 bash packaging/macos/build_app.sh 0.3.2      # → dist/mac/Humanizer.app、dist/Humanizer-0.3.2-macos-arm64.dmg(约 15 MB)
 ```
 
-Windows 包只能在 Windows 上出(Inno Setup):`python packaging/fetch_engine.py --target windows --out dist/engine && bash packaging/windows/build_win.sh 0.3.2`(Git Bash)。
+Windows 包只能在 Windows 上出(Inno Setup):
+
+```bash
+python packaging/fetch_engine.py --target windows --out dist/engine && bash packaging/windows/build_win.sh 0.3.2   # Git Bash
+```
+
+**装什么、每一步干什么、冒烟怎么测、只出一个 EXE、常见问题:[packaging/windows/README.md](packaging/windows/README.md)**(出 Windows 包前先看那份)。
 
 体积参考:macOS dmg 约 15 MB(引擎解压后 28 MB)。Windows 安装包里 CUDA 12.4 版引擎(263 MB)和 CUDA 运行库(cuBLAS 等,391 MB)占大头,四个官方压缩包合计约 0.7 GB,安装包预计 0.6–0.7 GB;如果只带 CPU + Vulkan,50 MB 以内。
 
