@@ -75,10 +75,12 @@
     <dt data-i18n="menu.device">设备</dt><dd id="pi-device">—</dd>
     <dt data-i18n="menu.memory">内存</dt><dd id="pi-ram">—</dd>
     <dt data-i18n="menu.context">上下文</dt><dd id="pi-ctx">—</dd>
+    <dt data-i18n="menu.paths">存储位置</dt><dd id="pi-paths">—</dd>
     <dt data-i18n="upd.versionLabel">版本</dt><dd id="pi-version">—</dd>
   </dl>
   <div class="pop-actions">
     <button class="row-btn" id="pa-tier" type="button"><svg><use href="#i-layers"/></svg><span data-i18n="menu.changeTier">更换模型档位</span></button>
+    <button class="row-btn" id="pa-paths" type="button"><svg><use href="#i-folder"/></svg><span data-i18n="menu.changePaths">更改存储位置</span></button>
     <button class="row-btn" id="pa-reveal" type="button"><svg><use href="#i-folder"/></svg><span data-i18n="menu.reveal">打开模型文件夹</span></button>
     <button class="row-btn" id="pa-restart" type="button"><svg><use href="#i-redo"/></svg><span data-i18n="menu.restart">重启引擎</span></button>
     <button class="row-btn" id="pa-update" type="button"><svg><use href="#i-update"/></svg><span data-i18n="upd.menu">检查更新</span><span class="row-badge" id="pa-update-badge" hidden></span></button>
@@ -112,6 +114,31 @@
           <span data-i18n="setup.source">下载源</span>
           <select id="endpoint"></select>
         </label>
+
+        <!-- 存储位置:默认在系统盘,可以改到别的盘(数据目录、模型目录各一个) -->
+        <details class="paths" id="paths">
+          <summary>
+            <span data-i18n="paths.title">存储位置</span>
+            <span class="paths-hint" id="paths-hint"></span>
+          </summary>
+          <div class="path-row">
+            <label class="path-label" for="path-data" data-i18n="paths.data">运行目录</label>
+            <input class="path-input" id="path-data" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <button class="btn ghost path-btn" id="pick-data" type="button"><svg aria-hidden="true"><use href="#i-folder"/></svg><span data-i18n="paths.browse">更改…</span></button>
+          </div>
+          <div class="path-row">
+            <label class="path-label" for="path-model" data-i18n="paths.model">模型目录</label>
+            <input class="path-input" id="path-model" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <button class="btn ghost path-btn" id="pick-model" type="button"><svg aria-hidden="true"><use href="#i-folder"/></svg><span data-i18n="paths.browse">更改…</span></button>
+          </div>
+          <p class="fine" id="paths-note"></p>
+          <div class="paths-actions">
+            <label class="movebox"><input type="checkbox" id="path-move"><span data-i18n="paths.move">把已下载的模型一起搬过去</span></label>
+            <button class="btn ghost" id="paths-reset" type="button" data-i18n="paths.reset">恢复默认</button>
+            <button class="btn primary" id="paths-save" type="button" data-i18n="paths.save">保存位置</button>
+          </div>
+        </details>
+
         <button class="cta" id="btn-download" type="button"><span id="cta-text"></span><svg><use href="#i-arrow"/></svg></button>
         <button class="btn ghost back" id="btn-back" type="button" hidden data-i18n="setup.back">返回</button>
         <p class="fine" data-i18n="setup.fine">模型存在本机的应用数据目录里，可以随时删掉。断网、关页面都能续传。</p>

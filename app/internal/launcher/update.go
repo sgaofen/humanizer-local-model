@@ -179,6 +179,15 @@ func newUpdater(a *App) *updater {
 
 func (u *updater) path(name string) string { return filepath.Join(u.dataDir, name) }
 
+// setDataDir 运行目录在网页上被改了:更新状态、更新包也换地方。
+func (u *updater) setDataDir(dir string) {
+	u.mu.Lock()
+	u.dataDir = dir
+	u.saveLocked()
+	u.saveFPsLocked()
+	u.mu.Unlock()
+}
+
 func (u *updater) load() {
 	if b, err := os.ReadFile(u.path(updStateFile)); err == nil {
 		_ = json.Unmarshal(b, &u.st)

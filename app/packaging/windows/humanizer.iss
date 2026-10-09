@@ -5,7 +5,8 @@
 ; 输出:dist\Humanizer-<版本>-windows-x64-setup.exe
 ;
 ; 按用户安装(不需要管理员权限),装到 %LOCALAPPDATA%\Programs\Humanizer;
-; 模型和日志在 %LOCALAPPDATA%\Humanizer(启动器管),卸载时问要不要一起删。
+; 模型和日志默认在 %LOCALAPPDATA%\Humanizer(启动器管),可以在网页上的「存储位置」里改。
+; 卸载时读 location.json,问要不要连改过的那个目录一起删。
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
@@ -65,15 +66,61 @@ en.AskDeleteModels=Also delete the downloaded models and logs?%n%n%1%n%nThe mode
 zh.AskDeleteModels=要不要把已下载的模型和日志也一起删掉？%n%n%1%n%n模型文件很大（几个 GB）。选「否」可以留着，下次重装直接用。
 
 [Code]
+// 从 location.json 里读出一个字符串字段的值。
+// 只处理"key": "value" 这种形态(启动器写出来的就是它),解析不了就返回空串,
+// 调用方按默认目录处理。
+function ReadLocationField(const Key: String): String;
+var
+  Content, P, Colon, Q1, Q2, Value: String;
+begin
+  Result := '';
+  if not LoadStringFromFile(ExpandConstant('{localappdata}\Humanizer\location.json'), Content) then
+    Exit;
+  P := Pos('"' + Key + '"', Content);
+  if P = 0 then Exit;
+  Colon := PosEx(':', Content, P);
+  if Colon = 0 then Exit;
+  Q1 := PosEx('"', Content, Colon);            // 值的左引号
+  if Q1 = 0 then Exit;
+  Q2 := PosEx('"', Content, Q1 + 1);          // 值的右引号
+  if Q2 = 0 then Exit;
+  Value := Copy(Content, Q1 + 1, Q2 - Q1 - 1);
+  // JSON 里反斜杠是转义的,还原回来(Pascal 字面量 '\\' 就是两个反斜杠)
+  StringChange(Value, '\\', '\');
+  Result := Value;
+end;
+
+// 盘根(C:\、D:\ 这类)一律不删:数据目录是用户自己填的路径,
+// 万一填成了盘根,卸载不能跟着把整盘删掉。
+function IsDeletableDir(const Dir: String): Boolean;
+var
+  S: String;
+begin
+  S := RemoveBackslash(Dir);
+  Result := (Pos(':', S) = 0) or (Length(S) > 3);
+end;
+
+// 卸载时要清理的目录:优先用户在网页上改过的运行目录,其次模型目录,最后默认目录。
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
-  DataDir: String;
+  DataDir, ModelDir: String;
+  Dirs: array[0..1] of String;
+  I, N: Integer;
 begin
-  if CurUninstallStep = usPostUninstall then
-  begin
+  if CurUninstallStep <> usPostUninstall then Exit;
+
+  DataDir := ReadLocationField('data_dir');
+  ModelDir := ReadLocationField('model_dir');
+  if DataDir = '' then
     DataDir := ExpandConstant('{localappdata}\Humanizer');
-    if DirExists(DataDir) and not UninstallSilent then
-      if MsgBox(FmtMessage(CustomMessage('AskDeleteModels'), [DataDir]), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
-        DelTree(DataDir, True, True, True);
-  end;
+
+  N := 0;
+  if DirExists(DataDir) and IsDeletableDir(DataDir) then begin Dirs[N] := DataDir; Inc(N); end;
+  // 模型目录单独放在外面(没设过就等于数据目录下的 models,那时不用再问一遍)
+  if (ModelDir <> '') and (ModelDir <> DataDir) and DirExists(ModelDir) and IsDeletableDir(ModelDir) then begin Dirs[N] := ModelDir; Inc(N); end;
+
+  for I := 0 to N - 1 do
+    if not UninstallSilent then
+      if MsgBox(FmtMessage(CustomMessage('AskDeleteModels'), [Dirs[I]]), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+        DelTree(Dirs[I], True, True, True);
 end;

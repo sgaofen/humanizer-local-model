@@ -6,6 +6,7 @@ import { pyStrip, countText, numberCheck, estimateTokens, isLongDraft } from '..
 import { buildPrompt, nPredictFor, selfCheck } from '../web/js/prompt.js';
 import { tokenize, diffTokens } from '../web/js/diff.js';
 import { hanCount, wentChinese, wentEnglish, langDrift, withLangGuard, LANG_RETRIES } from '../web/js/guard.js';
+import { customPaths, modelDirDefault, pathsHintKey, sameDir } from '../web/js/paths.js';
 
 let fails = 0;
 const ok = (cond, msg) => { if (!cond) { fails++; console.error('✗', msg); } else console.log('✓', msg); };
@@ -166,6 +167,30 @@ for (const s of fx.samples) {
   let stopped = false;
   try { await withFactGuard(p, async () => { throw Object.assign(new Error('stop'), { name: 'AbortError' }); }); } catch (e) { stopped = e.name === 'AbortError'; }
   ok(stopped, '用户停止直接抛出,不重试');
+}
+
+// 12. 存储位置:默认目录、尾斜杠、是否自定义过
+{
+  const win = { data_dir: 'C:\\Users\\B\\AppData\\Local\\Humanizer', default_data_dir: 'C:\\Users\\B\\AppData\\Local\\Humanizer', model_dir: 'C:\\Users\\B\\AppData\\Local\\Humanizer\\models' };
+  const mac = { data_dir: '/Users/b/Library/Application Support/Humanizer', default_data_dir: '/Users/b/Library/Application Support/Humanizer', model_dir: '/Users/b/Library/Application Support/Humanizer/models' };
+  ok(modelDirDefault(win) === 'C:\\Users\\B\\AppData\\Local\\Humanizer\\models', 'Windows 默认模型目录');
+  ok(modelDirDefault(mac) === '/Users/b/Library/Application Support/Humanizer/models', 'macOS 默认模型目录');
+  ok(!customPaths(win) && !customPaths(mac), '没改过时不算自定义');
+  ok(customPaths({ ...win, model_dir: 'D:\\models' }), '改了模型目录');
+  ok(customPaths({ ...win, data_dir: 'D:\\Humanizer' }), '改了运行目录');
+  // 运行目录被启动参数钉死时,那个"不一样"不算用户改的
+  ok(!customPaths({ ...win, data_dir_locked: true }), '钉死的运行目录不算自定义');
+  ok(modelDirDefault({ ...win, data_dir_locked: true }) === 'C:\\Users\\B\\AppData\\Local\\Humanizer\\models', '钉死时模型目录以它为基准');
+  // 尾斜杠、大小写不算改动
+  ok(!customPaths({ ...win, model_dir: 'c:\\users\\b\\appdata\\local\\humanizer\\models\\' }), '尾斜杠和大小写不算改动');
+  ok(!customPaths({ ...mac, model_dir: '/Users/b/Library/Application Support/Humanizer/models/' }), 'macOS 尾斜杠不算改动');
+  ok(sameDir('D:\\a', 'D:\\a\\') && sameDir('/x/y/', '/x/y') && !sameDir('D:\\a', 'D:\\b') && !sameDir('', 'D:\\a'),
+    '目录比较忽略尾斜杠、认得出不同目录');
+  // 摘要上那一句:三种状态
+  ok(pathsHintKey(win) === 'paths.hintDefault', '默认 → 默认在系统盘');
+  ok(pathsHintKey({ ...win, data_dir_locked: true }) === 'paths.hintLocked', '被启动参数钉死 → 由启动参数指定');
+  ok(pathsHintKey({ ...win, data_dir_locked: true, model_dir: 'D:\\models' }) === 'paths.hintCustom', '钉死但改了模型目录 → 仍算自定义');
+  ok(pathsHintKey({ ...win, model_dir: 'D:\\models' }) === 'paths.hintCustom', '改了模型目录 → 自定义');
 }
 
 if (fails) { console.error(`\n${fails} 项失败`); process.exit(1); }

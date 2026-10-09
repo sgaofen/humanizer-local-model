@@ -30,6 +30,8 @@ func (a *App) handler() http.Handler {
 	mux.HandleFunc("POST /app/setup", a.handleSetup)
 	mux.HandleFunc("POST /app/document", a.handleDocument)
 	mux.HandleFunc("POST /app/download/pause", a.handlePause)
+	mux.HandleFunc("POST /app/paths", a.handlePaths)
+	mux.HandleFunc("POST /app/pick-dir", a.handlePickDir)
 	mux.HandleFunc("POST /app/engine/restart", a.handleRestart)
 	mux.HandleFunc("POST /app/reveal", a.handleReveal)
 	mux.HandleFunc("POST /app/quit", a.handleQuit)
@@ -175,6 +177,9 @@ type statusResp struct {
 	Backends        []string     `json:"backends"`
 	Error           *errInfo     `json:"error,omitempty"`
 	DataDir         string       `json:"data_dir"`
+	ModelDir        string       `json:"model_dir"`
+	DefaultDataDir  string       `json:"default_data_dir"`
+	DataDirLocked   bool         `json:"data_dir_locked"`
 	IdleExitMinutes int          `json:"idle_exit_minutes"`
 	CtxSize         int          `json:"ctx_size"`
 	// Notice:"lite_retired" = 这台机器以前选的是已下线的 lite 档,网页提示换成推荐的 12B 档位;旧文件不删。
@@ -182,10 +187,16 @@ type statusResp struct {
 }
 
 func (a *App) handleStatus(w http.ResponseWriter, r *http.Request) {
+	dataDir, modelsDir := a.pathsNow()
+	defDir := a.pointerDir
+	if defDir == "" {
+		defDir = defaultDataDir()
+	}
 	s := statusResp{
 		App: "humanizer", Version: a.opts.Version, Sys: a.sys,
 		Recommended: a.cfg.recommendTier(a.sys.RAMGB),
-		Endpoints:   a.cfg.Endpoints, DataDir: a.dataDir,
+		Endpoints:   a.cfg.Endpoints,
+		DataDir:     dataDir, ModelDir: modelsDir, DefaultDataDir: defDir, DataDirLocked: a.dataDirLocked,
 		IdleExitMinutes: int(a.idleExit / time.Minute),
 		CtxSize:         a.cfg.Engine.CtxSize,
 	}
@@ -319,9 +330,13 @@ func (a *App) handleReveal(w http.ResponseWriter, r *http.Request) {
 		What string `json:"what"`
 	}
 	_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&req)
-	dir := filepath.Join(a.dataDir, "models")
-	if req.What == "logs" {
-		dir = filepath.Join(a.dataDir, "logs")
+	dataDir, modelsDir := a.pathsNow()
+	dir := modelsDir
+	switch req.What {
+	case "logs":
+		dir = filepath.Join(dataDir, "logs")
+	case "data":
+		dir = dataDir
 	}
 	_ = os.MkdirAll(dir, 0o755)
 	if err := revealPath(dir); err != nil {
