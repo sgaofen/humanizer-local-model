@@ -11,6 +11,9 @@ import html
 import json
 
 import diffmark
+from document import MAX_BYTES
+
+UPLOAD_MB = MAX_BYTES // (1024 * 1024)
 
 GH = "https://github.com/sgaofen/humanizer-local-model"
 REL = GH + "/releases/latest"
@@ -69,6 +72,12 @@ SPRITE = """
 <symbol id="i-win" viewBox="0 0 24 24"><path d="M3.5 5.6 10.5 4.6v6.9h-7V5.6Zm8 -1.1L20.5 3.2v8.3h-9V4.5ZM3.5 12.5h7v6.9l-7-1V12.5Zm8 0h9v8.3l-9-1.3v-7Z" fill="currentColor"/></symbol>
 <symbol id="i-term" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m7.5 9.5 3 2.5-3 2.5M12.5 15h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 3.5v3M14.5 3.5v3M9.5 17.5v3M14.5 17.5v3M3.5 9.5h3M3.5 14.5h3M17.5 9.5h3M17.5 14.5h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4.5V8h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="i-import" viewBox="0 0 24 24"><path d="M13.5 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8.5l-5-5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13.5 3.5v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".22"/><path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.8" r="1.1" fill="currentColor"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15.2" r="1.3" fill="currentColor"/></symbol>
 </defs></svg>
 """
 
@@ -100,24 +109,49 @@ def topbar() -> str:
 """
 
 
+UPLOAD_HELP = {"en": f"Import the text of a Word (.docx) or PDF file, up to {UPLOAD_MB} MB. Formatting is dropped; the file is read on this page's server and deleted right away. You can also drop the file on the draft.",
+               "zh": f"导入 Word（.docx）或 PDF 里的文字，最大 {UPLOAD_MB} MB。不保留格式；文件在本页的服务器上读取，读完立刻删除。也可以把文件拖进草稿框。"}
+FACT_HELP = {"en": "Kept word for word in the rewrite. Select text in the draft and click Create fact to add one.",
+             "zh": "改写时这些文字一字不改。在草稿里选中一段文字，点「原样保留」就能加进来。"}
+
+
 def draft_head() -> str:
     return f"""<div class="sheet-head">
   <span class="idx">01</span><h2 class="sheet-title">{L("Draft", "草稿")}</h2>
   <span class="sheet-sub">{L("what the AI wrote", "AI 写的原稿")}</span>
   <span class="meta mono" id="draft-count"><b>0</b> {L("words", "字")} <span class="dim">/ {L(f"{MAX_WORDS * PARTS:,}", f"{MAX_CJK * PARTS:,}")}</span></span>
+  <input type="file" id="doc-file" data-max="{MAX_BYTES}" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+  <button type="button" class="tool head-tool" id="btn-import" data-act="import" data-title-en="{html.escape(UPLOAD_HELP['en'])}" data-title-zh="{html.escape(UPLOAD_HELP['zh'])}">{icon("import")}<span class="when-idle">{L("Import", "导入")}</span><span class="when-busy">{L("Reading…", "读取中…")}</span></button>
 </div>"""
 
 
 def draft_foot(examples) -> str:
+    """Everything under the draft box: the long-draft note, the kept passages (Create fact), the footer with
+    samples and Clear. page.js moves .draft-overlays (the Create fact button, the drop overlay) onto the sheet."""
     short = {"en-email": ("Email", "英文邮件"), "en-review": ("Review", "产品评测"),
              "en-essay": ("Essay", "英文作文"), "zh-email": ("中文邮件", "中文邮件"),
              "zh-social": ("中文社交帖", "中文社交帖")}
     btns = "".join(f'<button type="button" class="sample-btn" data-sample="{e["id"]}">{L(*short[e["id"]])}</button>'
                    for e in examples if e["id"] in short)
-    return f"""<div class="sheet-foot">
+    return f"""<p class="draft-note" id="draft-long" role="note" hidden>{icon("info")}<span>{L(
+        "Long documents may drift on facts. Check the result, or ask an AI to fix any spots it got wrong.",
+        "长文档改写可能出现事实偏差，建议检查结果，或让 AI 把改错的地方纠正一下。")}</span></p>
+<div class="factbar" id="facts-panel" hidden>
+  <span class="factbar-label" data-title-en="{html.escape(FACT_HELP['en'])}" data-title-zh="{html.escape(FACT_HELP['zh'])}">{icon("lock")}{L("Facts", "原样保留")}<span class="factbar-count mono" id="facts-count"></span></span>
+  <ul class="factbar-list" id="facts-list"></ul>
+</div>
+<div class="sheet-foot">
   <span class="try">{L("Try one:", "试试示例：")}</span>{btns}
   <span class="grow"></span>
   <button type="button" class="tool" data-act="clear">{icon("eraser")}{L("Clear", "清空")}</button>
+</div>
+<div class="draft-overlays" hidden>
+  <button type="button" class="fact-pop" id="btn-create-fact" hidden data-title-en="Keep this text word for word in the rewrite" data-title-zh="改写时这段文字一字不改">{icon("lock")}<span class="when-new">{L("Create fact", "原样保留")}</span><span class="when-kept">{L("Already a fact", "已在保留")}</span></button>
+  <div class="dropzone" id="dropzone" hidden>
+    <span class="dz-icon">{icon("import")}</span>
+    <span class="dz-title">{L("Drop to import", "松开即可导入")}</span>
+    <span class="dz-sub mono">.docx · .pdf · {L(f"up to {UPLOAD_MB} MB", f"最大 {UPLOAD_MB} MB")}</span>
+  </div>
 </div>"""
 
 
@@ -131,11 +165,14 @@ def editor_note() -> str:
         f"words or {MAX_CJK * PARTS:,} Chinese characters per run; anything over {MAX_WORDS} words or {MAX_CJK:,} "
         f"characters is split at paragraph breaks and rewritten part by part. Free GPU time per visitor is limited, "
         f"so the first run can wait in a queue. For long documents use the app or <code>hz</code> "
-        f"(<a href=\"#local\">below</a>). Your text is not stored: this page logs counts and timing only.",
+        f"(<a href=\"#local\">below</a>). Import a .docx or PDF (up to {UPLOAD_MB} MB), or select text in the draft and click "
+        f"<b>Create fact</b> to keep it word for word. Your text is not stored: imported files are deleted as soon as "
+        f"they are read, and this page logs counts and timing only.",
         f"这里跑的是完整的 bf16 模型，用 Hugging Face 的共享 GPU（ZeroGPU）。每次最多英文约 {MAX_WORDS * PARTS:,} 词、"
         f"中文约 {MAX_CJK * PARTS:,} 字；超过英文 {MAX_WORDS} 词或中文 {MAX_CJK:,} 字的，会在段落之间切开、一段一段改。"
         f"每位访客的免费 GPU 时长有限，第一次可能要排队。长文档请用 App 或 "
-        f"<code>hz</code>（见<a href=\"#local\">下方</a>）。不保存你的文字：只记录字数和耗时。",
+        f"<code>hz</code>（见<a href=\"#local\">下方</a>）。可以导入 .docx 或 PDF（最大 {UPLOAD_MB} MB）；在草稿里选中一段文字点"
+        f"<b>「原样保留」</b>，改写时这段一字不改。不保存你的文字：导入的文件读完立刻删除，只记录字数和耗时。",
         "editor-note")
 
 

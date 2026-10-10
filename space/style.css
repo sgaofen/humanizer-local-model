@@ -24,6 +24,7 @@
   --go-bg: #101216; --go-ink: #D7F75B; --cta-bg: #101216; --cta-ink: #F6F7F9;
   --del: #E5484D; --ok: #18A058; --warn: #B87900; --err: #E5484D;
   --shadow: 0 1px 0 rgba(16, 18, 22, .04), 0 18px 40px -22px rgba(16, 18, 22, .28);
+  --shadow-pop: 0 2px 6px rgba(16, 18, 22, .06), 0 24px 60px -18px rgba(16, 18, 22, .35);
 
   /* Gradio theme variables the page relies on */
   --body-background-fill: var(--bg);
@@ -45,6 +46,7 @@
   --go-bg: #CDF54B; --go-ink: #0A0B0D; --cta-bg: #CDF54B; --cta-ink: #0A0B0D;
   --del: #FF6159; --ok: #3DD68C; --warn: #F5B841; --err: #FF6159;
   --shadow: 0 0 0 1px rgba(255, 255, 255, .02), 0 24px 48px -28px rgba(0, 0, 0, .9);
+  --shadow-pop: 0 0 0 1px rgba(255, 255, 255, .04), 0 30px 70px -20px rgba(0, 0, 0, .9);
   --body-background-fill: var(--bg);
   --background-fill-primary: var(--sheet);
   --body-text-color: var(--ink);
@@ -153,6 +155,8 @@ html[data-lang="zh"] #draft textarea, #draft textarea.cjk { font-family: var(--f
 .try { font-size: 13px; color: var(--ink-3); margin: 0 4px 0 8px; }
 .sample-btn { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px dashed var(--ink-4) !important; color: var(--ink-2); font-size: 12.5px; }
 .sample-btn:hover { border-style: solid !important; border-color: var(--ink) !important; background: var(--sunk); color: var(--ink); }
+html[data-lang="zh"] .sample-btn { padding: 0 8px; }   /* five Chinese labels + Clear stay on one row at common widths */
+html[data-lang="zh"] .try { margin: 0 2px 0 6px; }
 .tool { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 11px; border-radius: var(--r-ctl); font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 .tool svg { width: 17px; height: 17px; }
 .tool:hover { background: var(--sunk); color: var(--ink); }
@@ -354,6 +358,101 @@ html[data-lang="zh"] .sec-title { letter-spacing: -.01em; }
 .foot { margin: 72px 0 24px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-3); }
 .foot p { margin: 0 0 8px !important; max-width: 90ch; line-height: 1.6; }
 
+/* ───────── import, Create fact, toasts (the app's 0.3.2 parts, same look) ───────── */
+#draft-long[hidden], #facts-panel[hidden], #btn-create-fact[hidden], #dropzone[hidden], .draft-overlays[hidden], .toast.gone { display: none !important; }
+.draft-sheet { position: relative; }
+/* moved onto the sheet by page.js; a layer, because every direct child of a sheet is flattened above */
+.draft-overlays { position: absolute !important; inset: 0; z-index: 5; pointer-events: none; }
+.draft-overlays > .fact-pop { pointer-events: auto; }
+.tool:disabled { cursor: default; }
+.head-tool { height: 30px; padding: 0 10px; font-size: 12.5px; margin-left: 2px; }
+.head-tool svg { width: 16px; height: 16px; }
+.tool .when-busy { display: none; }
+.tool.busy .when-idle { display: none; }
+.tool.busy .when-busy { display: inline; }
+.tool.busy, .tool.busy:disabled { color: var(--ink-2); background: var(--sunk); }
+.tool.busy svg { animation: spin .8s linear infinite; }
+.hz-busy #btn-import, .hz-busy .fact-x { opacity: .4; pointer-events: none; }
+.hz-busy #btn-create-fact { display: none !important; }
+
+/* drop a file on the draft */
+.dropzone {
+  position: absolute; inset: 12px; z-index: 6; border-radius: 14px; border: 1.5px dashed var(--ink-3);
+  background: color-mix(in srgb, var(--sheet) 88%, transparent); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px; text-align: center;
+  pointer-events: none; animation: fade .15s;
+}
+@keyframes fade { from { opacity: 0; } }
+.dz-icon {
+  width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 10px;
+  background: var(--hl-solid); color: #101216; box-shadow: 0 0 0 7px var(--hl-ring);
+}
+.dz-icon svg { width: 25px; height: 25px; }
+.dz-title { font-family: var(--f-display); font-size: 18px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.dz-sub { color: var(--ink-3); }
+
+/* long drafts may drift on facts */
+.draft-note {
+  display: flex; align-items: flex-start; gap: 9px; margin: 0 !important; padding: 9px 18px 10px 20px;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-2); border-top: 1px solid var(--line-2);
+  background: color-mix(in srgb, var(--warn) 7%, var(--sheet));
+}
+.draft-note svg { width: 15px; height: 15px; margin-top: 2px; color: var(--warn); }
+
+/* Create fact: a small button over the selection; kept passages as a strip of chips above the footer */
+.fact-pop {
+  position: absolute; z-index: 5; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 10px !important;
+  border-radius: 999px; background: var(--ink) !important; color: var(--sheet) !important; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  box-shadow: var(--shadow-pop); animation: pop-in .14s var(--ease);
+}
+.fact-pop svg { width: 15px; height: 15px; }
+.fact-pop:hover:not(:disabled) { box-shadow: var(--shadow-pop), 0 0 0 4px var(--hl-ring); }
+.fact-pop .when-kept { display: none; }
+.fact-pop.kept .when-new { display: none; }
+.fact-pop.kept .when-kept { display: inline; }
+.fact-pop:disabled { background: var(--sunk) !important; color: var(--ink-3) !important; border: 1px solid var(--line) !important; box-shadow: none; cursor: default; }
+@keyframes pop-in { from { opacity: 0; transform: translateY(3px) scale(.96); } }
+.factbar {
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 14px 8px 20px; border-top: 1px solid var(--line-2);
+  max-height: 92px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.factbar-label { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 26px; font-size: 12px; font-weight: 600; color: var(--ink-2); cursor: help; }
+.factbar-label svg { width: 15px; height: 15px; color: var(--ink-3); }
+.factbar-count { color: var(--ink-3); font-weight: 400; font-size: 11px; }
+.factbar-list { list-style: none; margin: 0 !important; padding: 0 !important; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.fact-chip {
+  display: inline-flex; align-items: center; gap: 2px; max-width: 260px; height: 26px; margin: 0 !important; padding: 0 3px 0 10px;
+  border-radius: 999px; background: var(--sunk); border: 1px solid var(--line); font-size: 12.5px; color: var(--ink);
+}
+.fact-chip.new { animation: chip-in .5s var(--ease); }
+@keyframes chip-in { from { background: var(--hl-solid); color: #101216; } }
+.fact-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.fact-x { width: 20px; height: 20px; flex: none; border-radius: 50%; display: grid; place-items: center; color: var(--ink-3); }
+.fact-x svg { width: 13px; height: 13px; }
+.fact-x:hover { background: var(--line); color: var(--err); }
+
+/* a retry in progress (a kept passage got changed) */
+.notice.pending svg { color: var(--ink-3); }
+
+/* toasts: made by page.js, or sent by the server into #hz-toast after an import */
+#hz-toast { min-height: 0 !important; }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 80; transform: translateX(-50%); pointer-events: none;
+  max-width: min(560px, calc(100vw - 32px)); width: max-content; padding: 10px 16px 10px 14px; border-radius: 14px;
+  background: var(--ink); color: var(--sheet); font-size: 13px; font-weight: 500; line-height: 1.45; box-shadow: var(--shadow-pop);
+  animation: toast-life 5s var(--ease) forwards;
+}
+.toast::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 9px; vertical-align: 1px; background: var(--hl-solid); }
+.toast[data-kind="err"] { animation-duration: 8s; }
+.toast[data-kind="err"]::before { background: var(--err); }
+.toast code { background: transparent !important; border-color: color-mix(in srgb, var(--sheet) 30%, transparent) !important; color: inherit; }
+@keyframes toast-life {
+  0% { opacity: 0; transform: translate(-50%, 14px); }
+  5% { opacity: 1; transform: translate(-50%, 0); }
+  90% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 0); visibility: hidden; }
+}
+
 /* ───────── narrow screens ───────── */
 @media (max-width: 980px) {
   .gradio-container { padding: 0 16px !important; }
@@ -393,6 +492,9 @@ html[data-lang="zh"] .sec-title { letter-spacing: -.01em; }
   .bar-row { grid-template-columns: 1fr 64px; }
   .bar-row .bar-label { grid-column: 1 / -1; }
   .stats { display: none; }
+  .factbar { max-height: none; padding-right: 0; align-items: center; }
+  .factbar-list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 14px !important; }
+  .fact-chip { flex: none; max-width: 200px; }
   .textview { padding: 16px 18px 20px; font-size: 16px; }
   #draft textarea { padding: 16px 18px 20px !important; }
   .sheet-head { padding: 9px 10px 9px 16px; height: auto; min-height: 56px; flex-wrap: wrap; row-gap: 4px; }

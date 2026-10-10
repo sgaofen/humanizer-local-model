@@ -25,6 +25,11 @@ or 1,200 characters is split at paragraph breaks and rewritten part by part, and
 the finished text stays on screen with a note. The `/humanize` API still takes one part (700 words) per call. Real
 before/after pairs from the held-out evaluation set are on the page and need no GPU.
 
+As in the desktop app, you can import the text of a `.docx` or PDF (up to 10 MB), and select any passage in the
+draft and click **Create fact** to keep it word for word: the passage is swapped for a placeholder the model copies
+through, then put back, and a part that loses it is rewritten (up to 3 tries) instead of being shown changed.
+An English draft that comes back in Chinese is sampled again automatically.
+
 **Run it on your own computer:** the desktop app for macOS (Apple silicon) and Windows is on
 [GitHub Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest); the command-line tool
 `hz` and llama.cpp, MLX, transformers and vLLM steps are in
@@ -43,12 +48,12 @@ especially numbers, dates, names (and the direction of every claim).
 the rewrite plus copy rate and any numbers missing from it.
 
 **Privacy:** the Space keeps no text. It logs counts only (lengths, timing, copy rate), never the draft,
-the output or your IP.
+the output or your IP. An imported file is deleted as soon as its text has been read.
 
 Source of this Space: [`space/`](https://github.com/sgaofen/humanizer-local-model/tree/main/space) in the GitHub repo.
 
 ---
 
 把 AI 写的草稿改成读起来像人写的，训练目标是数字、单位、日期、人名、引语原样保留。中英文都行。训练全程没有用任何 AI 检测器。
-这里可以在线试一篇；想装到自己电脑上，下载 [App（macOS / Windows）](https://github.com/sgaofen/humanizer-local-model/releases/latest)，
+这里可以在线试一篇，也可以导入 .docx 或 PDF（最大 10 MB，读完即删）；在草稿里选中一段文字点「原样保留」，改写时这段一字不改。想装到自己电脑上，下载 [App（macOS / Windows）](https://github.com/sgaofen/humanizer-local-model/releases/latest)，
 或者看 [不用 App 怎么用](https://github.com/sgaofen/humanizer-local-model/blob/main/docs/USAGE.zh.md)。

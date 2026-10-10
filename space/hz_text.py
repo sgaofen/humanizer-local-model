@@ -44,6 +44,31 @@ def cjk_chars(text: str) -> int:
     return len(CJK.findall(text))
 
 
+# ── language guard ──────────────────────────────────────────────────────────────────────────────
+# The model occasionally rewrites a short, informal English draft that is full of technical jargon in
+# Chinese. This only counts characters (no judgement about content): a draft with at most 2 Chinese
+# characters whose rewrite has more than 15 is in the wrong language, and so is a Chinese draft whose
+# rewrite is plain English. hz then samples again with the same settings, up to LANG_RETRIES times.
+# Same thresholds as the app (app/web/js/guard.js).
+HAN = re.compile(r'[㐀-䶿一-鿿豈-﫿]')
+LETTER_WORD = re.compile(r"[A-Za-z]+(?:['\u2019-][A-Za-z]+)*")
+LANG_RETRIES = 3
+
+
+def han_chars(text: str) -> int:
+    return len(HAN.findall(text or ''))
+
+
+def language_drift(draft: str, out: str) -> bool:
+    """True if the rewrite is in the wrong language: an English draft written in Chinese, or a
+    Chinese draft written in English."""
+    hd, ho = han_chars(draft), han_chars(out)
+    if hd <= 2:
+        return ho > 15
+    return (hd >= 20 and hd > len(LETTER_WORD.findall(draft)) and ho <= 2
+            and len(LETTER_WORD.findall(out or '')) > 15)
+
+
 def count_words(text: str) -> int:
     """Words as reported to the user: English words plus Chinese characters (one character = one word)."""
     return latin_words(text) + cjk_chars(text)
@@ -280,6 +305,7 @@ def stray_markup(draft: str, out: str) -> List[str]:
 
 
 # Problems that make hz rewrite a piece again. 'added_numbers' is only reported, never retried.
+# 'language' (rewrite in the wrong language) has its own silent resampling before check() runs.
 RETRY_ISSUES = ('empty', 'truncated', 'too_short', 'too_long', 'repeated', 'markup', 'missing_numbers',
                 'missing_urls', 'copy')
 TOO_SHORT, TOO_LONG, TOO_LONG_MIN = 0.35, 1.75, 12
@@ -303,10 +329,11 @@ class Check:
 
     def score(self) -> Tuple[int, float]:
         """Lower is better. Each missing number or link, each added number and copying too much count
-        one; an empty, cut-off, much too short or much too long rewrite counts more than all of those."""
+        one; an empty, cut-off, wrong-language, much too short or much too long rewrite counts more than
+        all of those."""
         bad = len(self.missing_numbers) + len(self.missing_urls) + len(self.added_numbers) + ('copy' in self.issues)
         bad += 'markup' in self.issues
-        bad += sum({'empty': 1000, 'truncated': 100, 'too_short': 50, 'too_long': 50, 'repeated': 50}.get(i, 0)
+        bad += sum({'empty': 1000, 'language': 200, 'truncated': 100, 'too_short': 50, 'too_long': 50, 'repeated': 50}.get(i, 0)
                    for i in self.issues)
         return bad, self.copy
 
@@ -329,6 +356,8 @@ def check(draft: str, out: str, truncated: bool = False, max_copy: float = 0.5,
         issues.append('too_long')
     if not empty and _has_repeat(out) and not _has_repeat(draft):
         issues.append('repeated')
+    if not empty and language_drift(draft, out):
+        issues.append('language')
     if stray_markup(draft, out):
         issues.append('markup')
     if mn:
