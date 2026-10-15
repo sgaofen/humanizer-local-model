@@ -38,6 +38,7 @@ func (a *App) handler() http.Handler {
 	mux.HandleFunc("GET /app/external", a.handleExternalGet)
 	mux.HandleFunc("POST /app/external", a.handleExternalSet)
 	mux.HandleFunc("POST /app/external/test", a.handleExternalTest)
+	a.registerExtensionRoutes(mux)
 	a.registerUpdateRoutes(mux)
 	mux.Handle("/api/", a.countInflight(a.apiProxy()))
 	mux.Handle("/", a.static())
@@ -60,6 +61,13 @@ func (a *App) guard(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !okHost[r.Host] {
 			http.Error(w, "forbidden host", http.StatusForbidden)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/extension/") {
+			if a.guardExtension(w, r) {
+				a.touch()
+				next.ServeHTTP(w, r)
+			}
 			return
 		}
 		if o := r.Header.Get("Origin"); o != "" && !okOrigin[o] {
@@ -200,6 +208,7 @@ type statusResp struct {
 	DefaultDataDir  string          `json:"default_data_dir"`
 	DataDirLocked   bool            `json:"data_dir_locked"`
 	IdleExitMinutes int             `json:"idle_exit_minutes"`
+	ModelSleeping   bool            `json:"model_sleeping"`
 	CtxSize         int             `json:"ctx_size"`
 	External        *externalStatus `json:"external"`
 	// Notice:"lite_retired" = 这台机器以前选的是已下线的 lite 档,网页提示换成推荐的 12B 档位;旧文件不删。
@@ -230,6 +239,7 @@ func (a *App) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	s.Phase = a.phase
+	s.ModelSleeping = a.modelSleeping
 	s.Tier = a.tier
 	s.External = a.externalStatusLocked()
 	s.Endpoint = a.settings.Endpoint

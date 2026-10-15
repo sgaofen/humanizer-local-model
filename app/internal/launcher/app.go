@@ -85,6 +85,13 @@ type App struct {
 	restarts     int
 	stopping     bool
 
+	// Extension mode unloads only the bundled engine, keeping the launcher alive.
+	modelUseMu     sync.Mutex // serialize request admission with idle unloading
+	extensionToken string     // per-launch pairing secret; protected by mu
+	modelIdle      bool       // enabled when the paired extension wakes the model
+	modelSleeping  bool
+	modelLastUsed  time.Time
+
 	lastSeen atomic.Int64
 	idleExit time.Duration
 
@@ -200,6 +207,7 @@ func (a *App) startEngine(t Tier) {
 	ctx, cancel := context.WithCancel(a.rootCtx)
 	a.engineCancel = cancel
 	a.phase = phaseStarting
+	a.modelSleeping = false
 	a.tier = t.ID
 	a.errInfo = nil
 	a.engInfo = engineInfo{}
@@ -334,7 +342,7 @@ func (a *App) idleLoop(ctx context.Context) {
 			return
 		case <-t.C:
 			a.mu.Lock()
-			busy := a.phase == phaseDownloading
+			busy := a.phase == phaseDownloading || a.phase == phaseStarting || a.inflight.Load() != 0
 			a.mu.Unlock()
 			if a.updates != nil && a.updates.busy() { // 更新在下载/安装:别中途退出
 				busy = true

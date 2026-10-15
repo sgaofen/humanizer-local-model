@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Humanizer for Google Docs",
+  "version": "0.1.0",
+  "description": "Humanize selected Google Docs text with the local Humanizer app. Unloads the model after five idle minutes.",
+  "minimum_chrome_version": "116",
+  "permissions": ["contextMenus", "sidePanel", "storage", "clipboardRead", "clipboardWrite"],
+  "host_permissions": ["https://docs.google.com/document/*", "http://127.0.0.1/*", "http://localhost/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "Humanize selected text" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "content_scripts": [
+    { "matches": ["https://docs.google.com/document/*"], "js": ["content.js"] },
+    { "matches": ["http://127.0.0.1/extension-connect.html", "http://localhost/extension-connect.html"], "js": ["pair.js"] }
+  ],
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:* http://localhost:*; style-src 'self'; base-uri 'none'" }
+}

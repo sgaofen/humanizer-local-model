@@ -52,6 +52,8 @@ Most GGUF files come from one `llama-quantize` pass that rounds every weight to 
 
 ## Quick start
 
+**Chrome extension for Google Docs:** select a passage and humanize it with the local app, review the rewrite in a sidebar, then copy/paste it back. The model unloads after five idle minutes and reloads on demand. See [installation and usage](extension/README.md) (requires an app build containing the extension API).
+
 > [!TIP]
 > **Setting this up with an AI agent?** Point it at **[AGENTS.md](AGENTS.md)** (also [llms.txt](llms.txt)). It has the exact files to download, the server command, the prompt byte for byte, and a self-test.
 

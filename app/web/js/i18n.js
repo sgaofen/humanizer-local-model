@@ -1,6 +1,7 @@
 // 界面文案。只有两种语言,直接写死在这里;键名按界面区域分组。
 const DICT = {
   zh: {
+    'status.sleeping': '模型已卸载 · 改写时自动加载',
     'common.close': '关闭',
     'theme.toggle': '切换深浅色',
     'menu.title': '模型与设置',
@@ -335,6 +336,7 @@ const DICT = {
     'upd.toast.latest': '已是最新',
   },
   en: {
+    'status.sleeping': 'Model unloaded · reloads on rewrite',
     'common.close': 'Close',
     'theme.toggle': 'Toggle light / dark',
     'menu.title': 'Model & settings',

@@ -1,0 +1,43 @@
+name: extension-test
+
+on:
+  pull_request:
+    paths:
+      - "extension/**"
+      - "app/**"
+      - ".github/workflows/extension-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Extension tests
+        run: node --test extension/tests/*.test.mjs
+      - name: App checks
+        working-directory: app
+        run: |
+          go vet ./...
+          go test -race -count=1 ./...
+          node devtools/webtest.mjs
+          node devtools/webtest_update.mjs
+          bash devtools/e2e.sh
+      - name: Browser test dependencies
+        working-directory: extension
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Installed extension browser smoke test
+        working-directory: extension
+        run: npm run test:browser

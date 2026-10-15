@@ -28,9 +28,24 @@ func (a *App) registerUpdateRoutes(mux *http.ServeMux) {
 // countInflight 记下正在进行的改写请求数:模型更新要等改写结束才重启引擎,App 更新也要避开。
 func (a *App) countInflight(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/completion" || r.URL.Path == "/api/v1/chat/completions" { // 后者:外部服务模式
-			a.inflight.Add(1)
-			defer a.inflight.Add(-1)
+		// Tokenization also uses model memory. Admit it under the same lock as
+		// completions so an idle timer cannot stop an engine a request is using.
+		a.modelUseMu.Lock()
+		a.inflight.Add(1)
+		woke := a.wakeSleepingModel()
+		a.modelUseMu.Unlock()
+		defer func() {
+			a.modelUseMu.Lock()
+			a.mu.Lock()
+			a.modelLastUsed = time.Now()
+			a.mu.Unlock()
+			a.inflight.Add(-1)
+			a.modelUseMu.Unlock()
+			a.touch()
+		}()
+		if woke && !a.waitForModel(r.Context()) {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "Model could not reload; check the Humanizer app."})
+			return
 		}
 		h.ServeHTTP(w, r)
 	})

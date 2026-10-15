@@ -165,6 +165,7 @@ function renderStatus() {
   const tier = tierOf(st.tier);
   switch (st.phase) {
     case 'ready': {
+      if (st.model_sleeping) { text = t('status.sleeping'); break; }
       state = 'ready';
       const be = BACKEND[st.engine?.backend] || st.engine?.backend || '';
       const parts = extOn() ? [t('status.ready'), t('ext.status'), st.external.model] : [t('status.ready'), tier?.label, be];

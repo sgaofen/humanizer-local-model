@@ -356,6 +356,8 @@ func (a *App) runEngine(ctx context.Context, tier Tier) {
 		a.engInfo.Build = build
 		a.engInfo.ReadyAt = time.Now()
 		a.phase = phaseReady
+		a.modelSleeping = false
+		a.modelLastUsed = time.Now()
 		a.errInfo = nil
 		a.mu.Unlock()
 		a.finishAttempt("ok", "")

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Humanizer</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header><div class="mark" aria-hidden="true">h</div><div><h1>Humanizer</h1><span>FOR GOOGLE DOCS</span></div><span id="connection-badge">Not connected</span></header>
+  <main>
+    <p class="intro">Your words, a little more human.</p>
+    <p class="hint">Select a passage in your Doc and click <strong>Humanize selection</strong>, or use the right-click option.</p>
+    <details id="settings" open>
+      <summary>Local app connection</summary>
+      <label for="app-url">Humanizer app address</label>
+      <input id="app-url" type="url" value="http://127.0.0.1:47615" spellcheck="false">
+      <button id="connect" class="secondary">Connect app</button>
+      <p class="hint">Start the Humanizer app first. Click Connect on the page that opens. Reconnect after restarting the app.</p>
+    </details>
+    <div class="section-title"><label for="draft">Selected text</label><button id="clear" class="text-button">Clear</button></div>
+    <textarea id="draft" placeholder="Your selection will appear here. You can also paste a passage." rows="7"></textarea>
+    <div class="selection-actions"><button id="selection" class="secondary">Use selection</button><button id="clipboard" class="secondary">Use copied text</button></div>
+    <p class="hint">If Docs can’t share the selection, copy it with Ctrl+C / ⌘C, then click <strong>Use copied text</strong>.</p>
+    <div class="run-actions"><button id="humanize" class="primary">Humanize</button><button id="stop" class="secondary" hidden>Stop</button></div>
+    <p id="status" role="status" aria-live="polite">Open a Google Doc to get started.</p>
+    <div class="section-title"><label for="result">Humanized text</label><button id="copy" class="text-button" disabled>Copy result</button></div>
+    <textarea id="result" readonly placeholder="A fresh version, with the same meaning." rows="9"></textarea>
+    <p id="review" class="review" hidden></p>
+    <p class="hint">Review the result, then copy it and paste over the selected passage in Docs. This replaces it as plain text; use Undo in Docs to revert.</p>
+    <footer><span class="dot"></span> Runs locally · unloads after 5 idle minutes</footer>
+  </main>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

@@ -224,6 +224,7 @@ func Main(o Options) int {
 		}
 	}
 	go a.idleLoop(ctx)
+	go a.modelIdleLoop(ctx)
 	go a.updates.autoLoop(ctx, func() bool {
 		a.mu.Lock()
 		defer a.mu.Unlock()
