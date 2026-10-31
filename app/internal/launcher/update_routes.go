@@ -1,7 +1,9 @@
 package launcher
 
 import (
+	"archive/tar"
 	"archive/zip"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -175,6 +177,107 @@ func extractZip(src, dst string) error {
 		}
 	}
 	return nil
+}
+
+// extractTarGz 解压 Linux 便携版。拒绝绝对路径、../ 和硬链接;
+// 只允许指向包内相对位置的符号链接(引擎的 .so 名链接),
+// 文件权限上限 0755,总量和条目数有上限,防解压炸弹。
+const (
+	maxTarEntries   = 10000
+	maxTarTotalSize = 2 << 30
+)
+
+func extractTarGz(src, dst string) error {
+	f, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	gz, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+	root, err := filepath.Abs(dst)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return err
+	}
+	tr := tar.NewReader(gz)
+	var total int64
+	for entries := 0; ; entries++ {
+		if entries >= maxTarEntries {
+			return fmt.Errorf("压缩包条目太多(>%d)", maxTarEntries)
+		}
+		h, err := tr.Next()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		name := strings.TrimPrefix(h.Name, "./")
+		if name == "." || name == "" && h.Typeflag == tar.TypeDir {
+			continue // tar -C dir . 产生的根条目
+		}
+		if name == "" || strings.HasPrefix(name, "/") || filepath.IsAbs(name) {
+			return fmt.Errorf("压缩包里有不安全的路径:%q", h.Name)
+		}
+		target := filepath.Join(root, filepath.FromSlash(name))
+		if target != root && !strings.HasPrefix(target, root+string(filepath.Separator)) {
+			return fmt.Errorf("压缩包里有不安全的路径:%q", h.Name)
+		}
+		switch h.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				return err
+			}
+		case tar.TypeSymlink:
+			if filepath.IsAbs(h.Linkname) {
+				return fmt.Errorf("压缩包里有不安全的符号链接:%q", h.Name)
+			}
+			linkTarget := filepath.Join(filepath.Dir(target), filepath.FromSlash(h.Linkname))
+			rel, err := filepath.Rel(root, linkTarget)
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("压缩包里的符号链接指向包外:%q", h.Name)
+			}
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				return err
+			}
+			_ = os.Remove(target)
+			if err := os.Symlink(h.Linkname, target); err != nil {
+				return err
+			}
+		case tar.TypeReg, tar.TypeRegA:
+			mode := os.FileMode(h.Mode).Perm() & 0o755
+			if mode == 0 {
+				mode = 0o644
+			}
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				return err
+			}
+			out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+			if err != nil {
+				return err
+			}
+			n, err := io.Copy(out, io.LimitReader(tr, maxTarTotalSize-total+1))
+			total += n
+			if err != nil {
+				out.Close()
+				return err
+			}
+			if err := out.Close(); err != nil {
+				return err
+			}
+			if total > maxTarTotalSize {
+				return fmt.Errorf("压缩包解压后太大(>%d 字节)", maxTarTotalSize)
+			}
+		default:
+			return fmt.Errorf("压缩包里有链接或特殊文件:%q", h.Name)
+		}
+	}
 }
 
 func extractZipFile(f *zip.File, target string) error {

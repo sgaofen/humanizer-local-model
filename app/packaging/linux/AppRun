@@ -1,0 +1,5 @@
+#!/bin/sh
+# AppImage entry point: the launcher binary and its bundled engine live
+# under usr/bin (the launcher finds engine/ next to the executable).
+HERE="$(dirname "$(readlink -f "$0")")"
+exec "$HERE/usr/bin/humanizer" "$@"

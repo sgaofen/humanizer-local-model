@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -85,6 +86,14 @@ func packageVerifier(name string) func(string) error {
 			}
 		case strings.HasSuffix(lower, ".zip"):
 			if n < 4 || string(head) != "PK\x03\x04" {
+				return bad()
+			}
+		case strings.HasSuffix(lower, ".tar.gz"), strings.HasSuffix(lower, ".tgz"):
+			if n < 2 || head[0] != 0x1f || head[1] != 0x8b {
+				return bad()
+			}
+		case strings.HasSuffix(lower, ".appimage"):
+			if n < 4 || string(head) != "\x7fELF" {
 				return bad()
 			}
 		case strings.HasSuffix(lower, ".dmg"):
@@ -284,6 +293,11 @@ func (e *fallbackError) Unwrap() error { return e.err }
 
 // prepare 校验安装包 → 按平台准备好重启计划。
 func (u *updater) prepare(j *appJob) (*applyPlan, error) {
+	if runtime.GOOS == "linux" && j.Asset.SHA256 == "" {
+		// Linux 的 prepareApply 会直接执行下好的包做 --version 检查:
+		// 没有 sha256 时只有大小+文件头校验,不够格执行,宁可让用户手动装。
+		return nil, fmt.Errorf("这个安装包没有 sha256 校验值,请到 Releases 页面手动下载安装")
+	}
 	if j.Asset.SHA256 != "" { // 下完到现在可能过了很久,再核一遍
 		got, err := hashFileProgress(u.rootCtx, j.Path, nil)
 		if err != nil {
@@ -612,6 +626,11 @@ func stagedPathFor(in installInfo) string {
 		return filepath.Join(dir, "."+base+".update")
 	}
 	return filepath.Join(dir, base+".update")
+}
+
+func dirExists(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && st.IsDir()
 }
 
 // dirWritable:能不能在这个目录里建文件(=能不能在旁边放暂存/备份并改名)。

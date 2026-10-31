@@ -119,6 +119,7 @@ app/
 │   ├── fetch_engine.py        下载 + 校验 + 整理成 engine/{metal|cuda|vulkan|cpu}/
 │   ├── macos/                 Info.plist、build_app.sh(.app + .dmg + 签名/公证)、打不开怎么办.txt
 │   ├── windows/               humanizer.iss(Inno Setup)、build_win.sh(安装包 + 便携 zip)、README.md(出 Windows 包的完整步骤)
+│   ├── linux/                 build_linux.sh(便携 tar.gz + AppImage,不打 deb/rpm)、humanizer.desktop、AppRun、install-desktop.sh
 │   └── icon/                  图标源文件 svg、1024 png、Windows ico
 ├── .github-workflows/release-app.yml   CI(发布时挪到仓库根的 .github/workflows/)
 ├── docs/screenshots-real/       真机实拍截图(README 用这批)
@@ -198,6 +199,15 @@ CI:`.github-workflows/release-app.yml` 挪到仓库根 `.github/workflows/` 后,
 python3 packaging/fetch_engine.py --target macos --out dist/engine
 bash packaging/macos/build_app.sh 0.3.2      # → dist/mac/Humanizer.app、dist/Humanizer-0.3.2-macos-arm64.dmg(约 15 MB)
 ```
+
+Linux 包(便携 tar.gz + AppImage,不打 deb/rpm;引擎只带 CPU/Vulkan 两种):
+
+```bash
+python3 packaging/fetch_engine.py --target linux --out dist/engine
+bash packaging/linux/build_linux.sh 0.3.2      # → dist/Humanizer-0.3.2-linux-x64-portable.tar.gz、dist/Humanizer-0.3.2-linux-x64.AppImage
+```
+
+便携版解压后直接跑 `./humanizer`;想进应用菜单就再跑 `sh install-desktop.sh`。两种包都能自更新:便携版换整个目录,AppImage 换单个文件(同目录可写时)。给用户的安装步骤、系统库前提(`libstdc++`/`libgomp`/`libssl3`,GPU 另需 Vulkan 驱动)和 AppImage 的 `libfuse2` 说明在 [docs/INSTALL.md](../docs/INSTALL.md#app-on-linux)。
 
 Windows 包只能在 Windows 上出(Inno Setup):
 

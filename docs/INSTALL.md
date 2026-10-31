@@ -4,12 +4,12 @@
 
 There are two ways to run humanizer:
 
-- **The app** (macOS with Apple silicon, Windows x64). Download, double-click, paste a draft. Recommended for most people.
-- **The command line** (macOS, Windows, Linux). A local server you can call from scripts. Linux has no app, so use this route there.
+- **The app** (macOS with Apple silicon, Windows x64, Linux x64). Download, double-click, paste a draft. Recommended for most people.
+- **The command line** (macOS, Windows, Linux). A local server you can call from scripts.
 
 Either way the model runs on your own computer. The only network access is the one-time model download from Hugging Face.
 
-**Contents:** [Which model size](#which-model-size) · [App on macOS](#app-on-macos) · [App on Windows](#app-on-windows) · [First-launch warnings](#first-launch-warnings) · [Command line](#command-line) · [FAQ](#faq)
+**Contents:** [Which model size](#which-model-size) · [App on macOS](#app-on-macos) · [App on Windows](#app-on-windows) · [App on Linux](#app-on-linux) · [First-launch warnings](#first-launch-warnings) · [Command line](#command-line) · [FAQ](#faq)
 
 ## Which model size
 
@@ -46,6 +46,15 @@ Good to know:
 - Models and settings are in `~/Library/Application Support/Humanizer`.
 - **Want them somewhere else (another drive)?** On the first-run screen, open **Storage location** under the size picker: you can set the **run folder** (settings, logs, engine updates) and the **models folder** (the `.gguf` files) separately, and paste a path or use **Change…** to pick a folder. Nothing moves unless you tick **Move the models already downloaded**. It takes effect immediately; also reachable later from the **…** menu → **Change storage location**.
 - **Numbers check:** the app compares every number in the draft with the rewrite and flags any that are missing. It only compares Arabic digits, so "60 minutes → an hour" is flagged even though it's fine. Treat it as a reminder, not a verdict.
+
+## App on Linux
+
+**Needs:** 64-bit Linux (x86_64) with a glibc desktop distribution (Ubuntu, Fedora, Debian and similar), plus the usual desktop libraries the bundled engine links against (`libstdc++`, `libgomp`, `libssl3`; a Vulkan loader and driver only for GPU speed — without them it runs on the CPU). There is no `.deb`/`.rpm`; pick one of the two packages from [Releases](https://github.com/sgaofen/humanizer-local-model/releases/latest):
+
+1. **AppImage (easiest):** download `Humanizer-<version>-linux-x64.AppImage`, make it executable (`chmod +x Humanizer-<version>-linux-x64.AppImage`, or right-click → Properties → allow executing), then double-click or run it. If it fails to start with a `libfuse.so.2` error, your system lacks FUSE 2: install `libfuse2` (Ubuntu: `sudo apt install libfuse2t64` or `libfuse2`), or run it once as `./Humanizer-<version>-linux-x64.AppImage --appimage-extract-and-run`.
+2. **Portable tarball:** download `Humanizer-<version>-linux-x64-portable.tar.gz`, extract it anywhere, and run `./humanizer` from that folder in a terminal (keep the terminal open while you use it; closing it quits the app). Run `sh install-desktop.sh` from the same folder if you want an application-menu entry.
+
+Your browser opens the app at `http://127.0.0.1:47615/` — the browser tab is the app. Settings and models live under `~/.local/share/Humanizer` (or `$XDG_DATA_HOME/Humanizer`). ARM Linux is not supported yet.
 
 ## App on Windows
 

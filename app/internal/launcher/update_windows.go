@@ -55,11 +55,6 @@ func detectInstall() installInfo {
 	return in
 }
 
-func dirExists(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && st.IsDir()
-}
-
 // prepareApply(Windows):运行中的 exe 和所在目录都换不了,这里只做能提前做的(便携版先解压并试跑新版本),
 // 真正的替换交给旧进程退出后的更新助手。
 func prepareApply(ctx context.Context, in installInfo, pkg string, args []string, plan *applyPlan, logf func(string, ...any)) error {

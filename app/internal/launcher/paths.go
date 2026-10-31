@@ -261,10 +261,20 @@ func discoverBackends(overrides []string, gpu GPUInfo) []Backend {
 			out = append(out, Backend{Name: "cpu", Path: p, GPU: false})
 		}
 	default:
-		for _, n := range []string{"cuda", "vulkan", "cpu"} {
-			if p := find(n); p != "" {
-				out = append(out, Backend{Name: n, Path: p, GPU: n != "cpu"})
+		// Linux:和 Windows 一样先看驱动再试 GPU 后端,免得没有 Vulkan/NVIDIA
+		// 的机器先白等一轮 GPU 引擎加载;CPU 永远兜底。
+		if gpu.NVIDIA {
+			if p := find("cuda"); p != "" {
+				out = append(out, Backend{Name: "cuda", Path: p, GPU: true})
 			}
+		}
+		if gpu.Vulkan {
+			if p := find("vulkan"); p != "" {
+				out = append(out, Backend{Name: "vulkan", Path: p, GPU: true})
+			}
+		}
+		if p := find("cpu"); p != "" {
+			out = append(out, Backend{Name: "cpu", Path: p, GPU: false})
 		}
 	}
 	return out

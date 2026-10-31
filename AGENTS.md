@@ -278,3 +278,14 @@ Exit codes: 0 done (also when pieces are flagged), 1 error during the run (nothi
 - If `summary.flagged` is above 0, show the user each flagged piece: its line, and the numbers that are missing or added. Compare them with the draft yourself. Don't fix the text silently.
 - The checks cover numbers, links, copying, length, repetition and stray HTML tags only. A changed word, name or claim is not caught (in a real Chinese test, "all 48 stores" became "48 stores in the province"). Ask the user to read the result and check names, dates and the direction of each claim.
 - Never tell the user the result will pass an AI detector.
+
+## Code Map
+
+- `app/` — application source
+- `docs/` — project documentation
+- `humanizer/` — application source
+
+## Conventions
+
+- Use Go `package` declarations and grouped `import` blocks in Go source files.
+- Name Go test files using the `_test.go` filename pattern.

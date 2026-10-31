@@ -5,6 +5,8 @@
   windows → <out>/cpu/    {llama-server.exe, *.dll, LICENSE}
             <out>/vulkan/ {...}
             <out>/cuda/   {... + cudart/cublas 运行库}
+  linux   → <out>/cpu/    {llama-server, *.so, LICENSE}
+            <out>/vulkan/ {...}(Vulkan 覆盖 AMD/Intel/NVIDIA;不带 CUDA,包体积小一个量级)
 
 只保留 llama-server 及其依赖的动态库,其他命令行工具丢掉(省体积)。
 用法:python3 packaging/fetch_engine.py --target macos --out dist/engine
@@ -27,6 +29,10 @@ LAYOUT = {
         ("cpu", ["win-cpu-x64"]),
         ("vulkan", ["win-vulkan-x64"]),
         ("cuda", ["win-cuda-12.4-x64", "win-cudart-12.4-x64"]),
+    ],
+    "linux": [
+        ("cpu", ["linux-cpu-x64"]),
+        ("vulkan", ["linux-vulkan-x64"]),
     ],
 }
 
@@ -67,14 +73,20 @@ def extract(archive, into):
             try:
                 t.extractall(into, filter="data")  # Python ≥3.12
             except TypeError:
-                t.extractall(into)
+                sys.exit("需要 Python ≥3.12(安全的 tar 解压过滤),请升级 Python 后再打包")
+
+
+# llama-server 用不到的工具实现库,不进包(bench/cli/perplexity/tts 等)。
+UNUSED_IMPL = ("-bench", "-cli", "-perplexity", "-tts", "-quantize", "-fit-params", "-completion", "-batched-bench")
 
 
 def wanted(name):
     low = name.lower()
     if low in ("llama-server", "llama-server.exe") or low.startswith("license"):
         return True
-    return low.endswith(".dylib") or low.endswith(".dll")
+    if any(x in low for x in UNUSED_IMPL):
+        return False
+    return low.endswith(".dylib") or low.endswith(".dll") or low.endswith(".so") or ".so." in low
 
 
 def collect(src_root, dest):
