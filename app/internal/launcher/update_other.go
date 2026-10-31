@@ -1,4 +1,4 @@
-//go:build !darwin && !windows
+//go:build !darwin && !windows && !linux
 
 package launcher
 
@@ -7,7 +7,7 @@ import (
 	"errors"
 )
 
-// 其他系统(Linux)没有发布安装包:只提示有新版本,链接到 Releases 页面。
+// 其他系统没有发布安装包:只提示有新版本,链接到 Releases 页面。
 func detectInstall() installInfo {
 	return installInfo{Kind: "other", Mode: "none", Reason: "unsupported"}
 }

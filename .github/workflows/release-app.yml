@@ -8,6 +8,8 @@
 #   Humanizer-<版本>-macos-arm64.dmg              (含 Humanizer.app,Apple 芯片)
 #   Humanizer-<版本>-windows-x64-setup.exe        (Inno Setup 安装包,按用户安装,不要管理员)
 #   Humanizer-<版本>-windows-x64-portable.zip     (解压即用)
+#   Humanizer-<版本>-linux-x64-portable.tar.gz    (解压即用,不打 deb/rpm)
+#   Humanizer-<版本>-linux-x64.AppImage           (单文件)
 #
 # 引擎:llama.cpp 官方发布二进制,版本和 sha256 钉在 app/packaging/llama-cpp.lock.json。
 #
@@ -159,9 +161,63 @@ jobs:
             app/dist/Humanizer-*-windows-x64-portable.zip
           if-no-files-found: error
 
+  linux:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+      - name: 版本号
+        id: ver
+        run: |
+          v="${{ github.event.inputs.version }}"
+          [ -z "$v" ] && v="${GITHUB_REF_NAME#app-v}"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: 缓存引擎压缩包和 appimagetool
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            app/dist/engine-cache
+            app/dist/tools
+          key: linux-engine-${{ hashFiles('app/packaging/llama-cpp.lock.json', 'app/packaging/linux/build_linux.sh') }}
+      - name: 拉引擎(CPU / Vulkan,钉死版本,校验 sha256)
+        run: python3 packaging/fetch_engine.py --target linux --out dist/engine
+      - name: 打便携包和 AppImage(不打 deb/rpm)
+        run: bash packaging/linux/build_linux.sh "${{ steps.ver.outputs.version }}"
+      - name: 冒烟:便携版能找到 Vulkan 引擎、引擎能跑
+        run: |
+          D="$RUNNER_TEMP/hz"
+          mkdir -p "$RUNNER_TEMP/portable" && tar -xzf dist/Humanizer-*-linux-x64-portable.tar.gz -C "$RUNNER_TEMP/portable"
+          "$RUNNER_TEMP/portable/engine/vulkan/llama-server" --version
+          "$RUNNER_TEMP/portable/humanizer" --no-browser --data-dir "$D" --port 47802 &
+          for i in $(seq 1 40); do curl -sf http://127.0.0.1:47802/app/status > status.json && break; sleep 0.5; done
+          cat status.json
+          grep -q '"vulkan"' status.json
+          curl -s -X POST -H 'X-Humanizer: 1' http://127.0.0.1:47802/app/quit
+      - name: 冒烟:AppImage 能起服务并找到引擎(不只是 --version)
+        run: |
+          D="$RUNNER_TEMP/hz-appimage"
+          APPIMAGE_EXTRACT_AND_RUN=1 dist/Humanizer-*-linux-x64.AppImage --version
+          APPIMAGE_EXTRACT_AND_RUN=1 dist/Humanizer-*-linux-x64.AppImage --no-browser --data-dir "$D" --port 47803 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:47803/app/status > appimage-status.json && break; sleep 0.5; done
+          cat appimage-status.json
+          grep -q '"vulkan"' appimage-status.json
+          grep -q '"cpu"' appimage-status.json
+          curl -s -X POST -H 'X-Humanizer: 1' http://127.0.0.1:47803/app/quit
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: linux
+          path: |
+            app/dist/Humanizer-*-linux-x64-portable.tar.gz
+            app/dist/Humanizer-*-linux-x64.AppImage
+          if-no-files-found: error
+
   release:
     if: startsWith(github.ref, 'refs/tags/app-v')
-    needs: [macos, windows]
+    needs: [macos, windows, linux]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

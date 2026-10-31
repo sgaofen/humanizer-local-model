@@ -8,6 +8,8 @@
     "win-cpu-x64":         { "file": "llama-b11335-bin-win-cpu-x64.zip",          "sha256": "a15d8fac29ddbdc5ddfa9bb2b60a97e5b7f7332f6e9eead71d69a9f04dd3611f" },
     "win-vulkan-x64":      { "file": "llama-b11335-bin-win-vulkan-x64.zip",       "sha256": "190320fa5a676a6053751fce4f31748f98d57e717a2d531c66c7298b9aa77434" },
     "win-cuda-12.4-x64":   { "file": "llama-b11335-bin-win-cuda-12.4-x64.zip",    "sha256": "95c11f1371a81a3f2807e5827e72961850b395dc8bcc0112601fed9eb2f979b1" },
-    "win-cudart-12.4-x64": { "file": "cudart-llama-bin-win-cuda-12.4-x64.zip",    "sha256": "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6" }
+    "win-cudart-12.4-x64": { "file": "cudart-llama-bin-win-cuda-12.4-x64.zip",    "sha256": "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6" },
+    "linux-cpu-x64":       { "file": "llama-b11335-bin-ubuntu-x64.tar.gz",        "sha256": "238ba2e95f1ec7abeda62a729aa7f59fdd23be607e72a2817c26eb26ddfed2e0" },
+    "linux-vulkan-x64":    { "file": "llama-b11335-bin-ubuntu-vulkan-x64.tar.gz", "sha256": "32445385f6ae6823ef90209baa41d6021eb7fa973bdebc57f3b152b5db472b84" }
   }
 }

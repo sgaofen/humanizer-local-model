@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Humanizer
+Comment=Rewrite AI drafts so they read like a person wrote them
+Exec=humanizer
+Icon=humanizer
+Terminal=false
+Categories=Office;Utility;
+StartupNotify=true
